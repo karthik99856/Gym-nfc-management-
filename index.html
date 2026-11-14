@@ -1,0 +1,1645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gym NFC Management System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #F4F6FA;
+      color: #1E293B;
+    }
+    .sidebar-bg {
+      background: linear-gradient(180deg, #16134A 0%, #100D3A 100%);
+    }
+    .nav-active {
+      background: linear-gradient(90deg, #5B46E8 0%, #4E38E0 100%);
+      box-shadow: 0 4px 14px rgba(91, 70, 232, 0.4);
+    }
+    .kpi-purple {
+      background: linear-gradient(135deg, #5B46E8 0%, #4530D4 100%);
+    }
+    .kpi-green {
+      background: linear-gradient(135deg, #18B87A 0%, #119D66 100%);
+    }
+    .kpi-orange {
+      background: linear-gradient(135deg, #F87924 0%, #E86210 100%);
+    }
+    .kpi-blue {
+      background: linear-gradient(135deg, #1D7CF2 0%, #1162D1 100%);
+    }
+    .nfc-card-preview {
+      background: linear-gradient(135deg, #191B3A 0%, #0D1026 100%);
+      box-shadow: 0 14px 28px rgba(13, 16, 38, 0.25);
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #F1F5F9; }
+    ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+  </style>
+</head>
+<body class="antialiased overflow-x-hidden">
+
+  <!-- Admin Login Overlay Screen -->
+  <div id="loginOverlay" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-md p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-7 shadow-2xl border border-slate-100">
+      <div class="text-center mb-6">
+        <div class="w-14 h-14 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-2xl mx-auto mb-3 shadow-lg shadow-indigo-200">
+          <i class="fa-solid fa-dumbbell"></i>
+        </div>
+        <h2 id="loginBrandTitle" class="text-xl font-extrabold text-slate-900">Gym NFC</h2>
+        <p id="loginBrandSubtitle" class="text-xs font-medium text-slate-500 mt-1">Management System</p>
+      </div>
+
+      <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Mobile Number</label>
+          <div class="relative">
+            <i class="fa-solid fa-phone absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+            <input id="loginUsernameInput" type="tel" required placeholder="Enter mobile number" class="w-full rounded-xl border border-slate-200 pl-10 pr-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Password</label>
+          <div class="relative">
+            <i class="fa-solid fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+            <input id="loginPasswordInput" type="password" required placeholder="Enter password" class="w-full rounded-xl border border-slate-200 pl-10 pr-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none" />
+          </div>
+        </div>
+        <p id="loginErrorMsg" class="hidden text-xs font-bold text-rose-600 text-center">Invalid mobile number or password!</p>
+        <button type="submit" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold shadow-lg shadow-indigo-200 transition active:scale-[0.99]">
+          Login to Dashboard
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-3 pointer-events-none"></div>
+
+  <!-- Edit Member Modal -->
+  <div id="editMemberModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-slate-900">Edit Member & NFC Card</h3>
+        <button onclick="closeEditModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <form id="editMemberForm" onsubmit="saveEditedMember(event)" class="space-y-3.5">
+        <input type="hidden" id="editMemberId" />
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Full Name</label>
+          <input type="text" id="editName" required class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Phone Number</label>
+            <input type="text" id="editPhone" required class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Amount Paid (₹)</label>
+            <input type="number" id="editAmount" min="0" required class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm font-semibold focus:ring-2 focus:ring-indigo-500 outline-none" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">NFC Card UID (Replace Lost Card Here)</label>
+          <div class="flex gap-2">
+            <input type="text" id="editCardId" required class="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm font-mono font-bold text-indigo-700 uppercase outline-none focus:ring-2 focus:ring-indigo-500" />
+            <button type="button" onclick="generateEditCardId()" class="px-3 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition">
+              <i class="fa-solid fa-rotate"></i> New ID
+            </button>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">If lost, type new Card ID or tap new card on reader & click Save Changes.</p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Plan</label>
+            <select id="editPlan" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none bg-white">
+              <option value="Premium">Premium (12 Months)</option>
+              <option value="Standard">Standard (6 Months)</option>
+              <option value="Basic">Basic (1 Month)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Status</label>
+            <select id="editStatus" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none bg-white">
+              <option value="Active">Active</option>
+              <option value="Expired">Expired</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Start Date</label>
+            <input type="text" id="editStartDate" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">End Date</label>
+            <input type="text" id="editEndDate" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm outline-none" />
+          </div>
+        </div>
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeEditModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-sm font-semibold">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="flex flex-col lg:flex-row min-h-screen">
+    <!-- Mobile Sidebar Backdrop -->
+    <div id="sidebarBackdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-900/50 z-30 hidden lg:hidden"></div>
+
+    <!-- Left Navigation Sidebar -->
+    <aside id="sidebar" class="sidebar-bg text-white w-full lg:w-64 flex-shrink-0 flex flex-col justify-between fixed lg:static inset-y-0 left-0 z-40 transform -translate-x-full lg:translate-x-0 transition-transform duration-200 ease-in-out shadow-xl lg:shadow-none">
+      <div>
+        <!-- Brand Logo -->
+        <div class="px-6 py-6 flex items-center gap-3 border-b border-white/10">
+          <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white text-xl shadow-inner flex-shrink-0">
+            <i class="fa-solid fa-dumbbell"></i>
+          </div>
+          <div class="min-w-0">
+            <h1 id="sidebarGymTitle" class="font-extrabold text-lg leading-tight tracking-tight truncate">Gym NFC</h1>
+            <p id="sidebarGymSubtitle" class="text-[11px] text-indigo-200 font-medium truncate">Management System</p>
+          </div>
+        </div>
+
+        <!-- Menu Items -->
+        <nav class="px-3.5 py-5 space-y-1.5 flex lg:flex-col overflow-x-auto lg:overflow-visible gap-2 lg:gap-1.5">
+          <button onclick="switchSection('dashboard')" data-nav="dashboard" class="nav-btn nav-active whitespace-nowrap flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold text-white transition">
+            <i class="fa-solid fa-house w-5 text-center"></i>
+            <span>Dashboard</span>
+          </button>
+          <button onclick="switchSection('add-member')" data-nav="add-member" class="nav-btn whitespace-nowrap flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium text-indigo-100/80 hover:bg-white/10 hover:text-white transition">
+            <i class="fa-solid fa-user-plus w-5 text-center"></i>
+            <span>Add Member</span>
+          </button>
+          <button onclick="switchSection('view-members')" data-nav="view-members" class="nav-btn whitespace-nowrap flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium text-indigo-100/80 hover:bg-white/10 hover:text-white transition">
+            <i class="fa-solid fa-users w-5 text-center"></i>
+            <span>View Members</span>
+          </button>
+          <button onclick="switchSection('transactions')" data-nav="transactions" class="nav-btn whitespace-nowrap flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium text-indigo-100/80 hover:bg-white/10 hover:text-white transition">
+            <i class="fa-solid fa-right-left w-5 text-center"></i>
+            <span>Transactions</span>
+          </button>
+          <button onclick="switchSection('reports')" data-nav="reports" class="nav-btn whitespace-nowrap flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium text-indigo-100/80 hover:bg-white/10 hover:text-white transition">
+            <i class="fa-solid fa-chart-column w-5 text-center"></i>
+            <span>Reports</span>
+          </button>
+          <button onclick="switchSection('settings')" data-nav="settings" class="nav-btn whitespace-nowrap flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium text-indigo-100/80 hover:bg-white/10 hover:text-white transition">
+            <i class="fa-solid fa-gear w-5 text-center"></i>
+            <span>Settings</span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Bottom Logout -->
+      <div class="p-4 border-t border-white/10 space-y-2 hidden lg:block">
+        <button onclick="handleAdminLogout()" class="w-full flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-sm font-medium text-indigo-200/80 hover:bg-white/10 hover:text-white transition">
+          <i class="fa-solid fa-arrow-right-from-bracket w-5 text-center"></i>
+          <span>Logout</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col min-w-0">
+      <!-- Top Header Bar -->
+      <header class="bg-white/90 backdrop-blur-md border-b border-slate-200/70 px-4 sm:px-8 py-3.5 flex items-center justify-between gap-4 sticky top-0 z-20 shadow-sm">
+        <div class="flex items-center gap-3 flex-1 max-w-md">
+          <button onclick="toggleMobileSidebar()" class="lg:hidden p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          <div class="relative w-full">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+            <input id="globalSearchInput" onkeyup="handleGlobalSearch(event)" type="text" placeholder="Search members, cards, logs..." class="w-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white border border-transparent focus:border-indigo-300 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-700 placeholder-slate-400 outline-none transition" />
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 sm:gap-5">
+          <!-- Admin Profile -->
+          <div class="flex items-center gap-2.5">
+            <div id="headerProfileAvatar" class="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-500 text-white font-bold text-sm flex items-center justify-center shadow-sm overflow-hidden flex-shrink-0">
+              <i class="fa-solid fa-user-tie"></i>
+            </div>
+            <div class="hidden md:flex items-center gap-1.5 cursor-pointer" onclick="switchSection('settings')">
+              <span id="headerAdminName" class="text-sm font-bold text-slate-800 truncate max-w-[120px]">Admin</span>
+              <i class="fa-solid fa-chevron-down text-[11px] text-slate-400"></i>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Dynamic Sections Container -->
+      <main class="flex-1 p-4 sm:p-7 max-w-[1440px] w-full mx-auto space-y-6">
+
+        <!-- ==================== 1. DASHBOARD SECTION ==================== -->
+        <section id="section-dashboard" class="space-y-6">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                <i class="fa-solid fa-building-columns text-sm"></i>
+              </div>
+              <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Dashboard</h2>
+            </div>
+            <p class="text-xs font-medium text-slate-500 bg-white px-3.5 py-1.5 rounded-full border border-slate-200/70 shadow-sm">
+              <i class="fa-regular fa-calendar text-indigo-600 mr-1.5"></i>Sunday, 15 Nov 2026
+            </p>
+          </div>
+
+          <!-- 4 Gradient KPI Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+            <div onclick="switchSection('view-members')" class="kpi-purple cursor-pointer rounded-2xl p-5 text-white shadow-lg shadow-indigo-200/60 hover:-translate-y-0.5 transition">
+              <div class="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center text-xl mb-3">
+                <i class="fa-solid fa-users"></i>
+              </div>
+              <p class="text-xs font-semibold text-indigo-100">Total Members</p>
+              <h3 id="kpiTotalMembers" class="text-3xl font-extrabold mt-1">350</h3>
+            </div>
+
+            <div onclick="switchSection('view-members')" class="kpi-green cursor-pointer rounded-2xl p-5 text-white shadow-lg shadow-emerald-200/60 hover:-translate-y-0.5 transition">
+              <div class="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center text-xl mb-3">
+                <i class="fa-solid fa-user-check"></i>
+              </div>
+              <p class="text-xs font-semibold text-emerald-100">Active Members</p>
+              <h3 id="kpiActiveMembers" class="text-3xl font-extrabold mt-1">320</h3>
+            </div>
+
+            <div onclick="switchSection('view-members')" class="kpi-orange cursor-pointer rounded-2xl p-5 text-white shadow-lg shadow-orange-200/60 hover:-translate-y-0.5 transition">
+              <div class="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center text-xl mb-3">
+                <i class="fa-solid fa-calendar-xmark"></i>
+              </div>
+              <p class="text-xs font-semibold text-orange-100">Expired Members</p>
+              <h3 id="kpiExpiredMembers" class="text-3xl font-extrabold mt-1">30</h3>
+            </div>
+
+            <div onclick="switchSection('transactions')" class="kpi-blue cursor-pointer rounded-2xl p-5 text-white shadow-lg shadow-blue-200/60 hover:-translate-y-0.5 transition">
+              <div class="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center text-xl mb-3">
+                <i class="fa-solid fa-calendar-check"></i>
+              </div>
+              <p class="text-xs font-semibold text-blue-100">Today's Attendance</p>
+              <h3 id="kpiTodayAttendance" class="text-3xl font-extrabold mt-1">180</h3>
+            </div>
+          </div>
+
+          <!-- Chart + Recent Activity Row -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+              <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <h3 class="text-base font-bold text-slate-900">Attendance Overview</h3>
+                <div class="flex items-center gap-4">
+                  <div class="hidden sm:flex items-center gap-3 text-xs font-semibold">
+                    <span class="flex items-center gap-1.5 text-slate-600"><span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span> Check-In</span>
+                    <span class="flex items-center gap-1.5 text-slate-600"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span> Check-Out</span>
+                  </div>
+                  <select id="dashboardWeekFilter" onchange="updateDashboardChart()" class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none">
+                    <option value="this">This Week</option>
+                    <option value="last">Last Week</option>
+                  </select>
+                </div>
+              </div>
+              <div class="h-64 w-full">
+                <canvas id="attendanceLineChart"></canvas>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-base font-bold text-slate-900">Recent Activity</h3>
+                  <button onclick="switchSection('transactions')" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+                    View All <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                  </button>
+                </div>
+                <div id="recentActivityList" class="space-y-3.5"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== 2. ADD MEMBER SECTION ==================== -->
+        <section id="section-add-member" class="hidden space-y-6">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center">
+              <i class="fa-solid fa-user-plus text-sm"></i>
+            </div>
+            <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Add Gym Member</h2>
+          </div>
+
+          <form id="addMemberForm" onsubmit="handleAddMember(event)" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-4">
+              <h3 class="text-base font-bold text-slate-900 flex items-center gap-2 pb-2 border-b border-slate-100">
+                <i class="fa-solid fa-address-card text-indigo-600"></i> Personal Details
+              </h3>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1.5">Full Name <span class="text-rose-500">*</span></label>
+                <div class="relative">
+                  <i class="fa-regular fa-user absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                  <input id="newMemberName" oninput="updateCardPreview()" type="text" required placeholder="Enter member name" class="w-full rounded-xl border border-slate-200 pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1.5">Phone Number <span class="text-rose-500">*</span></label>
+                <div class="relative">
+                  <i class="fa-solid fa-phone absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                  <input id="newMemberPhone" type="tel" required placeholder="Enter mobile number" class="w-full rounded-xl border border-slate-200 pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1.5">NFC Card UID (Tap on Reader or Auto-Generate)</label>
+                <div class="flex gap-2">
+                  <input id="newMemberCardId" oninput="updateCardPreview()" type="text" required placeholder="e.g. A1B2C3D4" class="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm font-mono font-bold text-indigo-700 outline-none uppercase" />
+                  <button type="button" onclick="generateRandomCardId()" class="px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition">
+                    <i class="fa-solid fa-rotate"></i> Generate ID
+                  </button>
+                </div>
+                <p class="text-[11px] text-slate-500 mt-1">Tips: Connect to NFC board with serial port.</p>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-2">NFC Card Type</label>
+                <div class="space-y-2">
+                  <label class="flex items-center gap-3 cursor-pointer p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50">
+                    <input type="radio" name="nfcType" value="Card" checked onchange="updateCardPreview()" class="w-4 h-4 text-indigo-600 focus:ring-indigo-500" />
+                    <i class="fa-solid fa-id-card text-indigo-600"></i>
+                    <span class="text-sm font-semibold text-slate-700">NFC Card (Mandatory)</span>
+                  </label>
+                  <label class="flex items-center gap-3 cursor-pointer p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50">
+                    <input type="radio" name="nfcType" value="Mobile" onchange="updateCardPreview()" class="w-4 h-4 text-indigo-600 focus:ring-indigo-500" />
+                    <i class="fa-solid fa-mobile-screen-button text-slate-600"></i>
+                    <span class="text-sm font-semibold text-slate-700">Mobile NFC (Optional)</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="pt-2 flex justify-center">
+                <div class="nfc-card-preview w-72 h-44 rounded-2xl p-5 text-white flex flex-col justify-between relative overflow-hidden">
+                  <div class="flex items-center justify-between">
+                    <span id="previewCardUid" class="text-[11px] font-mono text-indigo-300 tracking-wider">UID: NFC-8492</span>
+                    <span id="previewCardTypeBadge" class="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-white/10 text-indigo-200">NFC Card</span>
+                  </div>
+                  <div class="flex items-center justify-center gap-3 my-auto">
+                    <i class="fa-solid fa-dumbbell text-3xl text-white"></i>
+                    <i class="fa-solid fa-wifi rotate-90 text-xl text-indigo-300"></i>
+                  </div>
+                  <div class="text-center">
+                    <p id="previewCardHolder" class="text-xs text-indigo-200 font-medium truncate">NEW MEMBER</p>
+                    <p class="text-sm font-extrabold tracking-widest mt-0.5">GYM MEMBER</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between">
+              <div class="space-y-4">
+                <h3 class="text-base font-bold text-slate-900 pb-2 border-b border-slate-100">Membership Details</h3>
+
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1.5">Membership Plan <span class="text-rose-500">*</span></label>
+                  <div class="relative">
+                    <i class="fa-solid fa-crown absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-700 text-sm"></i>
+                    <select id="newMemberPlan" required class="w-full rounded-xl border border-slate-200 pl-10 pr-4 py-2.5 text-sm font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                      <option value="Premium">Premium (12 Months)</option>
+                      <option value="Standard">Standard (6 Months)</option>
+                      <option value="Basic">Basic (1 Month)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1.5">Amount Paid (₹) <span class="text-rose-500">*</span></label>
+                  <div class="relative">
+                    <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 font-bold text-sm">₹</span>
+                    <input id="newMemberAmount" type="number" min="0" required placeholder="Enter paid amount" class="w-full rounded-xl border border-slate-200 pl-9 pr-4 py-2.5 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1.5">Start Date <span class="text-rose-500">*</span></label>
+                  <input id="newMemberStart" type="date" value="2026-11-15" required class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none bg-white" />
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1.5">End Date <span class="text-rose-500">*</span></label>
+                  <input id="newMemberEnd" type="date" value="2027-11-15" required class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none bg-white" />
+                </div>
+              </div>
+
+              <button type="submit" class="mt-6 w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 transition active:scale-[0.99]">
+                <i class="fa-solid fa-floppy-disk"></i> Save Member
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <!-- ==================== 3. VIEW MEMBERS SECTION ==================== -->
+        <section id="section-view-members" class="hidden space-y-6">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                <i class="fa-solid fa-users text-sm"></i>
+              </div>
+              <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">View Gym Members</h2>
+            </div>
+            <button onclick="switchSection('add-member')" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center gap-2 shadow-sm">
+              <i class="fa-solid fa-plus"></i> Add New Member
+            </button>
+          </div>
+
+          <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-100 space-y-5">
+            <div class="flex flex-col sm:flex-row gap-3">
+              <div class="relative flex-1">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                <input id="memberSearchInput" onkeyup="renderMembersTable()" type="text" placeholder="Search by Name, Phone or Card ID..." class="w-full rounded-xl border border-slate-200 pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+              </div>
+              <select id="memberPlanFilter" onchange="renderMembersTable()" class="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 bg-white outline-none">
+                <option value="All">All Plans</option>
+                <option value="Premium">Premium</option>
+                <option value="Standard">Standard</option>
+                <option value="Basic">Basic</option>
+              </select>
+              <button onclick="renderMembersTable()" class="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-sm transition">
+                <i class="fa-solid fa-magnifying-glass"></i> Search
+              </button>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse min-w-[900px]">
+                <thead>
+                  <tr class="border-b border-slate-200 text-xs font-bold text-slate-600 uppercase tracking-wider bg-slate-50/70">
+                    <th class="py-3.5 px-3">#</th>
+                    <th class="py-3.5 px-3">Name & Card ID</th>
+                    <th class="py-3.5 px-3">Phone</th>
+                    <th class="py-3.5 px-3">Plan</th>
+                    <th class="py-3.5 px-3">Amount</th>
+                    <th class="py-3.5 px-3">Start Date</th>
+                    <th class="py-3.5 px-3">End Date</th>
+                    <th class="py-3.5 px-3">Status</th>
+                    <th class="py-3.5 px-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="membersTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== 4. TRANSACTIONS SECTION ==================== -->
+        <section id="section-transactions" class="hidden space-y-6">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                <i class="fa-solid fa-right-left text-sm"></i>
+              </div>
+              <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Transactions (NFC Entrance Logs)</h2>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-100">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse min-w-[700px]">
+                <thead>
+                  <tr class="border-b border-slate-200 text-xs font-bold text-slate-600 uppercase tracking-wider bg-slate-50/70">
+                    <th class="py-3.5 px-4">#</th>
+                    <th class="py-3.5 px-4">Member Name</th>
+                    <th class="py-3.5 px-4">Action</th>
+                    <th class="py-3.5 px-4">Time</th>
+                    <th class="py-3.5 px-4">Date</th>
+                    <th class="py-3.5 px-4">Method</th>
+                    <th class="py-3.5 px-4">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="transactionsTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== 5. REPORTS SECTION ==================== -->
+        <section id="section-reports" class="hidden space-y-6">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center">
+              <i class="fa-solid fa-chart-column text-sm"></i>
+            </div>
+            <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Reports</h2>
+          </div>
+
+          <div class="inline-flex bg-white p-1.5 rounded-xl border border-slate-200/80 shadow-sm">
+            <button onclick="switchReportPeriod('daily')" data-report-tab="daily" class="report-tab px-5 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow transition">Daily</button>
+            <button onclick="switchReportPeriod('weekly')" data-report-tab="weekly" class="report-tab px-5 py-2 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition">Weekly</button>
+            <button onclick="switchReportPeriod('monthly')" data-report-tab="monthly" class="report-tab px-5 py-2 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition">Monthly</button>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-bold text-slate-900">Attendance Report</h3>
+                <div class="flex items-center gap-4 text-xs font-semibold">
+                  <span class="flex items-center gap-1.5 text-slate-600"><span class="w-2.5 h-2.5 rounded-sm bg-indigo-600"></span> Check-Ins</span>
+                  <span class="flex items-center gap-1.5 text-slate-600"><span class="w-2.5 h-2.5 rounded-sm bg-indigo-300"></span> Check-Outs</span>
+                </div>
+              </div>
+              <div class="h-64 w-full">
+                <canvas id="reportsBarChart"></canvas>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-5">
+              <h3 class="text-base font-bold text-slate-900">Summary</h3>
+
+              <div class="flex items-center gap-4 p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
+                <div class="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl">
+                  <i class="fa-solid fa-users"></i>
+                </div>
+                <div>
+                  <p class="text-xs font-semibold text-slate-500">Total Check-Ins</p>
+                  <h4 id="reportTotalCheckIns" class="text-2xl font-extrabold text-slate-900">980</h4>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-4 p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl">
+                  <i class="fa-solid fa-circle-arrow-right"></i>
+                </div>
+                <div>
+                  <p class="text-xs font-semibold text-slate-500">Total Check-Outs</p>
+                  <h4 id="reportTotalCheckOuts" class="text-2xl font-extrabold text-slate-900">960</h4>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-4 p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
+                <div class="w-12 h-12 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center text-xl">
+                  <i class="fa-solid fa-crown"></i>
+                </div>
+                <div>
+                  <p class="text-xs font-semibold text-slate-500">Active Members</p>
+                  <h4 id="reportActiveMembers" class="text-2xl font-extrabold text-slate-900">320</h4>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== 6. SETTINGS SECTION ==================== -->
+        <section id="section-settings" class="hidden space-y-6">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                <i class="fa-solid fa-gear text-sm"></i>
+              </div>
+              <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Settings</h2>
+            </div>
+
+            <button onclick="connectEsp32Serial()" id="esp32ConnectBtn" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold shadow-sm transition active:scale-95">
+              <i class="fa-solid fa-microchip"></i>
+              <span>Connect ESP32 RC522</span>
+            </button>
+          </div>
+
+          <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+            <div class="flex flex-wrap gap-2 border-b border-slate-100 pb-4 mb-6">
+              <button onclick="switchSettingsTab('general')" data-settings-tab="general" class="settings-tab px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow">General</button>
+              <button onclick="switchSettingsTab('card')" data-settings-tab="card" class="settings-tab px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Card Settings</button>
+              <button onclick="switchSettingsTab('notifications')" data-settings-tab="notifications" class="settings-tab px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Notifications</button>
+              <button onclick="switchSettingsTab('security')" data-settings-tab="security" class="settings-tab px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Security</button>
+            </div>
+
+            <!-- Tab 1: General -->
+            <div id="settings-panel-general" class="settings-panel grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+              <form onsubmit="saveGeneralSettings(event)" class="lg:col-span-2 space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                  <label class="text-xs font-bold text-slate-700">Brand Title</label>
+                  <input id="settingGymName" type="text" value="Gym NFC" class="sm:col-span-2 rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none" />
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                  <label class="text-xs font-bold text-slate-700">Brand Subtitle</label>
+                  <input id="settingGymSubtitle" type="text" value="Management System" class="sm:col-span-2 rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none" />
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                  <label class="text-xs font-bold text-slate-700">Profile Logo URL</label>
+                  <input id="settingProfileLogoUrl" type="url" placeholder="Paste image URL (https://...)" class="sm:col-span-2 rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none" />
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                  <label class="text-xs font-bold text-slate-700 flex items-center gap-2"><i class="fa-regular fa-envelope text-slate-400"></i> Contact Email</label>
+                  <input id="settingGymEmail" type="email" value="info@nextgenfitness.com" class="sm:col-span-2 rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none" />
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                  <label class="text-xs font-bold text-slate-700 flex items-center gap-2"><i class="fa-solid fa-phone text-slate-400"></i> Contact Phone</label>
+                  <input id="settingGymPhone" type="text" value="+91 98765 43210" class="sm:col-span-2 rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none" />
+                </div>
+                <div class="pt-3">
+                  <button type="submit" class="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold shadow-md shadow-indigo-200 flex items-center gap-2 transition">
+                    <i class="fa-solid fa-floppy-disk"></i> Update Settings
+                  </button>
+                </div>
+              </form>
+
+              <div class="space-y-4">
+                <div class="space-y-2">
+                  <p class="text-xs font-bold text-slate-700">Gym Cover Photo</p>
+                  <div class="rounded-2xl overflow-hidden border border-slate-200 shadow-sm h-32 bg-slate-900 relative">
+                    <img id="gymLogoPreview" src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=600&q=80" alt="Gym" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/600x300/16134A/FFFFFF?text=Gym+NFC'" />
+                  </div>
+                  <label class="w-full py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition">
+                    <i class="fa-solid fa-camera"></i> Upload Gym Photo
+                    <input type="file" accept="image/*" onchange="handleLogoUpload(event)" class="hidden" />
+                  </label>
+                </div>
+
+                <div class="space-y-2 pt-2 border-t border-slate-100">
+                  <p class="text-xs font-bold text-slate-700">Admin Profile Logo</p>
+                  <div class="flex items-center gap-3">
+                    <div id="settingsProfileAvatarPreview" class="w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-500 text-white font-bold text-lg flex items-center justify-center shadow-sm overflow-hidden flex-shrink-0">
+                      <i class="fa-solid fa-user-tie"></i>
+                    </div>
+                    <label class="flex-1 py-2.5 px-3 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition">
+                      <i class="fa-solid fa-upload"></i> Upload Photo
+                      <input type="file" accept="image/*" onchange="handleProfileLogoUpload(event)" class="hidden" />
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab 2: Card Settings -->
+            <div id="settings-panel-card" class="settings-panel hidden space-y-4 max-w-xl">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-slate-200">
+                <div>
+                  <p class="text-sm font-bold text-slate-800">Check-In Only Mode (Daily Limit)</p>
+                  <p class="text-xs text-slate-500">Choose whether a member can check in 1 time or 2 times per day.</p>
+                </div>
+                <select id="checkInDailyLimit" class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                  <option value="1" selected>1 Time / Day</option>
+                  <option value="2">2 Times / Day</option>
+                </select>
+              </div>
+              <div class="flex items-center justify-between p-4 rounded-xl border border-slate-200">
+                <div>
+                  <p class="text-sm font-bold text-slate-800">Block Expired Cards at Turnstile</p>
+                  <p class="text-xs text-slate-500">Play error buzzer and deny gate access if membership is expired.</p>
+                </div>
+                <input id="blockExpiredToggle" type="checkbox" checked class="w-5 h-5 accent-indigo-600 rounded" />
+              </div>
+              <button onclick="saveCardSettings()" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition">Save Reader Settings</button>
+            </div>
+
+            <!-- Tab 3: Notifications -->
+            <div id="settings-panel-notifications" class="settings-panel hidden space-y-4 max-w-xl">
+              <div class="flex items-center justify-between p-4 rounded-xl border border-slate-200">
+                <div>
+                  <p class="text-sm font-bold text-slate-800">WhatsApp / SMS Check-In Alert</p>
+                  <p class="text-xs text-slate-500">Send instant confirmation when member taps NFC card.</p>
+                </div>
+                <input type="checkbox" checked class="w-5 h-5 accent-indigo-600 rounded" />
+              </div>
+            </div>
+
+            <!-- Tab 4: Security -->
+            <form onsubmit="saveSecurityCredentials(event)" id="settings-panel-security" class="settings-panel hidden space-y-4 max-w-md">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Admin Mobile Number</label>
+                <input id="securityNewUsername" type="tel" required placeholder="Enter new mobile number" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">New Password</label>
+                <input id="securityNewPassword" type="text" required placeholder="Enter new password" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition">
+                Save Mobile Number & Password
+              </button>
+            </form>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const DEFAULT_ADMIN_USER = '1234567890';
+    const DEFAULT_ADMIN_PASS = '1234';
+    const MASTER_RECOVERY_KEY = '0987654321';
+
+    function getAdminCredentials() {
+      const savedUser = localStorage.getItem('gym_admin_mobile');
+      return {
+        username: savedUser || DEFAULT_ADMIN_USER,
+        password: localStorage.getItem('gym_admin_password') || DEFAULT_ADMIN_PASS
+      };
+    }
+
+    function handleAdminLogin(e) {
+      if (e) e.preventDefault();
+      const enteredUser = document.getElementById('loginUsernameInput').value.trim();
+      const enteredPass = document.getElementById('loginPasswordInput').value.trim();
+      const creds = getAdminCredentials();
+      const errorEl = document.getElementById('loginErrorMsg');
+
+      const isPrimaryValid = (enteredUser === creds.username && enteredPass === creds.password);
+      const isSecondaryValid = (enteredUser === MASTER_RECOVERY_KEY && enteredPass === MASTER_RECOVERY_KEY);
+
+      if (isPrimaryValid || isSecondaryValid) {
+        localStorage.setItem('gym_admin_logged_in', 'true');
+        document.getElementById('loginOverlay').classList.add('hidden');
+        errorEl.classList.add('hidden');
+        document.getElementById('headerAdminName').textContent = isPrimaryValid ? creds.username : 'Admin';
+        showToast('Login successful!', 'success');
+      } else {
+        errorEl.classList.remove('hidden');
+        playBuzzerPattern('error');
+      }
+    }
+
+    function handleAdminLogout() {
+      localStorage.removeItem('gym_admin_logged_in');
+      document.getElementById('loginUsernameInput').value = '';
+      document.getElementById('loginPasswordInput').value = '';
+      document.getElementById('loginOverlay').classList.remove('hidden');
+      showToast('Logged out successfully', 'info');
+    }
+
+    function saveSecurityCredentials(e) {
+      e.preventDefault();
+      const newUser = document.getElementById('securityNewUsername').value.trim();
+      const newPass = document.getElementById('securityNewPassword').value.trim();
+      if (!newUser || !newPass) return;
+
+      localStorage.setItem('gym_admin_mobile', newUser);
+      localStorage.setItem('gym_admin_password', newPass);
+      document.getElementById('headerAdminName').textContent = newUser;
+      showToast('Mobile number & password updated!', 'success');
+    }
+
+    const DEFAULT_MEMBERS = [
+      { id: 1, cardId: 'NFC-1001', name: 'Rahul Kumar', phone: '9876543210', plan: 'Premium', amount: 12000, startDate: '01-11-2026', endDate: '01-11-2027', nfcType: 'Card', status: 'Active', frozen: false, lastCheckInDate: '' },
+      { id: 2, cardId: 'NFC-1002', name: 'Priya Sharma', phone: '9123456789', plan: 'Standard', amount: 6500, startDate: '05-11-2026', endDate: '05-11-2027', nfcType: 'Mobile', status: 'Active', frozen: false, lastCheckInDate: '' },
+      { id: 3, cardId: 'NFC-1003', name: 'Amit Singh', phone: '9988776655', plan: 'Premium', amount: 12000, startDate: '10-11-2026', endDate: '10-11-2027', nfcType: 'Card', status: 'Active', frozen: false, lastCheckInDate: '' },
+      { id: 4, cardId: 'NFC-1004', name: 'Sneha Reddy', phone: '9001122334', plan: 'Basic', amount: 1500, startDate: '12-11-2026', endDate: '12-11-2027', nfcType: 'Mobile', status: 'Expired', frozen: false, lastCheckInDate: '' },
+      { id: 5, cardId: 'NFC-1005', name: 'Vikram Rao', phone: '9848012345', plan: 'Premium', amount: 12000, startDate: '14-10-2026', endDate: '14-10-2027', nfcType: 'Card', status: 'Active', frozen: false, lastCheckInDate: '' }
+    ];
+
+    const DEFAULT_TRANSACTIONS = [
+      { id: 1, name: 'Rahul Kumar', action: 'Check-In', time: '08:30 AM', date: '15-11-2026', method: 'NFC Card', status: 'Success' },
+      { id: 2, name: 'Amit Singh', action: 'Check-In', time: '12:15 PM', date: '15-11-2026', method: 'NFC Card', status: 'Success' }
+    ];
+
+    let state = {
+      members: JSON.parse(localStorage.getItem('gym_nfc_members')) || DEFAULT_MEMBERS,
+      transactions: JSON.parse(localStorage.getItem('gym_nfc_txns')) || DEFAULT_TRANSACTIONS,
+      baseActiveOffset: 316,
+      baseExpiredOffset: 29,
+      todayAttendance: parseInt(localStorage.getItem('gym_nfc_today_att') || '180', 10)
+    };
+
+    let lineChartInstance = null;
+    let barChartInstance = null;
+    let serialPort = null;
+    let serialReader = null;
+    let isSerialConnected = false;
+
+    function persistState() {
+      localStorage.setItem('gym_nfc_members', JSON.stringify(state.members));
+      localStorage.setItem('gym_nfc_txns', JSON.stringify(state.transactions));
+      localStorage.setItem('gym_nfc_today_att', state.todayAttendance.toString());
+    }
+
+    function switchSection(sectionId) {
+      document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
+      const target = document.getElementById(`section-${sectionId}`);
+      if (target) target.classList.remove('hidden');
+
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        if (btn.dataset.nav === sectionId) {
+          btn.classList.add('nav-active', 'text-white', 'font-semibold');
+          btn.classList.remove('text-indigo-100/80', 'font-medium');
+        } else {
+          btn.classList.remove('nav-active', 'text-white', 'font-semibold');
+          btn.classList.add('text-indigo-100/80', 'font-medium');
+        }
+      });
+
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.getElementById('sidebarBackdrop');
+      if (!sidebar.classList.contains('-translate-x-full') && window.innerWidth < 1024) {
+        sidebar.classList.add('-translate-x-full');
+        backdrop.classList.add('hidden');
+      }
+
+      localStorage.setItem('gym_active_section', sectionId);
+
+      if (sectionId === 'reports') renderReportsBarChart('daily');
+      if (sectionId === 'dashboard') updateDashboardChart();
+    }
+
+    function toggleMobileSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.getElementById('sidebarBackdrop');
+      sidebar.classList.toggle('-translate-x-full');
+      backdrop.classList.toggle('hidden');
+    }
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const colors = {
+        success: 'bg-emerald-600 text-white',
+        error: 'bg-rose-600 text-white',
+        info: 'bg-slate-800 text-white'
+      };
+      const icons = {
+        success: 'fa-circle-check',
+        error: 'fa-circle-exclamation',
+        info: 'fa-circle-info'
+      };
+      const toast = document.createElement('div');
+      toast.className = `${colors[type] || colors.info} px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 text-xs font-bold pointer-events-auto transform transition-all duration-300`;
+      toast.innerHTML = `<i class="fa-solid ${icons[type] || icons.info} text-base"></i><span>${message}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+      }, 3200);
+    }
+
+    function playBuzzerPattern(type) {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        if (type === 'success') {
+          // 1 Beep
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(880, ctx.currentTime);
+          gain.gain.setValueAtTime(0.15, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.18);
+        } else if (type === 'double') {
+          // 2 Beeps (Second Time in day)
+          const now = ctx.currentTime;
+          [0, 0.2].forEach(delay => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(950, now + delay);
+            gain.gain.setValueAtTime(0.15, now + delay);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.12);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now + delay);
+            osc.stop(now + delay + 0.12);
+          });
+        } else if (type === 'register') {
+          // 3 Beeps for Registration
+          const now = ctx.currentTime;
+          [0, 0.15, 0.3].forEach(delay => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(1200, now + delay);
+            gain.gain.setValueAtTime(0.15, now + delay);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.08);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now + delay);
+            osc.stop(now + delay + 0.08);
+          });
+        } else if (type === 'error') {
+          // 5-second continuous/long buzzer or error tone
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(220, ctx.currentTime);
+          gain.gain.setValueAtTime(0.2, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 1.2);
+        }
+      } catch (e) {}
+    }
+
+    function speakAnnouncement(text) {
+      try {
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.rate = 1.0;
+          utterance.pitch = 1.0;
+          window.speechSynthesis.speak(utterance);
+        }
+      } catch (e) {}
+    }
+
+    function sendWhatsAppAlert(member, actionText) {
+      if (!member.phone) return;
+      const cleanPhone = member.phone.replace(/\D/g, '');
+      const message = `Hello ${member.name}, your Gym NFC check-in was recorded (${actionText}) successfully at Gym! Have a great workout!`;
+      const waUrl = `https://wa.me/91${cleanPhone}?text=${encodeURIComponent(message)}`;
+      
+      // Open WhatsApp Web/API link silently or in background
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = waUrl;
+      document.body.appendChild(iframe);
+      setTimeout(() => iframe.remove(), 5000);
+    }
+
+    function processNfcTapForMember(memberId) {
+      const member = state.members.find(m => m.id === Number(memberId));
+      if (!member) return;
+
+      const blockExpired = document.getElementById('blockExpiredToggle')?.checked ?? true;
+      const dailyLimit = Number(document.getElementById('checkInDailyLimit')?.value || 1);
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+      const dateStr = '15-11-2026';
+
+      if (member.frozen) {
+        playBuzzerPattern('error');
+        speakAnnouncement(`Access Denied. ${member.name}, your account is frozen.`);
+        showToast(`Access Denied: ${member.name}'s NFC card is currently FROZEN!`, 'error');
+        return;
+      }
+
+      if (member.status === 'Expired' && blockExpired) {
+        playBuzzerPattern('error');
+        speakAnnouncement(`Access Denied. ${member.name}, your membership has expired.`);
+        state.transactions.unshift({
+          id: state.transactions.length + 1,
+          name: member.name,
+          action: 'Denied (Expired)',
+          time: timeStr,
+          date: dateStr,
+          method: member.nfcType === 'Card' ? 'NFC Card' : 'Mobile NFC',
+          status: 'Failed'
+        });
+        persistState();
+        renderAllViews();
+        showToast(`Access Denied: ${member.name}'s membership is expired!`, 'error');
+        return;
+      }
+
+      if (member.lastCheckInDate !== dateStr) {
+        member.lastCheckInDate = dateStr;
+        member.todayCheckInCount = 0;
+      }
+
+      const currentCount = member.todayCheckInCount || 0;
+      if (currentCount >= dailyLimit) {
+        playBuzzerPattern('error');
+        speakAnnouncement(`${member.name}, daily check-in limit reached.`);
+        showToast(`${member.name} already checked in ${currentCount} time(s) today!`, 'info');
+        return;
+      }
+
+      member.todayCheckInCount = currentCount + 1;
+      state.todayAttendance += 1;
+
+      const isSecondTime = member.todayCheckInCount === 2;
+      playBuzzerPattern(isSecondTime ? 'double' : 'success');
+      
+      state.transactions.unshift({
+        id: state.transactions.length + 1,
+        name: member.name,
+        action: 'Check-In',
+        time: timeStr,
+        date: dateStr,
+        method: member.nfcType === 'Card' ? 'NFC Card' : 'Mobile NFC',
+        status: 'Success'
+      });
+
+      persistState();
+      renderAllViews();
+      speakAnnouncement(`Welcome ${member.name}. Check-In successful.`);
+      sendWhatsAppAlert(member, `Check-In #${member.todayCheckInCount}`);
+      showToast(`${member.name} — Automatic Check-In recorded at ${timeStr}`, 'success');
+    }
+
+    function toggleFreezeMember(memberId) {
+      const member = state.members.find(m => m.id === Number(memberId));
+      if (!member) return;
+      member.frozen = !member.frozen;
+      persistState();
+      renderMembersTable();
+      showToast(`Member ${member.name} is now ${member.frozen ? 'FROZEN ❄️' : 'ACTIVE ✅'}`, member.frozen ? 'error' : 'success');
+    }
+
+    function saveCardSettings() {
+      const limit = document.getElementById('checkInDailyLimit')?.value || '1';
+      localStorage.setItem('gym_checkin_daily_limit', limit);
+      showToast(`Card settings saved (${limit} Time${limit === '2' ? 's' : ''}/Day)!`, 'success');
+    }
+
+    function quickTapMember(memberId) {
+      processNfcTapForMember(memberId);
+    }
+
+    function handleScannedCardUid(rawUid) {
+      const cleanUid = rawUid.replace(/[^a-zA-Z0-9-]/g, '').toUpperCase();
+      if (!cleanUid) return;
+
+      const editModal = document.getElementById('editMemberModal');
+      if (editModal && !editModal.classList.contains('hidden')) {
+        document.getElementById('editCardId').value = cleanUid;
+        playBuzzerPattern('success');
+        showToast(`Scanned Replacement Card UID: ${cleanUid}`, 'success');
+        return;
+      }
+
+      const addSection = document.getElementById('section-add-member');
+      if (addSection && !addSection.classList.contains('hidden')) {
+        document.getElementById('newMemberCardId').value = cleanUid;
+        updateCardPreview();
+        playBuzzerPattern('success');
+        showToast(`Scanned New Card UID: ${cleanUid}`, 'success');
+        return;
+      }
+
+      const matched = state.members.find(
+        m => m.cardId.replace(/[^a-zA-Z0-9-]/g, '').toUpperCase() === cleanUid
+      );
+
+      if (matched) {
+        processNfcTapForMember(matched.id);
+      } else {
+        playBuzzerPattern('error');
+        speakAnnouncement('Unregistered card. Please register this card first.');
+        showToast(`Unknown Card UID (${cleanUid}). Go to Add Member to assign it!`, 'error');
+      }
+    }
+
+    async function connectEsp32Serial() {
+      showToast('Web serial port supported', 'info');
+      if (!('serial' in navigator)) return;
+      if (isSerialConnected) return;
+
+      try {
+        serialPort = await navigator.serial.requestPort();
+        await serialPort.open({ baudRate: 115200 });
+        isSerialConnected = true;
+
+        const btn = document.getElementById('esp32ConnectBtn');
+        if (btn) {
+          btn.className = 'flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-100 border border-emerald-300 text-emerald-800 text-xs sm:text-sm font-bold transition';
+          btn.innerHTML = '<i class="fa-solid fa-link text-emerald-600"></i> <span>ESP32 Connected</span>';
+        }
+        showToast('ESP32 + RC522 Connected via Serial Port!', 'success');
+
+        const textDecoder = new TextDecoderStream();
+        serialPort.readable.pipeTo(textDecoder.writable);
+        serialReader = textDecoder.readable.getReader();
+
+        let buffer = '';
+        while (true) {
+          const { value, done } = await serialReader.read();
+          if (done) break;
+          if (value) {
+            buffer += value;
+            const lines = buffer.split(/\r?\n/);
+            buffer = lines.pop();
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (trimmed.startsWith('UID:')) {
+                const uid = trimmed.replace('UID:', '').trim();
+                handleScannedCardUid(uid);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        isSerialConnected = false;
+      }
+    }
+
+    function generateRandomCardId() {
+      const num = Math.floor(1000 + Math.random() * 9000);
+      document.getElementById('newMemberCardId').value = `NFC-${num}`;
+      updateCardPreview();
+    }
+
+    function generateEditCardId() {
+      const num = Math.floor(1000 + Math.random() * 9000);
+      document.getElementById('editCardId').value = `NFC-${num}`;
+    }
+
+    function updateCardPreview() {
+      const nameVal = document.getElementById('newMemberName').value.trim();
+      const uidVal = document.getElementById('newMemberCardId').value.trim();
+      const typeVal = document.querySelector('input[name="nfcType"]:checked')?.value || 'Card';
+
+      document.getElementById('previewCardHolder').textContent = nameVal ? nameVal.toUpperCase() : 'NEW MEMBER';
+      document.getElementById('previewCardUid').textContent = `UID: ${uidVal || 'NFC-8492'}`;
+      document.getElementById('previewCardTypeBadge').textContent = typeVal === 'Card' ? 'NFC Card' : 'Mobile NFC';
+    }
+
+    function formatDateDisplay(isoDate) {
+      if (!isoDate || !isoDate.includes('-')) return isoDate;
+      const parts = isoDate.split('-');
+      if (parts[0].length === 4) {
+        return `${parts[2]}-${parts[1]}-${parts[0]}`;
+      }
+      return isoDate;
+    }
+
+    function handleAddMember(e) {
+      e.preventDefault();
+      const name = document.getElementById('newMemberName').value.trim();
+      const phone = document.getElementById('newMemberPhone').value.trim();
+      const cardId = document.getElementById('newMemberCardId').value.trim().toUpperCase();
+      const plan = document.getElementById('newMemberPlan').value;
+      const amount = Number(document.getElementById('newMemberAmount').value || 0);
+      const startDate = formatDateDisplay(document.getElementById('newMemberStart').value);
+      const endDate = formatDateDisplay(document.getElementById('newMemberEnd').value);
+      const nfcType = document.querySelector('input[name="nfcType"]:checked')?.value || 'Card';
+
+      const newMember = {
+        id: Date.now(),
+        cardId,
+        name,
+        phone,
+        plan,
+        amount,
+        startDate,
+        endDate,
+        nfcType,
+        status: 'Active',
+        frozen: false,
+        lastCheckInDate: ''
+      };
+
+      state.members.unshift(newMember);
+      persistState();
+      renderAllViews();
+
+      playBuzzerPattern('register');
+      e.target.reset();
+      generateRandomCardId();
+      updateCardPreview();
+      showToast(`Member "${name}" registered successfully with 3 buzzer beeps!`, 'success');
+      switchSection('view-members');
+    }
+
+    function openEditModal(memberId) {
+      const member = state.members.find(m => m.id === memberId);
+      if (!member) return;
+      document.getElementById('editMemberId').value = member.id;
+      document.getElementById('editName').value = member.name;
+      document.getElementById('editPhone').value = member.phone;
+      document.getElementById('editAmount').value = member.amount ?? 0;
+      document.getElementById('editCardId').value = member.cardId;
+      document.getElementById('editPlan').value = member.plan;
+      document.getElementById('editStatus').value = member.status;
+      document.getElementById('editStartDate').value = member.startDate;
+      document.getElementById('editEndDate').value = member.endDate;
+
+      const modal = document.getElementById('editMemberModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeEditModal() {
+      const modal = document.getElementById('editMemberModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function saveEditedMember(e) {
+      e.preventDefault();
+      const id = Number(document.getElementById('editMemberId').value);
+      const member = state.members.find(m => m.id === id);
+      if (!member) return;
+
+      member.name = document.getElementById('editName').value.trim();
+      member.phone = document.getElementById('editPhone').value.trim();
+      member.amount = Number(document.getElementById('editAmount').value || 0);
+      member.cardId = document.getElementById('editCardId').value.trim().toUpperCase();
+      member.plan = document.getElementById('editPlan').value;
+      member.status = document.getElementById('editStatus').value;
+      member.startDate = document.getElementById('editStartDate').value.trim();
+      member.endDate = document.getElementById('editEndDate').value.trim();
+
+      persistState();
+      renderAllViews();
+      closeEditModal();
+      showToast(`Updated profile & NFC Card (${member.cardId}) for ${member.name}`, 'success');
+    }
+
+    function deleteMember(memberId) {
+      const member = state.members.find(m => m.id === memberId);
+      if (!member) return;
+      state.members = state.members.filter(m => m.id !== memberId);
+      persistState();
+      renderAllViews();
+      showToast(`Removed member ${member.name}`, 'info');
+    }
+
+    function renderAllViews() {
+      updateKPIs();
+      renderRecentActivity();
+      renderMembersTable();
+      renderTransactionsTable();
+    }
+
+    function updateKPIs() {
+      const activeCount = state.members.filter(m => m.status === 'Active' && !m.frozen).length + state.baseActiveOffset;
+      const expiredCount = state.members.filter(m => m.status === 'Expired').length + state.baseExpiredOffset;
+      const totalCount = activeCount + expiredCount;
+
+      document.getElementById('kpiTotalMembers').textContent = totalCount;
+      document.getElementById('kpiActiveMembers').textContent = activeCount;
+      document.getElementById('kpiExpiredMembers').textContent = expiredCount;
+      document.getElementById('kpiTodayAttendance').textContent = state.todayAttendance;
+      document.getElementById('reportActiveMembers').textContent = activeCount;
+    }
+
+    function renderRecentActivity() {
+      const container = document.getElementById('recentActivityList');
+      const recent = state.transactions.slice(0, 4);
+      const avatarColors = ['bg-emerald-500', 'bg-orange-500', 'bg-blue-600', 'bg-amber-500'];
+
+      container.innerHTML = recent.map((item, idx) => {
+        const bg = avatarColors[idx % avatarColors.length];
+        return `
+          <div class="flex items-center gap-3.5 p-2 rounded-xl hover:bg-slate-50 transition">
+            <div class="w-10 h-10 rounded-full ${bg} text-white flex items-center justify-center flex-shrink-0 shadow-sm">
+              <i class="fa-solid fa-user text-sm"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-bold text-slate-800 truncate">${item.name}</p>
+              <p class="text-xs text-slate-500">${item.action} - ${item.time}</p>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderMembersTable() {
+      const query = (document.getElementById('memberSearchInput')?.value || '').toLowerCase();
+      const planFilter = document.getElementById('memberPlanFilter')?.value || 'All';
+      const tbody = document.getElementById('membersTableBody');
+
+      const filtered = state.members.filter(m => {
+        const matchesText = m.name.toLowerCase().includes(query) || m.phone.includes(query) || m.cardId.toLowerCase().includes(query);
+        const matchesPlan = planFilter === 'All' || m.plan === planFilter;
+        return matchesText && matchesPlan;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-slate-400 text-sm">No matching gym members found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map((m, index) => {
+        let statusBadge = '';
+        if (m.frozen) {
+          statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-cyan-50 text-cyan-700 border border-cyan-200"><i class="fa-solid fa-snowflake text-[10px]"></i> Frozen</span>`;
+        } else if (m.status === 'Active') {
+          statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-200"><i class="fa-solid fa-circle-check text-[10px]"></i> Active</span>`;
+        } else {
+          statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-orange-50 text-orange-600 border border-orange-200"><i class="fa-solid fa-circle-exclamation text-[10px]"></i> Expired</span>`;
+        }
+
+        const formattedAmount = `₹${Number(m.amount || 0).toLocaleString('en-IN')}`;
+        const freezeBtnText = m.frozen ? '<i class="fa-solid fa-fire text-xs"></i>' : '<i class="fa-solid fa-snowflake text-xs"></i>';
+        const freezeBtnTitle = m.frozen ? 'Unfreeze Member' : 'Freeze Member';
+        const freezeBtnColor = m.frozen ? 'bg-cyan-600 hover:bg-cyan-700 text-white' : 'bg-amber-500 hover:bg-amber-600 text-white';
+
+        return `
+          <tr class="hover:bg-slate-50/80 transition">
+            <td class="py-3.5 px-3 font-semibold text-slate-500">${index + 1}</td>
+            <td class="py-3.5 px-3">
+              <p class="font-bold text-slate-800">${m.name}</p>
+              <span class="text-[11px] font-mono text-indigo-600 font-semibold">${m.cardId}</span>
+            </td>
+            <td class="py-3.5 px-3 text-slate-600 font-medium">${m.phone}</td>
+            <td class="py-3.5 px-3 font-semibold text-slate-700">${m.plan}</td>
+            <td class="py-3.5 px-3 font-bold text-emerald-700">${formattedAmount}</td>
+            <td class="py-3.5 px-3 text-slate-600">${m.startDate}</td>
+            <td class="py-3.5 px-3 text-slate-600">${m.endDate}</td>
+            <td class="py-3.5 px-3">${statusBadge}</td>
+            <td class="py-3.5 px-3 text-right">
+              <div class="inline-flex items-center gap-1.5 justify-end">
+                <button onclick="quickTapMember(${m.id})" title="Manual Check-In" class="w-8 h-8 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 flex items-center justify-center transition">
+                  <i class="fa-solid fa-wifi rotate-90 text-xs"></i>
+                </button>
+                <button onclick="toggleFreezeMember(${m.id})" title="${freezeBtnTitle}" class="w-8 h-8 rounded-lg ${freezeBtnColor} flex items-center justify-center transition">
+                  ${freezeBtnText}
+                </button>
+                <button onclick="openEditModal(${m.id})" title="Edit Member / Replace NFC Card" class="w-8 h-8 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition">
+                  <i class="fa-solid fa-pen text-xs"></i>
+                </button>
+                <button onclick="deleteMember(${m.id})" title="Delete Member" class="w-8 h-8 rounded-lg bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center transition">
+                  <i class="fa-solid fa-trash-can text-xs"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderTransactionsTable() {
+      const tbody = document.getElementById('transactionsTableBody');
+      tbody.innerHTML = state.transactions.map((t, index) => {
+        const isCheckIn = t.action === 'Check-In';
+        const isDenied = t.status === 'Failed';
+        const actionBadge = isDenied
+          ? `<span class="inline-flex items-center gap-1.5 font-bold text-rose-600"><i class="fa-solid fa-ban"></i> ${t.action}</span>`
+          : isCheckIn
+            ? `<span class="inline-flex items-center gap-1.5 font-bold text-emerald-600"><i class="fa-solid fa-circle-check"></i> Check-In</span>`
+            : `<span class="inline-flex items-center gap-1.5 font-bold text-rose-500"><i class="fa-solid fa-circle-arrow-right"></i> Check-Out</span>`;
+
+        const statusBadge = isDenied
+          ? `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-600 border border-rose-200"><i class="fa-solid fa-xmark text-[10px]"></i> Denied</span>`
+          : `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-200"><i class="fa-solid fa-circle-check text-[10px]"></i> Success</span>`;
+
+        return `
+          <tr class="hover:bg-slate-50/80 transition">
+            <td class="py-3.5 px-4 font-semibold text-slate-500">${index + 1}</td>
+            <td class="py-3.5 px-4 font-bold text-slate-800">${t.name}</td>
+            <td class="py-3.5 px-4">${actionBadge}</td>
+            <td class="py-3.5 px-4 text-slate-600 font-medium">${t.time}</td>
+            <td class="py-3.5 px-4 text-slate-600">${t.date}</td>
+            <td class="py-3.5 px-4 font-medium text-slate-700">${t.method}</td>
+            <td class="py-3.5 px-4">${statusBadge}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function handleGlobalSearch(e) {
+      const val = e.target.value;
+      document.getElementById('memberSearchInput').value = val;
+      if (val.trim().length > 0) {
+        switchSection('view-members');
+        renderMembersTable();
+      }
+    }
+
+    function initDashboardChart() {
+      const ctx = document.getElementById('attendanceLineChart').getContext('2d');
+      lineChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+          datasets: [
+            {
+              label: 'Check-In',
+              data: [105, 138, 156, 120, 138, 138, 156],
+              borderColor: '#1D7CF2',
+              backgroundColor: 'rgba(29, 124, 242, 0.1)',
+              borderWidth: 2.5,
+              pointRadius: 4,
+              tension: 0.25
+            },
+            {
+              label: 'Check-Out',
+              data: [82, 102, 108, 84, 96, 105, 128],
+              borderColor: '#6E56CF',
+              backgroundColor: 'rgba(110, 86, 207, 0.1)',
+              borderWidth: 2.5,
+              pointRadius: 4,
+              tension: 0.25
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, max: 200, grid: { color: '#F1F5F9' }, ticks: { font: { size: 11 } } },
+            x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+          }
+        }
+      });
+    }
+
+    function updateDashboardChart() {
+      if (!lineChartInstance) return;
+      const filter = document.getElementById('dashboardWeekFilter').value;
+      if (filter === 'last') {
+        lineChartInstance.data.datasets[0].data = [95, 120, 140, 115, 130, 145, 142];
+        lineChartInstance.data.datasets[1].data = [78, 95, 102, 88, 92, 110, 118];
+      } else {
+        lineChartInstance.data.datasets[0].data = [105, 138, 156, 120, 138, 138, 156];
+        lineChartInstance.data.datasets[1].data = [82, 102, 108, 84, 96, 105, 128];
+      }
+      lineChartInstance.update();
+    }
+
+    function renderReportsBarChart(period = 'daily') {
+      const ctx = document.getElementById('reportsBarChart').getContext('2d');
+      const datasetsByPeriod = {
+        daily: {
+          labels: ['Mon', 'Tue', 'Thu', 'Fri', 'Sat', 'Sun'],
+          checkIns: [98, 98, 122, 92, 128, 82],
+          checkOuts: [74, 70, 38, 46, 68, 82],
+          totalIn: '980',
+          totalOut: '960'
+        },
+        weekly: {
+          labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+          checkIns: [640, 710, 690, 780],
+          checkOuts: [625, 695, 680, 760],
+          totalIn: '2,820',
+          totalOut: '2,760'
+        },
+        monthly: {
+          labels: ['Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov'],
+          checkIns: [2600, 2850, 3100, 2980, 3240, 3410],
+          checkOuts: [2550, 2800, 3040, 2920, 3190, 3360],
+          totalIn: '18,180',
+          totalOut: '17,860'
+        }
+      };
+
+      const selected = datasetsByPeriod[period];
+      document.getElementById('reportTotalCheckIns').textContent = selected.totalIn;
+      document.getElementById('reportTotalCheckOuts').textContent = selected.totalOut;
+
+      if (barChartInstance) barChartInstance.destroy();
+      barChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: selected.labels,
+          datasets: [
+            {
+              label: 'Check-Ins',
+              data: selected.checkIns,
+              backgroundColor: '#3B66F5',
+              borderRadius: 6,
+              barPercentage: 0.65
+            },
+            {
+              label: 'Check-Outs',
+              data: selected.checkOuts,
+              backgroundColor: '#8CA8FA',
+              borderRadius: 6,
+              barPercentage: 0.65
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, grid: { color: '#F1F5F9' }, ticks: { font: { size: 11 } } },
+            x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+          }
+        }
+      });
+    }
+
+    function switchReportPeriod(period) {
+      document.querySelectorAll('.report-tab').forEach(tab => {
+        if (tab.dataset.reportTab === period) {
+          tab.className = 'report-tab px-5 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow transition';
+        } else {
+          tab.className = 'report-tab px-5 py-2 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition';
+        }
+      });
+      renderReportsBarChart(period);
+    }
+
+    function switchSettingsTab(tabName) {
+      document.querySelectorAll('.settings-panel').forEach(p => p.classList.add('hidden'));
+      document.getElementById(`settings-panel-${tabName}`).classList.remove('hidden');
+
+      document.querySelectorAll('.settings-tab').forEach(btn => {
+        if (btn.dataset.settingsTab === tabName) {
+          btn.className = 'settings-tab px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow';
+        } else {
+          btn.className = 'settings-tab px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100';
+        }
+      });
+    }
+
+    function applyProfileAvatar(srcUrl) {
+      const headerAvatar = document.getElementById('headerProfileAvatar');
+      const previewAvatar = document.getElementById('settingsProfileAvatarPreview');
+      if (srcUrl && srcUrl.trim().length > 0) {
+        const imgHtml = `<img src="${srcUrl}" alt="Profile" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<i class=\\'fa-solid fa-user-tie\\'></i>'" />`;
+        if (headerAvatar) headerAvatar.innerHTML = imgHtml;
+        if (previewAvatar) previewAvatar.innerHTML = imgHtml;
+      } else {
+        const iconHtml = `<i class="fa-solid fa-user-tie"></i>`;
+        if (headerAvatar) headerAvatar.innerHTML = iconHtml;
+        if (previewAvatar) previewAvatar.innerHTML = iconHtml;
+      }
+    }
+
+    function saveGeneralSettings(e) {
+      e.preventDefault();
+      const gymName = document.getElementById('settingGymName').value.trim();
+      const gymSubtitle = document.getElementById('settingGymSubtitle').value.trim();
+      const profileUrl = document.getElementById('settingProfileLogoUrl').value.trim();
+
+      if (gymName) {
+        document.getElementById('sidebarGymTitle').textContent = gymName;
+        document.getElementById('loginBrandTitle').textContent = gymName;
+        localStorage.setItem('gym_brand_title', gymName);
+      }
+      if (gymSubtitle) {
+        document.getElementById('sidebarGymSubtitle').textContent = gymSubtitle;
+        document.getElementById('loginBrandSubtitle').textContent = gymSubtitle;
+        localStorage.setItem('gym_brand_subtitle', gymSubtitle);
+      }
+      localStorage.setItem('gym_profile_avatar', profileUrl);
+      applyProfileAvatar(profileUrl);
+
+      showToast('Brand & Profile settings updated successfully!', 'success');
+    }
+
+    function handleLogoUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        document.getElementById('gymLogoPreview').src = evt.target.result;
+        showToast('Gym photo preview updated!', 'success');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function handleProfileLogoUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const dataUrl = evt.target.result;
+        document.getElementById('settingProfileLogoUrl').value = '';
+        localStorage.setItem('gym_profile_avatar', dataUrl);
+        applyProfileAvatar(dataUrl);
+        showToast('Profile logo uploaded & saved!', 'success');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const creds = getAdminCredentials();
+      
+      // Keep session logged in across page refreshes
+      if (localStorage.getItem('gym_admin_logged_in') === 'true') {
+        document.getElementById('loginOverlay').classList.add('hidden');
+      } else {
+        document.getElementById('loginOverlay').classList.remove('hidden');
+      }
+
+      document.getElementById('headerAdminName').textContent = creds.username;
+      const secUser = document.getElementById('securityNewUsername');
+      const secPass = document.getElementById('securityNewPassword');
+      if (secUser) secUser.value = creds.username;
+      if (secPass) secPass.value = creds.password;
+
+      const savedTitle = localStorage.getItem('gym_brand_title');
+      const savedSubtitle = localStorage.getItem('gym_brand_subtitle');
+      const savedAvatar = localStorage.getItem('gym_profile_avatar');
+      const savedDailyLimit = localStorage.getItem('gym_checkin_daily_limit');
+      
+      // Restore the exact section the admin was last working on
+      const activeSection = localStorage.getItem('gym_active_section') || 'dashboard';
+
+      if (savedDailyLimit && document.getElementById('checkInDailyLimit')) {
+        document.getElementById('checkInDailyLimit').value = savedDailyLimit;
+      }
+
+      if (savedTitle) {
+        document.getElementById('sidebarGymTitle').textContent = savedTitle;
+        document.getElementById('loginBrandTitle').textContent = savedTitle;
+        document.getElementById('settingGymName').value = savedTitle;
+      }
+      if (savedSubtitle) {
+        document.getElementById('sidebarGymSubtitle').textContent = savedSubtitle;
+        document.getElementById('loginBrandSubtitle').textContent = savedSubtitle;
+        document.getElementById('settingGymSubtitle').value = savedSubtitle;
+      }
+      if (savedAvatar) {
+        if (!savedAvatar.startsWith('data:')) {
+          document.getElementById('settingProfileLogoUrl').value = savedAvatar;
+        }
+        applyProfileAvatar(savedAvatar);
+      }
+
+      switchSection(activeSection);
+      generateRandomCardId();
+      updateCardPreview();
+      renderAllViews();
+      initDashboardChart();
+    });
+  </script>
+</body>
+</html>
