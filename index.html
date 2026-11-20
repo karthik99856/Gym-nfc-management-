@@ -9,9 +9,6 @@
   <!-- jsPDF & AutoTable for Excel-style Clean PDF Export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-  <!-- Firebase Compat SDKs (Zero-Traffic Real-Time Firestore) -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
@@ -233,11 +230,11 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-3 sm:gap-5">
-          <!-- Firebase Cloud Sync Status Badge -->
-          <div id="firebaseStatusBadge" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-[11px] font-bold text-slate-600">
-            <span id="firebaseStatusDot" class="w-2 h-2 rounded-full bg-amber-500"></span>
-            <span id="firebaseStatusText">Local Mode</span>
+          <div class="flex items-center gap-3 sm:gap-5">
+          <!-- Local Storage Mode Badge -->
+          <div id="localStorageBadge" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-[11px] font-bold text-slate-600">
+            <span id="localStorageDot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span id="localStorageText">Local Storage Mode</span>
           </div>
 
           <!-- Admin Profile -->
@@ -728,29 +725,11 @@
               </div>
 
               <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/50 flex items-start gap-3">
-                <i class="fa-solid fa-cloud-check text-emerald-600 text-lg mt-0.5"></i>
+                <i class="fa-solid fa-database text-emerald-600 text-lg mt-0.5"></i>
                 <div>
-                  <p class="text-sm font-bold text-slate-800">Direct Cloud Integration Active</p>
-                  <p class="text-xs text-slate-600 mt-0.5">Configured directly inside the source code for clean, distraction-free gym operations.</p>
+                  <p class="text-sm font-bold text-slate-800">LocalStorage Mode Active</p>
+                  <p class="text-xs text-slate-600 mt-0.5">All members, check-ins, and settings are saved directly in this browser's LocalStorage with zero cloud or external database dependencies.</p>
                 </div>
-              </div>
-
-              <!-- Firebase Firestore Rules Box (Copy & Paste in Firebase Console -> Firestore -> Rules) -->
-              <div class="p-4 rounded-xl border border-indigo-200 bg-slate-900 text-slate-100 space-y-2">
-                <div class="flex items-center justify-between">
-                  <span class="text-xs font-bold text-indigo-300">Firebase Firestore Rules (Copy & Publish)</span>
-                  <button type="button" onclick="copyFirestoreRules()" class="px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold transition">
-                    Copy Rules
-                  </button>
-                </div>
-                <pre id="firestoreRulesCode" class="text-xs font-mono leading-relaxed overflow-x-auto text-emerald-300 select-all">rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
-    }
-  }
-}</pre>
               </div>
             </div>
 
@@ -827,7 +806,6 @@ service cloud.firestore {
       localStorage.setItem('gym_admin_mobile', newUser);
       localStorage.setItem('gym_admin_password', newPass);
       document.getElementById('headerAdminName').textContent = newUser;
-      syncGlobalSettingsToFirebase();
       showToast('Mobile number & password updated!', 'success');
     }
 
@@ -858,210 +836,22 @@ service cloud.firestore {
     let serialReader = null;
     let isSerialConnected = false;
 
-    // =========================================================================
-    // 1. DIRECT FIREBASE CONFIG (ఇక్కడ మీ 6 Firebase వివరాలను పేస్ట్ చేయండి - URL అవసరం లేదు)
-    // =========================================================================
-    const DIRECT_FIREBASE_CONFIG = {
-      apiKey: "AIzaSyCBM41vLiPVUK-13uo1NavvrRyv7arsKyQ",
-      authDomain: "gym-magement-fde40.firebaseapp.com",
-      projectId: "gym-magement-fde40",
-      storageBucket: "gym-magement-fde40.firebasestorage.app",
-      messagingSenderId: "437536435997",
-      appId: "1:437536435997:web:d0dbad3b2bdab5c94c3bf4"
-    };
-
-    function copyFirestoreRules() {
-      try {
-        const rulesEl = document.getElementById('firestoreRulesCode');
-        if (!rulesEl) return;
-        const tempInput = document.createElement('textarea');
-        tempInput.value = rulesEl.textContent.trim();
-        document.body.appendChild(tempInput);
-        tempInput.select();
-        document.execCommand('copy');
-        document.body.removeChild(tempInput);
-        showToast('Firestore rules copied cleanly!', 'success');
-      } catch (e) {
-        showToast('Could not copy rules automatically.', 'error');
-      }
-    }
-
-    let firebaseDb = null;
-    let isFirebaseConnected = false;
-    let unsubscribeMembers = null;
-    let unsubscribeTxns = null;
-    let unsubscribeSettings = null;
-
-    function updateFirebaseStatusUI(connected, labelText) {
-      const dot = document.getElementById('firebaseStatusDot');
-      const text = document.getElementById('firebaseStatusText');
-      if (!dot || !text) return;
-      if (connected) {
-        dot.className = 'w-2 h-2 rounded-full bg-emerald-500 animate-pulse';
-        text.textContent = labelText || 'Firebase Backend Live';
-      } else {
-        dot.className = 'w-2 h-2 rounded-full bg-amber-500';
-        text.textContent = labelText || 'Local Mode';
-      }
-    }
-
-    function initFirebaseFromStorage() {
-      if (typeof firebase === 'undefined') {
-        updateFirebaseStatusUI(false, 'Local Mode');
-        return;
-      }
-
-      if (!DIRECT_FIREBASE_CONFIG.apiKey || DIRECT_FIREBASE_CONFIG.apiKey.includes("PASTE_YOUR")) {
-        updateFirebaseStatusUI(false, 'Local Mode');
-        return;
-      }
-
-      try {
-        if (!firebase.apps.length) {
-          firebase.initializeApp(DIRECT_FIREBASE_CONFIG);
-        }
-        firebaseDb = firebase.firestore();
-
-        // Offline persistence ensures zero errors even if gym Wi-Fi drops
-        firebaseDb.enablePersistence({ synchronizeTabs: true }).catch(() => {});
-
-        isFirebaseConnected = true;
-        updateFirebaseStatusUI(true, 'Firebase Backend Live');
-        attachFirebaseListeners();
-      } catch (err) {
-        isFirebaseConnected = false;
-        updateFirebaseStatusUI(false, 'Local Mode');
-      }
-    }
-
-    function attachFirebaseListeners() {
-      if (!firebaseDb) return;
-
-      if (unsubscribeMembers) unsubscribeMembers();
-      if (unsubscribeTxns) unsubscribeTxns();
-      if (unsubscribeSettings) unsubscribeSettings();
-
-      // 1. Real-Time Members Listener
-      unsubscribeMembers = firebaseDb.collection('members').orderBy('id', 'desc').limit(1000).onSnapshot(
-        (snapshot) => {
-          if (!snapshot.empty) {
-            const cloudMembers = [];
-            snapshot.forEach(doc => cloudMembers.push(doc.data()));
-            state.members = cloudMembers;
-            localStorage.setItem('gym_nfc_members', JSON.stringify(state.members));
-            renderAllViews();
-          }
-          updateFirebaseStatusUI(true, 'Firebase Backend Live');
-        },
-        () => {
-          updateFirebaseStatusUI(false, 'Offline Cache');
-        }
-      );
-
-      // 2. Real-Time Transactions Listener
-      unsubscribeTxns = firebaseDb.collection('transactions').orderBy('timestamp', 'desc').limit(300).onSnapshot(
-        (snapshot) => {
-          if (!snapshot.empty) {
-            const cloudTxns = [];
-            snapshot.forEach(doc => cloudTxns.push(doc.data()));
-            state.transactions = cloudTxns;
-            localStorage.setItem('gym_nfc_txns', JSON.stringify(state.transactions));
-            renderAllViews();
-          }
-        },
-        () => {}
-      );
-
-      // 3. Real-Time Global Settings, Stats & Admin Credentials Listener
-      unsubscribeSettings = firebaseDb.collection('settings').doc('gym_config').onSnapshot(
-        (doc) => {
-          if (doc.exists) {
-            const cfg = doc.data();
-            if (typeof cfg.todayAttendance === 'number') {
-              state.todayAttendance = cfg.todayAttendance;
-              localStorage.setItem('gym_nfc_today_att', state.todayAttendance.toString());
-              updateKPIs();
-            }
-            if (cfg.brandTitle) {
-              localStorage.setItem('gym_brand_title', cfg.brandTitle);
-              document.getElementById('sidebarGymTitle').textContent = cfg.brandTitle;
-              document.getElementById('loginBrandTitle').textContent = cfg.brandTitle;
-              if (document.getElementById('settingGymName')) document.getElementById('settingGymName').value = cfg.brandTitle;
-            }
-            if (cfg.brandSubtitle) {
-              localStorage.setItem('gym_brand_subtitle', cfg.brandSubtitle);
-              document.getElementById('sidebarGymSubtitle').textContent = cfg.brandSubtitle;
-              document.getElementById('loginBrandSubtitle').textContent = cfg.brandSubtitle;
-              if (document.getElementById('settingGymSubtitle')) document.getElementById('settingGymSubtitle').value = cfg.brandSubtitle;
-            }
-            if (cfg.checkInDailyLimit && document.getElementById('checkInDailyLimit')) {
-              localStorage.setItem('gym_checkin_daily_limit', cfg.checkInDailyLimit);
-              document.getElementById('checkInDailyLimit').value = cfg.checkInDailyLimit;
-            }
-            if (typeof cfg.blockExpired === 'boolean' && document.getElementById('blockExpiredToggle')) {
-              document.getElementById('blockExpiredToggle').checked = cfg.blockExpired;
-            }
-            if (cfg.adminMobile) {
-              localStorage.setItem('gym_admin_mobile', cfg.adminMobile);
-              document.getElementById('headerAdminName').textContent = cfg.adminMobile;
-              if (document.getElementById('securityNewUsername')) document.getElementById('securityNewUsername').value = cfg.adminMobile;
-            }
-            if (cfg.adminPassword) {
-              localStorage.setItem('gym_admin_password', cfg.adminPassword);
-              if (document.getElementById('securityNewPassword')) document.getElementById('securityNewPassword').value = cfg.adminPassword;
-            }
-          }
-        },
-        () => {}
-      );
-    }
-
-    async function syncGlobalSettingsToFirebase() {
-      if (!isFirebaseConnected || !firebaseDb) return;
-      try {
-        const creds = getAdminCredentials();
-        await firebaseDb.collection('settings').doc('gym_config').set({
-          todayAttendance: state.todayAttendance,
-          brandTitle: localStorage.getItem('gym_brand_title') || 'Gym NFC',
-          brandSubtitle: localStorage.getItem('gym_brand_subtitle') || 'Management System',
-          checkInDailyLimit: document.getElementById('checkInDailyLimit')?.value || '1',
-          blockExpired: document.getElementById('blockExpiredToggle')?.checked ?? true,
-          adminMobile: creds.username,
-          adminPassword: creds.password,
-          updatedAt: Date.now()
-        }, { merge: true });
-      } catch (e) {}
-    }
-
-    async function syncMemberToFirebase(member) {
-      if (!isFirebaseConnected || !firebaseDb || !member) return;
-      try {
-        await firebaseDb.collection('members').doc(String(member.id)).set(member, { merge: true });
-      } catch (e) {}
-    }
-
-    async function deleteMemberFromFirebase(memberId) {
-      if (!isFirebaseConnected || !firebaseDb) return;
-      try {
-        await firebaseDb.collection('members').doc(String(memberId)).delete();
-      } catch (e) {}
-    }
-
-    async function syncTransactionToFirebase(txn) {
-      if (!isFirebaseConnected || !firebaseDb || !txn) return;
-      try {
-        const docId = `${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-        await firebaseDb.collection('transactions').doc(docId).set({
-          ...txn,
-          timestamp: Date.now()
-        });
-      } catch (e) {}
+    function initLocalStorageMode() {
+      const dot = document.getElementById('localStorageDot');
+      const text = document.getElementById('localStorageText');
+      if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
+      if (text) text.textContent = 'Local Storage Mode';
+      persistState();
     }
 
     function persistState() {
-      localStorage.setItem('gym_nfc_members', JSON.stringify(state.members));
-      localStorage.setItem('gym_nfc_txns', JSON.stringify(state.transactions));
-      localStorage.setItem('gym_nfc_today_att', state.todayAttendance.toString());
+      try {
+        localStorage.setItem('gym_nfc_members', JSON.stringify(state.members));
+        localStorage.setItem('gym_nfc_txns', JSON.stringify(state.transactions));
+        localStorage.setItem('gym_nfc_today_att', state.todayAttendance.toString());
+      } catch (err) {
+        showToast('Unable to write to LocalStorage.', 'error');
+      }
     }
 
     function switchSection(sectionId) {
@@ -1239,7 +1029,6 @@ service cloud.firestore {
         };
         state.transactions.unshift(deniedTxn);
         persistState();
-        syncTransactionToFirebase(deniedTxn);
         renderAllViews();
         showToast(`Access Denied: ${member.name}'s membership is expired!`, 'error');
         return;
@@ -1276,9 +1065,6 @@ service cloud.firestore {
       state.transactions.unshift(successTxn);
 
       persistState();
-      syncMemberToFirebase(member);
-      syncTransactionToFirebase(successTxn);
-      syncGlobalSettingsToFirebase();
       renderAllViews();
       speakAnnouncement(`Welcome ${member.name}. Check-In successful.`);
       sendWhatsAppAlert(member, `Check-In #${member.todayCheckInCount}`);
@@ -1290,7 +1076,6 @@ service cloud.firestore {
       if (!member) return;
       member.frozen = !member.frozen;
       persistState();
-      syncMemberToFirebase(member);
       renderMembersTable();
       showToast(`Member ${member.name} is now ${member.frozen ? 'FROZEN ❄️' : 'ACTIVE ✅'}`, member.frozen ? 'error' : 'success');
     }
@@ -1298,7 +1083,6 @@ service cloud.firestore {
     function saveCardSettings() {
       const limit = document.getElementById('checkInDailyLimit')?.value || '1';
       localStorage.setItem('gym_checkin_daily_limit', limit);
-      syncGlobalSettingsToFirebase();
       showToast(`Card settings saved (${limit} Time${limit === '2' ? 's' : ''}/Day)!`, 'success');
     }
 
@@ -1441,7 +1225,6 @@ service cloud.firestore {
 
       state.members.unshift(newMember);
       persistState();
-      syncMemberToFirebase(newMember);
       renderAllViews();
 
       playBuzzerPattern('register');
@@ -1449,7 +1232,7 @@ service cloud.firestore {
       generateRandomCardId();
       updateCardPreview();
 
-      showToast(`Member "${name}" registered & synced!`, 'success');
+      showToast(`Member "${name}" saved to LocalStorage!`, 'success');
       switchSection('view-members');
     }
 
@@ -1493,7 +1276,6 @@ service cloud.firestore {
       member.endDate = document.getElementById('editEndDate').value.trim();
 
       persistState();
-      syncMemberToFirebase(member);
       renderAllViews();
       closeEditModal();
       showToast(`Updated profile & NFC Card (${member.cardId}) for ${member.name}`, 'success');
@@ -1504,7 +1286,6 @@ service cloud.firestore {
       if (!member) return;
       state.members = state.members.filter(m => m.id !== memberId);
       persistState();
-      deleteMemberFromFirebase(memberId);
       renderAllViews();
       showToast(`Removed member ${member.name}`, 'info');
     }
@@ -1968,7 +1749,6 @@ service cloud.firestore {
       }
       localStorage.setItem('gym_profile_avatar', profileUrl);
       applyProfileAvatar(profileUrl);
-      syncGlobalSettingsToFirebase();
 
       showToast('Brand & Profile settings updated successfully!', 'success');
     }
@@ -2048,7 +1828,7 @@ service cloud.firestore {
       updateCardPreview();
       renderAllViews();
       initDashboardChart();
-      initFirebaseFromStorage();
+      initLocalStorageMode();
     });
   </script>
 </body>
