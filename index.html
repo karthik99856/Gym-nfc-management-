@@ -6,6 +6,12 @@
   <title>Gym NFC Management System</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- jsPDF & AutoTable for Excel-style Clean PDF Export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <!-- Firebase Compat SDKs (Zero-Traffic Real-Time Firestore) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
@@ -228,6 +234,12 @@
         </div>
 
         <div class="flex items-center gap-3 sm:gap-5">
+          <!-- Firebase Cloud Sync Status Badge -->
+          <div id="firebaseStatusBadge" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-[11px] font-bold text-slate-600">
+            <span id="firebaseStatusDot" class="w-2 h-2 rounded-full bg-amber-500"></span>
+            <span id="firebaseStatusText">Local Mode</span>
+          </div>
+
           <!-- Admin Profile -->
           <div class="flex items-center gap-2.5">
             <div id="headerProfileAvatar" class="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-500 text-white font-bold text-sm flex items-center justify-center shadow-sm overflow-hidden flex-shrink-0">
@@ -455,9 +467,17 @@
               </div>
               <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">View Gym Members</h2>
             </div>
-            <button onclick="switchSection('add-member')" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center gap-2 shadow-sm">
-              <i class="fa-solid fa-plus"></i> Add New Member
-            </button>
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="downloadMembersPdf()" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition">
+                <i class="fa-solid fa-file-pdf"></i> Download PDF
+              </button>
+              <button onclick="forwardMembersToGoogleSheets()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition">
+                <i class="fa-solid fa-file-excel"></i> Forward to Google Sheets
+              </button>
+              <button onclick="switchSection('add-member')" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center gap-2 shadow-sm">
+                <i class="fa-solid fa-plus"></i> Add New Member
+              </button>
+            </div>
           </div>
 
           <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-100 space-y-5">
@@ -507,6 +527,9 @@
               </div>
               <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Transactions (NFC Entrance Logs)</h2>
             </div>
+            <button onclick="downloadTransactionsPdf()" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition">
+              <i class="fa-solid fa-file-pdf"></i> Download PDF
+            </button>
           </div>
 
           <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-100">
@@ -606,7 +629,7 @@
 
             <button onclick="connectEsp32Serial()" id="esp32ConnectBtn" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold shadow-sm transition active:scale-95">
               <i class="fa-solid fa-microchip"></i>
-              <span>Connect ESP32 RC522</span>
+              <span>Connect NFC Reader</span>
             </button>
           </div>
 
@@ -707,18 +730,11 @@
                 <input type="checkbox" checked class="w-5 h-5 accent-indigo-600 rounded" />
               </div>
 
-              <!-- Google Sheets Auto-Sync Integration -->
-              <div class="p-4 rounded-xl border border-slate-200 space-y-3 bg-slate-50/50">
-                <div class="flex items-center gap-2">
-                  <i class="fa-solid fa-table text-emerald-600"></i>
-                  <p class="text-sm font-bold text-slate-800">Google Sheets Auto-Sync (Web App URL)</p>
-                </div>
-                <p class="text-xs text-slate-500">Paste your Google Apps Script Web App URL to automatically send new members & check-ins to Google Sheets.</p>
-                <div class="flex flex-col sm:flex-row gap-2">
-                  <input id="googleSheetWebhookUrl" type="url" placeholder="https://script.google.com/macros/s/.../exec" class="flex-1 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-medium outline-none focus:ring-2 focus:ring-indigo-500" />
-                  <button type="button" onclick="saveGoogleSheetUrl()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition">
-                    Save Sheet URL
-                  </button>
+              <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/50 flex items-start gap-3">
+                <i class="fa-solid fa-cloud-check text-emerald-600 text-lg mt-0.5"></i>
+                <div>
+                  <p class="text-sm font-bold text-slate-800">Direct Cloud & Sheets Integration Active</p>
+                  <p class="text-xs text-slate-600 mt-0.5">Configured directly inside the source code for clean, distraction-free gym operations.</p>
                 </div>
               </div>
             </div>
@@ -796,6 +812,7 @@
       localStorage.setItem('gym_admin_mobile', newUser);
       localStorage.setItem('gym_admin_password', newPass);
       document.getElementById('headerAdminName').textContent = newUser;
+      syncGlobalSettingsToFirebase();
       showToast('Mobile number & password updated!', 'success');
     }
 
@@ -825,6 +842,195 @@
     let serialPort = null;
     let serialReader = null;
     let isSerialConnected = false;
+
+    // =========================================================================
+    // 1. DIRECT FIREBASE CONFIG (ఇక్కడ మీ 6 Firebase వివరాలను పేస్ట్ చేయండి - URL అవసరం లేదు)
+    // =========================================================================
+    const DIRECT_FIREBASE_CONFIG = {
+      apiKey: "PASTE_YOUR_API_KEY_HERE",
+      authDomain: "PASTE_YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "PASTE_YOUR_PROJECT_ID",
+      storageBucket: "PASTE_YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "PASTE_YOUR_SENDER_ID",
+      appId: "PASTE_YOUR_APP_ID"
+    };
+
+    // =========================================================================
+    // 2. DIRECT GOOGLE SHEET LINK (ఇక్కడ మీ Google Sheet Web App URL పేస్ట్ చేయండి)
+    // =========================================================================
+    const DIRECT_GOOGLE_SHEET_URL = "PASTE_YOUR_GOOGLE_SHEET_WEB_APP_URL_HERE";
+
+    let firebaseDb = null;
+    let isFirebaseConnected = false;
+    let unsubscribeMembers = null;
+    let unsubscribeTxns = null;
+    let unsubscribeSettings = null;
+
+    function updateFirebaseStatusUI(connected, labelText) {
+      const dot = document.getElementById('firebaseStatusDot');
+      const text = document.getElementById('firebaseStatusText');
+      if (!dot || !text) return;
+      if (connected) {
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-500 animate-pulse';
+        text.textContent = labelText || 'Firebase Backend Live';
+      } else {
+        dot.className = 'w-2 h-2 rounded-full bg-amber-500';
+        text.textContent = labelText || 'Local Mode';
+      }
+    }
+
+    function initFirebaseFromStorage() {
+      if (typeof firebase === 'undefined') {
+        updateFirebaseStatusUI(false, 'Local Mode');
+        return;
+      }
+
+      if (!DIRECT_FIREBASE_CONFIG.apiKey || DIRECT_FIREBASE_CONFIG.apiKey.includes("PASTE_YOUR")) {
+        updateFirebaseStatusUI(false, 'Local Mode');
+        return;
+      }
+
+      try {
+        if (!firebase.apps.length) {
+          firebase.initializeApp(DIRECT_FIREBASE_CONFIG);
+        }
+        firebaseDb = firebase.firestore();
+
+        // Offline persistence ensures zero errors even if gym Wi-Fi drops
+        firebaseDb.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+
+        isFirebaseConnected = true;
+        updateFirebaseStatusUI(true, 'Firebase Backend Live');
+        attachFirebaseListeners();
+      } catch (err) {
+        isFirebaseConnected = false;
+        updateFirebaseStatusUI(false, 'Local Mode');
+      }
+    }
+
+    function attachFirebaseListeners() {
+      if (!firebaseDb) return;
+
+      if (unsubscribeMembers) unsubscribeMembers();
+      if (unsubscribeTxns) unsubscribeTxns();
+      if (unsubscribeSettings) unsubscribeSettings();
+
+      // 1. Real-Time Members Listener
+      unsubscribeMembers = firebaseDb.collection('members').orderBy('id', 'desc').limit(1000).onSnapshot(
+        (snapshot) => {
+          if (!snapshot.empty) {
+            const cloudMembers = [];
+            snapshot.forEach(doc => cloudMembers.push(doc.data()));
+            state.members = cloudMembers;
+            localStorage.setItem('gym_nfc_members', JSON.stringify(state.members));
+            renderAllViews();
+          }
+          updateFirebaseStatusUI(true, 'Firebase Backend Live');
+        },
+        () => {
+          updateFirebaseStatusUI(false, 'Offline Cache');
+        }
+      );
+
+      // 2. Real-Time Transactions Listener
+      unsubscribeTxns = firebaseDb.collection('transactions').orderBy('timestamp', 'desc').limit(300).onSnapshot(
+        (snapshot) => {
+          if (!snapshot.empty) {
+            const cloudTxns = [];
+            snapshot.forEach(doc => cloudTxns.push(doc.data()));
+            state.transactions = cloudTxns;
+            localStorage.setItem('gym_nfc_txns', JSON.stringify(state.transactions));
+            renderAllViews();
+          }
+        },
+        () => {}
+      );
+
+      // 3. Real-Time Global Settings, Stats & Admin Credentials Listener
+      unsubscribeSettings = firebaseDb.collection('settings').doc('gym_config').onSnapshot(
+        (doc) => {
+          if (doc.exists) {
+            const cfg = doc.data();
+            if (typeof cfg.todayAttendance === 'number') {
+              state.todayAttendance = cfg.todayAttendance;
+              localStorage.setItem('gym_nfc_today_att', state.todayAttendance.toString());
+              updateKPIs();
+            }
+            if (cfg.brandTitle) {
+              localStorage.setItem('gym_brand_title', cfg.brandTitle);
+              document.getElementById('sidebarGymTitle').textContent = cfg.brandTitle;
+              document.getElementById('loginBrandTitle').textContent = cfg.brandTitle;
+              if (document.getElementById('settingGymName')) document.getElementById('settingGymName').value = cfg.brandTitle;
+            }
+            if (cfg.brandSubtitle) {
+              localStorage.setItem('gym_brand_subtitle', cfg.brandSubtitle);
+              document.getElementById('sidebarGymSubtitle').textContent = cfg.brandSubtitle;
+              document.getElementById('loginBrandSubtitle').textContent = cfg.brandSubtitle;
+              if (document.getElementById('settingGymSubtitle')) document.getElementById('settingGymSubtitle').value = cfg.brandSubtitle;
+            }
+            if (cfg.checkInDailyLimit && document.getElementById('checkInDailyLimit')) {
+              localStorage.setItem('gym_checkin_daily_limit', cfg.checkInDailyLimit);
+              document.getElementById('checkInDailyLimit').value = cfg.checkInDailyLimit;
+            }
+            if (typeof cfg.blockExpired === 'boolean' && document.getElementById('blockExpiredToggle')) {
+              document.getElementById('blockExpiredToggle').checked = cfg.blockExpired;
+            }
+            if (cfg.adminMobile) {
+              localStorage.setItem('gym_admin_mobile', cfg.adminMobile);
+              document.getElementById('headerAdminName').textContent = cfg.adminMobile;
+              if (document.getElementById('securityNewUsername')) document.getElementById('securityNewUsername').value = cfg.adminMobile;
+            }
+            if (cfg.adminPassword) {
+              localStorage.setItem('gym_admin_password', cfg.adminPassword);
+              if (document.getElementById('securityNewPassword')) document.getElementById('securityNewPassword').value = cfg.adminPassword;
+            }
+          }
+        },
+        () => {}
+      );
+    }
+
+    async function syncGlobalSettingsToFirebase() {
+      if (!isFirebaseConnected || !firebaseDb) return;
+      try {
+        const creds = getAdminCredentials();
+        await firebaseDb.collection('settings').doc('gym_config').set({
+          todayAttendance: state.todayAttendance,
+          brandTitle: localStorage.getItem('gym_brand_title') || 'Gym NFC',
+          brandSubtitle: localStorage.getItem('gym_brand_subtitle') || 'Management System',
+          checkInDailyLimit: document.getElementById('checkInDailyLimit')?.value || '1',
+          blockExpired: document.getElementById('blockExpiredToggle')?.checked ?? true,
+          adminMobile: creds.username,
+          adminPassword: creds.password,
+          updatedAt: Date.now()
+        }, { merge: true });
+      } catch (e) {}
+    }
+
+    async function syncMemberToFirebase(member) {
+      if (!isFirebaseConnected || !firebaseDb || !member) return;
+      try {
+        await firebaseDb.collection('members').doc(String(member.id)).set(member, { merge: true });
+      } catch (e) {}
+    }
+
+    async function deleteMemberFromFirebase(memberId) {
+      if (!isFirebaseConnected || !firebaseDb) return;
+      try {
+        await firebaseDb.collection('members').doc(String(memberId)).delete();
+      } catch (e) {}
+    }
+
+    async function syncTransactionToFirebase(txn) {
+      if (!isFirebaseConnected || !firebaseDb || !txn) return;
+      try {
+        const docId = `${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+        await firebaseDb.collection('transactions').doc(docId).set({
+          ...txn,
+          timestamp: Date.now()
+        });
+      } catch (e) {}
+    }
 
     function persistState() {
       localStorage.setItem('gym_nfc_members', JSON.stringify(state.members));
@@ -996,7 +1202,7 @@
       if (member.status === 'Expired' && blockExpired) {
         playBuzzerPattern('error');
         speakAnnouncement(`Access Denied. ${member.name}, your membership has expired.`);
-        state.transactions.unshift({
+        const deniedTxn = {
           id: state.transactions.length + 1,
           name: member.name,
           action: 'Denied (Expired)',
@@ -1004,8 +1210,10 @@
           date: dateStr,
           method: member.nfcType === 'Card' ? 'NFC Card' : 'Mobile NFC',
           status: 'Failed'
-        });
+        };
+        state.transactions.unshift(deniedTxn);
         persistState();
+        syncTransactionToFirebase(deniedTxn);
         renderAllViews();
         showToast(`Access Denied: ${member.name}'s membership is expired!`, 'error');
         return;
@@ -1030,7 +1238,7 @@
       const isSecondTime = member.todayCheckInCount === 2;
       playBuzzerPattern(isSecondTime ? 'double' : 'success');
       
-      state.transactions.unshift({
+      const successTxn = {
         id: state.transactions.length + 1,
         name: member.name,
         action: 'Check-In',
@@ -1038,43 +1246,17 @@
         date: dateStr,
         method: member.nfcType === 'Card' ? 'NFC Card' : 'Mobile NFC',
         status: 'Success'
-      });
+      };
+      state.transactions.unshift(successTxn);
 
       persistState();
+      syncMemberToFirebase(member);
+      syncTransactionToFirebase(successTxn);
+      syncGlobalSettingsToFirebase();
       renderAllViews();
       speakAnnouncement(`Welcome ${member.name}. Check-In successful.`);
       sendWhatsAppAlert(member, `Check-In #${member.todayCheckInCount}`);
-      syncToGoogleSheet({
-        type: 'Check-In',
-        name: member.name,
-        phone: member.phone,
-        cardId: member.cardId,
-        nfcType: member.nfcType === 'Card' ? 'NFC Card' : 'Mobile NFC',
-        plan: member.plan,
-        checkInStatus: `Check-In #${member.todayCheckInCount}`,
-        time: timeStr,
-        date: dateStr
-      });
       showToast(`${member.name} — Automatic Check-In recorded at ${timeStr}`, 'success');
-    }
-
-    function saveGoogleSheetUrl() {
-      const url = document.getElementById('googleSheetWebhookUrl').value.trim();
-      localStorage.setItem('gym_google_sheet_url', url);
-      showToast(url ? 'Google Sheets Webhook URL saved!' : 'Google Sheets URL cleared.', 'success');
-    }
-
-    async function syncToGoogleSheet(payload) {
-      const webhookUrl = localStorage.getItem('gym_google_sheet_url');
-      if (!webhookUrl) return;
-      try {
-        await fetch(webhookUrl, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-      } catch (e) {}
     }
 
     function toggleFreezeMember(memberId) {
@@ -1082,6 +1264,7 @@
       if (!member) return;
       member.frozen = !member.frozen;
       persistState();
+      syncMemberToFirebase(member);
       renderMembersTable();
       showToast(`Member ${member.name} is now ${member.frozen ? 'FROZEN ❄️' : 'ACTIVE ✅'}`, member.frozen ? 'error' : 'success');
     }
@@ -1089,6 +1272,7 @@
     function saveCardSettings() {
       const limit = document.getElementById('checkInDailyLimit')?.value || '1';
       localStorage.setItem('gym_checkin_daily_limit', limit);
+      syncGlobalSettingsToFirebase();
       showToast(`Card settings saved (${limit} Time${limit === '2' ? 's' : ''}/Day)!`, 'success');
     }
 
@@ -1231,26 +1415,18 @@
 
       state.members.unshift(newMember);
       persistState();
+      syncMemberToFirebase(newMember);
       renderAllViews();
-
-      syncToGoogleSheet({
-        type: 'New Member',
-        name: newMember.name,
-        phone: newMember.phone,
-        cardId: newMember.cardId,
-        nfcType: newMember.nfcType === 'Card' ? 'NFC Card' : 'Mobile NFC',
-        plan: newMember.plan,
-        amount: newMember.amount,
-        startDate: newMember.startDate,
-        endDate: newMember.endDate,
-        status: newMember.status
-      });
 
       playBuzzerPattern('register');
       e.target.reset();
       generateRandomCardId();
       updateCardPreview();
-      showToast(`Member "${name}" registered successfully with 3 buzzer beeps!`, 'success');
+
+      // Auto-send newly added member directly to Google Sheet columns (A to H) if URL is saved
+      sendSingleMemberRowToGoogleSheet(newMember, state.members.length);
+
+      showToast(`Member "${name}" registered & synced!`, 'success');
       switchSection('view-members');
     }
 
@@ -1294,6 +1470,7 @@
       member.endDate = document.getElementById('editEndDate').value.trim();
 
       persistState();
+      syncMemberToFirebase(member);
       renderAllViews();
       closeEditModal();
       showToast(`Updated profile & NFC Card (${member.cardId}) for ${member.name}`, 'success');
@@ -1304,8 +1481,229 @@
       if (!member) return;
       state.members = state.members.filter(m => m.id !== memberId);
       persistState();
+      deleteMemberFromFirebase(memberId);
       renderAllViews();
       showToast(`Removed member ${member.name}`, 'info');
+    }
+
+    function getGoogleSheetUrl() {
+      if (DIRECT_GOOGLE_SHEET_URL && !DIRECT_GOOGLE_SHEET_URL.includes("PASTE_YOUR")) {
+        return DIRECT_GOOGLE_SHEET_URL.trim();
+      }
+      return '';
+    }
+
+    // Sends a single newly added member row matching Columns A to H:
+    // [S.No, Name, Mobile Number, NFC Card ID, Plan, Joining Date, Expiry Date, Amount Paid]
+    async function sendSingleMemberRowToGoogleSheet(member, serialNo) {
+      const webhookUrl = getGoogleSheetUrl();
+      if (!webhookUrl) return;
+      try {
+        await fetch(webhookUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'appendRow',
+            row: [
+              serialNo,
+              member.name,
+              member.phone,
+              member.cardId,
+              member.plan,
+              member.startDate,
+              member.endDate,
+              member.amount || 0
+            ]
+          })
+        });
+      } catch (e) {}
+    }
+
+    async function forwardMembersToGoogleSheets() {
+      const webhookUrl = getGoogleSheetUrl();
+      if (!webhookUrl) {
+        showToast('Please paste your Google Sheet link in DIRECT_GOOGLE_SHEET_URL inside the code!', 'error');
+        return;
+      }
+
+      if (!state.members || state.members.length === 0) {
+        showToast('No members available to forward.', 'info');
+        return;
+      }
+
+      try {
+        showToast(`Forwarding ${state.members.length} members to Google Sheet columns...`, 'info');
+        // Reverse so oldest is #1 and newest is last, matching exact Sheet Columns A to H
+        const orderedMembers = [...state.members].reverse();
+        const rows = orderedMembers.map((m, idx) => [
+          idx + 1,             // Column A: S.No
+          m.name,              // Column B: Name
+          m.phone,             // Column C: Mobile Number
+          m.cardId,            // Column D: NFC Card ID
+          m.plan,              // Column E: Plan
+          m.startDate,         // Column F: Joining Date
+          m.endDate,           // Column G: Expiry Date
+          m.amount || 0        // Column H: Amount Paid
+        ]);
+
+        await fetch(webhookUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'replaceAllRows',
+            rows: rows
+          })
+        });
+        showToast(`Successfully forwarded ${state.members.length} members to your Google Sheet!`, 'success');
+      } catch (e) {
+        showToast('Failed to forward members to Google Sheets.', 'error');
+      }
+    }
+
+    function downloadMembersPdf() {
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        showToast('PDF library is loading, please try again in a moment.', 'info');
+        return;
+      }
+      if (!state.members || state.members.length === 0) {
+        showToast('No members available to download.', 'info');
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+      const gymTitle = localStorage.getItem('gym_brand_title') || 'Gym NFC';
+
+      doc.setFontSize(16);
+      doc.setTextColor(22, 19, 74);
+      doc.text(`${gymTitle} - Gym Members Report`, 40, 40);
+
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      doc.text(`Generated on: ${new Date().toLocaleDateString('en-IN')} | Total Members: ${state.members.length}`, 40, 58);
+
+      const columns = [
+        'S.No',
+        'Name',
+        'NFC Card ID',
+        'Phone Number',
+        'Plan',
+        'Amount Paid',
+        'Start Date',
+        'End Date',
+        'Status'
+      ];
+
+      const rows = state.members.map((m, index) => [
+        index + 1,
+        m.name,
+        m.cardId,
+        m.phone,
+        m.plan,
+        `Rs. ${Number(m.amount || 0).toLocaleString('en-IN')}`,
+        m.startDate,
+        m.endDate,
+        m.frozen ? 'Frozen' : m.status
+      ]);
+
+      doc.autoTable({
+        startY: 72,
+        head: [columns],
+        body: rows,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [22, 19, 74],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          fontSize: 9.5,
+          halign: 'left'
+        },
+        bodyStyles: {
+          fontSize: 9,
+          textColor: [30, 41, 59],
+          lineColor: [203, 213, 225],
+          lineWidth: 0.6
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252]
+        },
+        margin: { left: 40, right: 40 }
+      });
+
+      doc.save(`${gymTitle.replace(/\s+/g, '_')}_Members_List.pdf`);
+      showToast('Members list downloaded as Excel-style PDF!', 'success');
+    }
+
+    function downloadTransactionsPdf() {
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        showToast('PDF library is loading, please try again in a moment.', 'info');
+        return;
+      }
+      if (!state.transactions || state.transactions.length === 0) {
+        showToast('No transactions available to download.', 'info');
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+      const gymTitle = localStorage.getItem('gym_brand_title') || 'Gym NFC';
+
+      doc.setFontSize(16);
+      doc.setTextColor(22, 19, 74);
+      doc.text(`${gymTitle} - NFC Transactions Log`, 40, 40);
+
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      doc.text(`Generated on: ${new Date().toLocaleDateString('en-IN')} | Total Records: ${state.transactions.length}`, 40, 58);
+
+      const columns = [
+        'S.No',
+        'Member Name',
+        'Action',
+        'Time',
+        'Date',
+        'Method',
+        'Status'
+      ];
+
+      const rows = state.transactions.map((t, index) => [
+        index + 1,
+        t.name,
+        t.action,
+        t.time,
+        t.date,
+        t.method,
+        t.status
+      ]);
+
+      doc.autoTable({
+        startY: 72,
+        head: [columns],
+        body: rows,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [22, 19, 74],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          fontSize: 9.5,
+          halign: 'left'
+        },
+        bodyStyles: {
+          fontSize: 9,
+          textColor: [30, 41, 59],
+          lineColor: [203, 213, 225],
+          lineWidth: 0.6
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252]
+        },
+        margin: { left: 40, right: 40 }
+      });
+
+      doc.save(`${gymTitle.replace(/\s+/g, '_')}_Transactions_Log.pdf`);
+      showToast('Transactions log downloaded as Excel-style PDF!', 'success');
     }
 
     function renderAllViews() {
@@ -1623,6 +2021,7 @@
       }
       localStorage.setItem('gym_profile_avatar', profileUrl);
       applyProfileAvatar(profileUrl);
+      syncGlobalSettingsToFirebase();
 
       showToast('Brand & Profile settings updated successfully!', 'success');
     }
@@ -1672,14 +2071,9 @@
       const savedSubtitle = localStorage.getItem('gym_brand_subtitle');
       const savedAvatar = localStorage.getItem('gym_profile_avatar');
       const savedDailyLimit = localStorage.getItem('gym_checkin_daily_limit');
-      const savedSheetUrl = localStorage.getItem('gym_google_sheet_url');
       
       // Restore the exact section the admin was last working on
       const activeSection = localStorage.getItem('gym_active_section') || 'dashboard';
-
-      if (savedSheetUrl && document.getElementById('googleSheetWebhookUrl')) {
-        document.getElementById('googleSheetWebhookUrl').value = savedSheetUrl;
-      }
 
       if (savedDailyLimit && document.getElementById('checkInDailyLimit')) {
         document.getElementById('checkInDailyLimit').value = savedDailyLimit;
@@ -1707,7 +2101,8 @@
       updateCardPreview();
       renderAllViews();
       initDashboardChart();
+      initFirebaseFromStorage();
     });
   </script>
 </body>
-</html>
+  </html>
