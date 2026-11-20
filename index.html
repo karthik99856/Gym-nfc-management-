@@ -471,9 +471,6 @@
               <button onclick="downloadMembersPdf()" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition">
                 <i class="fa-solid fa-file-pdf"></i> Download PDF
               </button>
-              <button onclick="forwardMembersToGoogleSheets()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition">
-                <i class="fa-solid fa-file-excel"></i> Forward to Google Sheets
-              </button>
               <button onclick="switchSection('add-member')" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center gap-2 shadow-sm">
                 <i class="fa-solid fa-plus"></i> Add New Member
               </button>
@@ -733,9 +730,27 @@
               <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/50 flex items-start gap-3">
                 <i class="fa-solid fa-cloud-check text-emerald-600 text-lg mt-0.5"></i>
                 <div>
-                  <p class="text-sm font-bold text-slate-800">Direct Cloud & Sheets Integration Active</p>
+                  <p class="text-sm font-bold text-slate-800">Direct Cloud Integration Active</p>
                   <p class="text-xs text-slate-600 mt-0.5">Configured directly inside the source code for clean, distraction-free gym operations.</p>
                 </div>
+              </div>
+
+              <!-- Firebase Firestore Rules Box (Copy & Paste in Firebase Console -> Firestore -> Rules) -->
+              <div class="p-4 rounded-xl border border-indigo-200 bg-slate-900 text-slate-100 space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-indigo-300">Firebase Firestore Rules (Copy & Publish)</span>
+                  <button type="button" onclick="copyFirestoreRules()" class="px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold transition">
+                    Copy Rules
+                  </button>
+                </div>
+                <pre id="firestoreRulesCode" class="text-xs font-mono leading-relaxed overflow-x-auto text-emerald-300 select-all">rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}</pre>
               </div>
             </div>
 
@@ -855,10 +870,21 @@
       appId: "PASTE_YOUR_APP_ID"
     };
 
-    // =========================================================================
-    // 2. DIRECT GOOGLE SHEET LINK (ఇక్కడ మీ Google Sheet Web App URL పేస్ట్ చేయండి)
-    // =========================================================================
-    const DIRECT_GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbw1QbNODdeOn3Qfr-4kIyTXzcBYOTiOqm-1ERwi88jDEnkteV4oFmeI1XlAnacUFCBGIQ/exec";
+    function copyFirestoreRules() {
+      try {
+        const rulesEl = document.getElementById('firestoreRulesCode');
+        if (!rulesEl) return;
+        const tempInput = document.createElement('textarea');
+        tempInput.value = rulesEl.textContent.trim();
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand('copy');
+        document.body.removeChild(tempInput);
+        showToast('Firestore rules copied cleanly!', 'success');
+      } catch (e) {
+        showToast('Could not copy rules automatically.', 'error');
+      }
+    }
 
     let firebaseDb = null;
     let isFirebaseConnected = false;
@@ -1423,9 +1449,6 @@
       generateRandomCardId();
       updateCardPreview();
 
-      // Auto-send newly added member directly to Google Sheet columns (A to H) if URL is saved
-      sendSingleMemberRowToGoogleSheet(newMember, state.members.length);
-
       showToast(`Member "${name}" registered & synced!`, 'success');
       switchSection('view-members');
     }
@@ -1484,82 +1507,6 @@
       deleteMemberFromFirebase(memberId);
       renderAllViews();
       showToast(`Removed member ${member.name}`, 'info');
-    }
-
-    function getGoogleSheetUrl() {
-      if (DIRECT_GOOGLE_SHEET_URL && !DIRECT_GOOGLE_SHEET_URL.includes("PASTE_YOUR")) {
-        return DIRECT_GOOGLE_SHEET_URL.trim();
-      }
-      return '';
-    }
-
-    // Sends a single newly added member row matching Columns A to H:
-    // [S.No, Name, Mobile Number, NFC Card ID, Plan, Joining Date, Expiry Date, Amount Paid]
-    async function sendSingleMemberRowToGoogleSheet(member, serialNo) {
-      const webhookUrl = getGoogleSheetUrl();
-      if (!webhookUrl) return;
-      try {
-        await fetch(webhookUrl, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'appendRow',
-            row: [
-              serialNo,
-              member.name,
-              member.phone,
-              member.cardId,
-              member.plan,
-              member.startDate,
-              member.endDate,
-              member.amount || 0
-            ]
-          })
-        });
-      } catch (e) {}
-    }
-
-    async function forwardMembersToGoogleSheets() {
-      const webhookUrl = getGoogleSheetUrl();
-      if (!webhookUrl) {
-        showToast('Please paste your Google Sheet link in DIRECT_GOOGLE_SHEET_URL inside the code!', 'error');
-        return;
-      }
-
-      if (!state.members || state.members.length === 0) {
-        showToast('No members available to forward.', 'info');
-        return;
-      }
-
-      try {
-        showToast(`Forwarding ${state.members.length} members to Google Sheet columns...`, 'info');
-        // Reverse so oldest is #1 and newest is last, matching exact Sheet Columns A to H
-        const orderedMembers = [...state.members].reverse();
-        const rows = orderedMembers.map((m, idx) => [
-          idx + 1,             // Column A: S.No
-          m.name,              // Column B: Name
-          m.phone,             // Column C: Mobile Number
-          m.cardId,            // Column D: NFC Card ID
-          m.plan,              // Column E: Plan
-          m.startDate,         // Column F: Joining Date
-          m.endDate,           // Column G: Expiry Date
-          m.amount || 0        // Column H: Amount Paid
-        ]);
-
-        await fetch(webhookUrl, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'replaceAllRows',
-            rows: rows
-          })
-        });
-        showToast(`Successfully forwarded ${state.members.length} members to your Google Sheet!`, 'success');
-      } catch (e) {
-        showToast('Failed to forward members to Google Sheets.', 'error');
-      }
     }
 
     function downloadMembersPdf() {
@@ -2105,4 +2052,4 @@
     });
   </script>
 </body>
-  </html>
+</html>
