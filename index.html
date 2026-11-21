@@ -12,7 +12,6 @@
   <title>Gym NFC Management System</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- jsPDF & AutoTable for Clean PDF Export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
@@ -45,6 +44,20 @@
     .nfc-card-preview {
       background: linear-gradient(135deg, #191B3A 0%, #0D1026 100%);
       box-shadow: 0 14px 28px rgba(13, 16, 38, 0.25);
+    }
+    @keyframes greenPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.75); transform: scale(1); }
+      50% { box-shadow: 0 0 36px 10px rgba(16, 185, 129, 0.45); transform: scale(1.02); }
+    }
+    @keyframes redPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.75); transform: scale(1); }
+      50% { box-shadow: 0 0 36px 10px rgba(244, 63, 94, 0.45); transform: scale(1.02); }
+    }
+    .green-light-active {
+      animation: greenPulse 1.1s infinite ease-in-out;
+    }
+    .red-light-active {
+      animation: redPulse 0.9s infinite ease-in-out;
     }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #F1F5F9; }
@@ -172,7 +185,6 @@
     <!-- Left Navigation Sidebar -->
     <aside id="sidebar" class="sidebar-bg text-white w-64 flex-shrink-0 flex flex-col justify-between fixed lg:static inset-y-0 left-0 z-40 transform -translate-x-full lg:translate-x-0 transition-transform duration-200 ease-in-out shadow-xl lg:shadow-none overflow-y-auto">
       <div>
-        <!-- Brand Logo -->
         <div class="px-6 py-6 flex items-center justify-between border-b border-white/10">
           <div class="flex items-center gap-3 min-w-0">
             <div id="sidebarBrandLogoBox" class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white text-xl shadow-inner flex-shrink-0 overflow-hidden">
@@ -188,7 +200,6 @@
           </button>
         </div>
 
-        <!-- Menu Items -->
         <nav class="px-3.5 py-5 flex flex-col space-y-1.5">
           <button type="button" onclick="switchSection('dashboard')" data-nav="dashboard" class="nav-btn nav-active w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold text-white transition text-left">
             <i class="fa-solid fa-house w-5 text-center"></i>
@@ -217,7 +228,6 @@
         </nav>
       </div>
 
-      <!-- Bottom Logout -->
       <div class="p-4 border-t border-white/10 space-y-2">
         <button type="button" id="sidebarInstallBtn" onclick="installPwaApp()" class="hidden w-full flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-sm font-bold bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-400/30 transition text-left">
           <i class="fa-solid fa-download w-5 text-center"></i>
@@ -245,25 +255,21 @@
         </div>
 
         <div class="flex items-center gap-2.5 sm:gap-4">
-          <!-- Install App Quick Button -->
           <button type="button" id="headerInstallBtn" onclick="installPwaApp()" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-[11px] font-bold text-emerald-700 transition">
             <i class="fa-solid fa-download text-xs"></i>
             <span>Install App</span>
           </button>
 
-          <!-- Header USB Serial Quick-Connect Pill -->
-          <button type="button" onclick="connectSerialReader()" id="headerSerialBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-[11px] font-bold text-indigo-700 transition">
-            <i class="fa-brands fa-usb text-xs"></i>
-            <span id="headerSerialText">Connect Serial</span>
+          <button type="button" onclick="connectBluetoothReader()" id="headerBleBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sky-50 hover:bg-sky-100 border border-sky-200 text-[11px] font-bold text-sky-700 transition">
+            <i class="fa-brands fa-bluetooth-b text-xs"></i>
+            <span id="headerBleText">Connect Bluetooth</span>
           </button>
 
-          <!-- Local Storage Mode Badge -->
           <div id="localStorageBadge" class="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-[11px] font-bold text-slate-600">
             <span id="localStorageDot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
             <span id="localStorageText">Local Storage Mode</span>
           </div>
 
-          <!-- Admin Profile -->
           <div class="flex items-center gap-2.5">
             <div id="headerProfileAvatar" class="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-500 text-white font-bold text-sm flex items-center justify-center shadow-sm overflow-hidden flex-shrink-0">
               <i class="fa-solid fa-user-tie"></i>
@@ -364,7 +370,6 @@
           </div>
 
           <form id="addMemberForm" onsubmit="handleAddMember(event)" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Step 1: Personal Details -->
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-4">
               <h3 class="text-base font-bold text-slate-900 flex items-center gap-2 pb-2 border-b border-slate-100">
                 <i class="fa-solid fa-address-card text-indigo-600"></i> 1. Personal Details
@@ -404,7 +409,6 @@
               </div>
             </div>
 
-            <!-- Step 2: Membership Details & Tap to Save -->
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between space-y-4">
               <div class="space-y-4">
                 <h3 class="text-base font-bold text-slate-900 pb-2 border-b border-slate-100">2. Membership Details</h3>
@@ -441,7 +445,6 @@
                   </div>
                 </div>
 
-                <!-- Choose Card or Mobile NFC -->
                 <div>
                   <label class="block text-xs font-bold text-slate-700 mb-1.5">Tap Device Type</label>
                   <div class="grid grid-cols-2 gap-3">
@@ -464,13 +467,13 @@
               </div>
 
               <div class="space-y-2.5 pt-2">
-                <div class="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold">
-                  <i class="fa-solid fa-wifi rotate-90 animate-pulse"></i>
-                  <span id="tapInstructionText">Ready: Tap Card or Mobile on RC522 Reader to Save</span>
+                <div class="flex flex-col items-center justify-center gap-1.5 py-4 px-4 rounded-xl bg-indigo-50 border-2 border-dashed border-indigo-300 text-indigo-800 text-xs font-bold text-center">
+                  <div class="flex items-center gap-2 text-sm text-indigo-700">
+                    <i class="fa-solid fa-wifi rotate-90 animate-pulse text-base"></i>
+                    <span id="tapInstructionText">Auto-Save Ready: Tap NFC Card or Mobile on RC522 Reader</span>
+                  </div>
+                  <p class="text-[11px] font-medium text-indigo-600">Connect Bluetooth above, fill details & tap on RC522!</p>
                 </div>
-                <button type="button" onclick="saveNewMemberRecord(false)" class="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 transition active:scale-[0.99]">
-                  <i class="fa-solid fa-mobile-screen-button"></i> Save / Tap Mobile NFC
-                </button>
               </div>
             </div>
           </form>
@@ -647,10 +650,12 @@
               <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Settings</h2>
             </div>
 
-            <button type="button" onclick="connectSerialReader()" id="serialConnectBtn" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold shadow-sm transition active:scale-95">
-              <i class="fa-brands fa-usb"></i>
-              <span>Connect USB Serial NFC</span>
-            </button>
+            <div class="flex flex-wrap items-center gap-2">
+              <button type="button" onclick="connectBluetoothReader()" id="bleConnectBtn" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs sm:text-sm font-bold shadow-sm transition active:scale-95">
+                <i class="fa-brands fa-bluetooth-b"></i>
+                <span>Connect Bluetooth NFC</span>
+              </button>
+            </div>
           </div>
 
           <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
@@ -662,7 +667,6 @@
               <button type="button" onclick="switchSettingsTab('security')" data-settings-tab="security" class="settings-tab px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Security</button>
             </div>
 
-            <!-- Tab 1: General -->
             <div id="settings-panel-general" class="settings-panel grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
               <form onsubmit="saveGeneralSettings(event)" class="lg:col-span-2 space-y-4">
                 <div class="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
@@ -739,7 +743,6 @@
               </div>
             </div>
 
-            <!-- Tab 2: Card Settings -->
             <div id="settings-panel-card" class="settings-panel hidden space-y-4 max-w-xl">
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-slate-200">
                 <div>
@@ -761,7 +764,6 @@
               <button type="button" onclick="saveCardSettings()" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition">Save Reader Settings</button>
             </div>
 
-            <!-- Tab: Owner Card (Unlimited Check-In) -->
             <div id="settings-panel-owner-card" class="settings-panel hidden space-y-4 max-w-xl">
               <div class="p-5 rounded-2xl border border-indigo-200 bg-indigo-50/50 space-y-3">
                 <div class="flex items-center gap-2.5">
@@ -785,7 +787,6 @@
               </div>
             </div>
 
-            <!-- Tab 3: Notifications -->
             <div id="settings-panel-notifications" class="settings-panel hidden space-y-4 max-w-xl">
               <div class="flex items-center justify-between p-4 rounded-xl border border-slate-200">
                 <div>
@@ -804,13 +805,23 @@
               </div>
             </div>
 
-            <!-- Tab 4: Security -->
             <form onsubmit="saveSecurityCredentials(event)" id="settings-panel-security" class="settings-panel hidden space-y-4 max-w-md">
               <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1">Admin Mobile Number</label>
                 <input id="securityNewUsername" type="tel" required placeholder="Enter new mobile number" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500" />
-  <!-- Toast Notification Container -->
-  <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-3 pointer-events-none"></div>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">New Password</label>
+                <input id="securityNewPassword" type="password" required placeholder="Enter new password" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition">Update Credentials</button>
+            </form>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
 
   <!-- Full-Screen NFC Tap Access Light Banner (Green / Red Light Feedback) -->
   <div id="nfcLightBanner" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/75 backdrop-blur-sm p-4 transition-all">
@@ -1021,21 +1032,84 @@
 
     let lineChartInstance = null;
     let barChartInstance = null;
-    let serialPort = null;
-    let serialReader = null;
-    let serialWriter = null;
-    let isSerialConnected = false;
-    let serialReceiveBuffer = '';
-    let nfcLightTimeout = null;
+    let bleDevice = null;
+    let bleRxCharacteristic = null;
+    let bleTxCharacteristic = null;
+    let isBleConnected = false;
+    let bleReceiveBuffer = '';
 
-    async function sendSerialSignal(commandStr) {
-      if (!isSerialConnected || !serialPort || !serialPort.writable) return;
-      try {
-        const encoder = new TextEncoder();
-        const writer = serialPort.writable.getWriter();
-        await writer.write(encoder.encode(commandStr + '\n'));
-        writer.releaseLock();
-      } catch (e) {}
+    async function sendHardwareSignal(commandStr) {
+      // Send over Bluetooth BLE if connected
+      if (isBleConnected && bleRxCharacteristic) {
+        try {
+          const encoder = new TextEncoder();
+          await bleRxCharacteristic.writeValue(encoder.encode(commandStr + '\n'));
+        } catch (e) {}
+      }
+    }
+
+    function persistState() {
+// ... existing code ... -->
+      if (!isWithinValidity || member.status === 'Expired') {
+        member.status = 'Expired';
+        playBuzzerPattern('error');
+        speakAnnouncement(`Your login failed due to your plan is expired`);
+        sendHardwareSignal('RED');
+        const deniedTxn = {
+          id: Date.now(),
+          name: member.name,
+          cardId: member.cardId,
+          endDate: member.endDate,
+          action: 'Expired (Plan Expired)',
+          time: timeStr,
+          date: dateStr,
+          method: member.nfcType === 'Mobile' ? 'Mobile NFC' : 'NFC Card',
+          status: 'Failed'
+        };
+        state.transactions.unshift(deniedTxn);
+        persistState();
+        renderAllViews();
+        showToast(`${member.name}: Your login failed due to your plan is expired`, 'error');
+        return;
+      }
+
+      const todayMemberCheckIns = state.transactions.filter(
+        t => t.name === member.name && t.date === dateStr && t.status === 'Success'
+      ).length;
+
+      if (todayMemberCheckIns >= dailyLimit) {
+        playBuzzerPattern('error');
+        speakAnnouncement(`Daily check-in limit reached for ${member.name}.`);
+        showToast(`Limit Reached: ${member.name} already checked in ${todayMemberCheckIns}/${dailyLimit} time(s) today!`, 'error');
+        return;
+      }
+
+      const nextCheckInCount = todayMemberCheckIns + 1;
+      const actionText = dailyLimit > 1 ? `Checked In (${nextCheckInCount}/${dailyLimit})` : 'Check-In Successful';
+      member.lastCheckInDate = dateStr;
+
+      playBuzzerPattern(nextCheckInCount === 1 ? 'success' : 'double');
+      speakAnnouncement(`${member.name}, your check-in successful`);
+      sendHardwareSignal('GREEN');
+
+      const successTxn = {
+        id: Date.now(),
+        name: member.name,
+        cardId: member.cardId,
+        endDate: member.endDate,
+        action: actionText,
+        time: timeStr,
+        date: dateStr,
+        method: member.nfcType === 'Mobile' ? 'Mobile NFC' : 'NFC Card',
+        status: 'Success'
+      };
+      state.transactions.unshift(successTxn);
+
+      sendWhatsAppAlert(member, actionText);
+      persistState();
+      renderAllViews();
+      showToast(`${member.name}, your check-in successful`, 'success');
+    }
     }
 
     function showAccessLightBanner(isAllowed, memberName, expiryDate, subtext) {
@@ -1050,15 +1124,15 @@
       if (!overlay || !card) return;
 
       if (isAllowed) {
-        card.className = 'max-w-md w-full rounded-3xl p-8 text-center text-white shadow-2xl border-4 border-emerald-300 bg-gradient-to-br from-emerald-500 to-green-600 transition-all';
+        card.className = 'max-w-md w-full rounded-3xl p-8 text-center text-white shadow-2xl border-4 border-emerald-300 bg-gradient-to-br from-emerald-500 to-green-600 green-light-active transition-all';
         icon.className = 'fa-solid fa-circle-check';
         badge.textContent = 'GREEN LIGHT • ACCESS ALLOWED';
-        sendSerialSignal('GREEN');
+        sendHardwareSignal('GREEN');
       } else {
-        card.className = 'max-w-md w-full rounded-3xl p-8 text-center text-white shadow-2xl border-4 border-rose-300 bg-gradient-to-br from-rose-600 to-red-700 transition-all';
+        card.className = 'max-w-md w-full rounded-3xl p-8 text-center text-white shadow-2xl border-4 border-rose-300 bg-gradient-to-br from-rose-600 to-red-700 red-light-active transition-all';
         icon.className = 'fa-solid fa-circle-xmark';
         badge.textContent = 'RED LIGHT • ACCESS DENIED';
-        sendSerialSignal('RED');
+        sendHardwareSignal('RED');
       }
 
       nameEl.textContent = memberName;
@@ -1231,7 +1305,6 @@
 
       syncMembershipExpirations();
 
-      const blockExpired = document.getElementById('blockExpiredToggle')?.checked ?? true;
       const dailyLimit = Number(document.getElementById('checkInDailyLimit')?.value || 1);
       const now = new Date();
       const todayMidnight = new Date();
@@ -1286,17 +1359,17 @@
         return;
       }
 
-      if ((!isWithinValidity || member.status === 'Expired') && blockExpired) {
+      if (!isWithinValidity || member.status === 'Expired') {
         member.status = 'Expired';
         playBuzzerPattern('error');
-        speakAnnouncement(`Access Declined. ${member.name}, your membership has expired.`);
-        showAccessLightBanner(false, member.name, member.endDate, 'Declined • Membership Expired');
+        speakAnnouncement(`Your login failed due to your plan is expired`);
+        showAccessLightBanner(false, member.name, member.endDate, 'EXPIRED • Your login failed due to your plan is expired');
         const deniedTxn = {
           id: Date.now(),
           name: member.name,
           cardId: member.cardId,
           endDate: member.endDate,
-          action: 'Declined (Expired)',
+          action: 'Expired (Red Light)',
           time: timeStr,
           date: dateStr,
           method: member.nfcType === 'Mobile' ? 'Mobile NFC' : 'NFC Card',
@@ -1305,7 +1378,7 @@
         state.transactions.unshift(deniedTxn);
         persistState();
         renderAllViews();
-        showToast(`Declined: ${member.name}'s membership expired on ${member.endDate}!`, 'error');
+        showToast(`RED LIGHT: ${member.name} - Your login failed due to your plan is expired`, 'error');
         return;
       }
 
@@ -1322,12 +1395,12 @@
       }
 
       const nextCheckInCount = todayMemberCheckIns + 1;
-      const actionText = dailyLimit > 1 ? `Allowed (${nextCheckInCount}/${dailyLimit})` : 'Allowed';
+      const actionText = dailyLimit > 1 ? `Allowed (${nextCheckInCount}/${dailyLimit})` : 'Allowed (Green Light)';
       member.lastCheckInDate = dateStr;
 
       playBuzzerPattern(nextCheckInCount === 1 ? 'success' : 'double');
-      speakAnnouncement(`Welcome ${member.name}. Access allowed.`);
-      showAccessLightBanner(true, member.name, member.endDate, `Allowed • Valid till ${member.endDate}`);
+      speakAnnouncement(`${member.name}, your check-in successful`);
+      showAccessLightBanner(true, member.name, member.endDate, `${member.plan} Plan • Valid till ${member.endDate}`);
 
       const successTxn = {
         id: Date.now(),
@@ -1345,7 +1418,14 @@
       sendWhatsAppAlert(member, actionText);
       persistState();
       renderAllViews();
-      showToast(`Allowed (${nextCheckInCount}/${dailyLimit}): ${member.name}`, 'success');
+      showToast(`GREEN LIGHT (${nextCheckInCount}/${dailyLimit}): ${member.name}`, 'success');
+    }
+
+    function initLocalStorageMode() {
+      const dot = document.getElementById('localStorageDot');
+      const text = document.getElementById('localStorageText');
+      if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
+      if (text) text.textContent = 'Local Storage Active';
     }
 
     function handleIncomingCardScan(rawUid) {
@@ -1404,18 +1484,27 @@
           return;
         }
 
-        document.getElementById('newMemberCardId').value = cleanUid;
-        updateCardPreview();
-
         const nameVal = document.getElementById('newMemberName').value.trim();
         const phoneVal = document.getElementById('newMemberPhone').value.trim();
 
-        if (nameVal && phoneVal) {
-          saveNewMemberRecord(true);
-        } else {
-          playBuzzerPattern('success');
-          showToast(`NFC (${cleanUid}) captured! Enter Name & Phone above, then tap again or click Save.`, 'info');
+        if (!nameVal) {
+          playBuzzerPattern('error');
+          speakAnnouncement('Please enter member full name before tapping.');
+          showToast('Please enter Full Name first, then tap NFC Card / Mobile on RC522!', 'error');
+          document.getElementById('newMemberName').focus();
+          return;
         }
+        if (!phoneVal) {
+          playBuzzerPattern('error');
+          speakAnnouncement('Please enter phone number before tapping.');
+          showToast('Please enter Phone Number first, then tap NFC Card / Mobile on RC522!', 'error');
+          document.getElementById('newMemberPhone').focus();
+          return;
+        }
+
+        document.getElementById('newMemberCardId').value = cleanUid;
+        updateCardPreview();
+        saveNewMemberRecord(true);
         return;
       }
 
@@ -1432,106 +1521,115 @@
       }
     }
 
-    function updateSerialButtonState(connected, label = '') {
-      isSerialConnected = connected;
-      const btn = document.getElementById('serialConnectBtn');
-      const headerBtn = document.getElementById('headerSerialBtn');
-      const headerText = document.getElementById('headerSerialText');
+    function parseIncomingReaderStream(chunkText, bufferType) {
+      if (bufferType === 'ble') {
+        bleReceiveBuffer += chunkText;
+        const lines = bleReceiveBuffer.split(/\r?\n/);
+        bleReceiveBuffer = lines.pop();
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
+          const uidMatch = trimmed.match(/(?:UID|CARD|ID)?[:=\s]*([0-9A-Fa-f]{2}(?:[:\s-]?[0-9A-Fa-f]{2}){3,6}|NFC-[0-9A-Za-z]+)/i);
+          if (uidMatch && uidMatch[1]) {
+            const formattedUid = uidMatch[1].replace(/[:\s]/g, '').toUpperCase();
+            handleIncomingCardScan(formattedUid);
+          }
+        }
+      }
+    }
+
+    function updateBleButtonState(connected, label = '') {
+      isBleConnected = connected;
+      const btn = document.getElementById('bleConnectBtn');
+      const headerBtn = document.getElementById('headerBleBtn');
+      const headerText = document.getElementById('headerBleText');
 
       if (connected) {
         if (btn) {
           btn.className = 'flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold shadow-sm transition';
-          btn.innerHTML = `<i class="fa-brands fa-usb"></i><span>Connected: ${label || 'USB Serial NFC'}</span>`;
+          btn.innerHTML = `<i class="fa-brands fa-bluetooth-b"></i><span>Connected: ${label || 'Bluetooth NFC'}</span>`;
         }
         if (headerBtn) {
           headerBtn.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-[11px] font-bold text-emerald-700 transition';
         }
         if (headerText) {
-          headerText.textContent = label || 'Serial Active';
+          headerText.textContent = label || 'BLE Active';
         }
       } else {
         if (btn) {
-          btn.className = 'flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold shadow-sm transition active:scale-95';
-          btn.innerHTML = `<i class="fa-brands fa-usb"></i><span>Connect USB Serial NFC</span>`;
+          btn.className = 'flex items-center gap-2 px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs sm:text-sm font-bold shadow-sm transition active:scale-95';
+          btn.innerHTML = `<i class="fa-brands fa-bluetooth-b"></i><span>Connect Bluetooth NFC</span>`;
         }
         if (headerBtn) {
-          headerBtn.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-[11px] font-bold text-indigo-700 transition';
+          headerBtn.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sky-50 hover:bg-sky-100 border border-sky-200 text-[11px] font-bold text-sky-700 transition';
         }
         if (headerText) {
-          headerText.textContent = 'Connect Serial';
+          headerText.textContent = 'Connect Bluetooth';
         }
       }
     }
 
-    async function connectSerialReader() {
-      if (!('serial' in navigator)) {
-        showToast('Web Serial is not supported in this browser. Please use Chrome or Edge on Desktop/Android.', 'error');
+    async function connectBluetoothReader() {
+      if (!('bluetooth' in navigator)) {
+        showToast('Web Bluetooth is not supported in this browser. Please use Google Chrome or Edge on Android/PC.', 'error');
         return;
       }
 
-      if (isSerialConnected && serialPort) {
+      if (isBleConnected && bleDevice && bleDevice.gatt.connected) {
         try {
-          if (serialReader) {
-            await serialReader.cancel();
-          }
-          await serialPort.close();
-        } catch (err) {}
-        serialPort = null;
-        serialReader = null;
-        updateSerialButtonState(false);
-        showToast('USB Serial NFC Reader disconnected', 'info');
+          bleDevice.gatt.disconnect();
+        } catch (e) {}
+        bleDevice = null;
+        bleRxCharacteristic = null;
+        bleTxCharacteristic = null;
+        updateBleButtonState(false);
+        showToast('Bluetooth NFC Reader disconnected', 'info');
         return;
       }
 
       try {
-        showToast('Select your USB Serial NFC Reader (ESP32 / Arduino)...', 'info');
-        serialPort = await navigator.serial.requestPort();
-        await serialPort.open({ baudRate: 115200 });
+        showToast('Scanning for Bluetooth NFC Reader (ESP32)...', 'info');
+        bleDevice = await navigator.bluetooth.requestDevice({
+          acceptAllDevices: true,
+          optionalServices: [BLE_UART_SERVICE_UUID, '0000ffe0-0000-1000-8000-00805f9b34fb']
+        });
 
-        updateSerialButtonState(true, 'USB Serial Ready');
-        showToast('Connected to USB Serial NFC Reader! Tap any card now.', 'success');
+        bleDevice.addEventListener('gattserverdisconnected', () => {
+          updateBleButtonState(false);
+          showToast('Bluetooth NFC Reader disconnected.', 'info');
+        });
 
-        const textDecoder = new TextDecoderStream();
-        serialPort.readable.pipeTo(textDecoder.writable);
-        serialReader = textDecoder.readable.getReader();
+        const server = await bleDevice.gatt.connect();
+        let service = null;
+        try {
+          service = await server.getPrimaryService(BLE_UART_SERVICE_UUID);
+          bleTxCharacteristic = await service.getCharacteristic(BLE_UART_TX_CHAR_UUID);
+          try {
+            bleRxCharacteristic = await service.getCharacteristic(BLE_UART_RX_CHAR_UUID);
+          } catch (e) {}
+        } catch (err) {
+          // Fallback to HM-10 / JDY-31 BLE UART service (0xFFE0 / 0xFFE1)
+          service = await server.getPrimaryService('0000ffe0-0000-1000-8000-00805f9b34fb');
+          bleTxCharacteristic = await service.getCharacteristic('0000ffe1-0000-1000-8000-00805f9b34fb');
+          bleRxCharacteristic = bleTxCharacteristic;
+        }
 
-        readSerialLoop();
+        await bleTxCharacteristic.startNotifications();
+        bleTxCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
+          const decoder = new TextDecoder('utf-8');
+          const text = decoder.decode(event.target.value);
+          // Ensure newline termination if ESP32 sends full UID in a single packet
+          const normalized = text.includes('\n') ? text : text + '\n';
+          parseIncomingReaderStream(normalized);
+        });
+
+        const devName = bleDevice.name || 'BLE NFC';
+        updateBleButtonState(true, devName);
+        showToast(`Connected via Bluetooth (${devName})! Tap card or phone now.`, 'success');
       } catch (err) {
-        updateSerialButtonState(false);
+        updateBleButtonState(false);
         if (err && err.name !== 'NotFoundError') {
-          showToast(`Serial connection failed: ${err.message}`, 'error');
-        }
-      }
-    }
-
-    async function readSerialLoop() {
-      try {
-        while (true) {
-          const { value, done } = await serialReader.read();
-          if (done) break;
-          if (value) {
-            serialReceiveBuffer += value;
-            const lines = serialReceiveBuffer.split(/\r?\n/);
-            serialReceiveBuffer = lines.pop();
-
-            for (const line of lines) {
-              const trimmed = line.trim();
-              if (!trimmed) continue;
-
-              const uidMatch = trimmed.match(/(?:UID|CARD|ID)?[:=\s]*([0-9A-Fa-f]{2}(?:[:\s-]?[0-9A-Fa-f]{2}){3,6}|NFC-[0-9A-Za-z]+)/i);
-              if (uidMatch && uidMatch[1]) {
-                const formattedUid = uidMatch[1].replace(/[:\s]/g, '').toUpperCase();
-                handleIncomingCardScan(formattedUid);
-              }
-            }
-          }
-        }
-      } catch (err) {
-        updateSerialButtonState(false);
-        showToast('USB Serial device disconnected.', 'info');
-      } finally {
-        if (serialReader) {
-          try { serialReader.releaseLock(); } catch (e) {}
+          showToast(`Bluetooth connection failed: ${err.message}`, 'error');
         }
       }
     }
@@ -1545,15 +1643,6 @@
       localStorage.setItem('gym_owner_card_uid', uid);
       playBuzzerPattern('register');
       showToast(`Owner Card (${uid}) saved for unlimited check-in!`, 'success');
-    }
-
-    function generateRandomCardId() {
-      const rand = Math.floor(1000 + Math.random() * 9000);
-      const idStr = `NFC-${rand}`;
-      const inp = document.getElementById('newMemberCardId');
-      if (inp) inp.value = idStr;
-      updateCardPreview();
-      return idStr;
     }
 
     function generateEditCardId() {
@@ -1701,7 +1790,8 @@
 
       playBuzzerPattern('register');
       if (autoTriggeredByTap) {
-        speakAnnouncement(`${nfcType === 'Mobile' ? 'Mobile NFC' : 'Card'} registered successfully for ${name}.`);
+        speakAnnouncement(`${name}, your card details saved successfully.`);
+        sendHardwareSignal(`WRITE:${cardId}|${name}|${endDate}`);
       }
 
       const form = document.getElementById('addMemberForm');
@@ -1711,7 +1801,7 @@
       if (cardIdEl) cardIdEl.value = '';
       updateCardPreview();
 
-      showToast(`Member "${name}" saved with ${nfcType === 'Mobile' ? 'Mobile NFC' : 'NFC Card'} (${cardId})!`, 'success');
+      showToast(`NFC Detected Successfully! Saved ${name} (${cardId}) to LocalStorage.`, 'success');
       switchSection('view-members');
     }
 
@@ -2509,9 +2599,8 @@
       initLocalStorageMode();
       renderAllViews();
 
-      // Always open Dashboard as the default home page
       switchSection('dashboard');
     });
   </script>
 </body>
-              </html>
+</html>
