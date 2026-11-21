@@ -2193,21 +2193,6 @@
       updatePwaManifest();
       showToast('Gym Logo, Name & Settings updated everywhere!', 'success');
     }
-      if (gymSubtitle) {
-        document.getElementById('sidebarGymSubtitle').textContent = gymSubtitle;
-        document.getElementById('loginBrandSubtitle').textContent = gymSubtitle;
-        localStorage.setItem('gym_brand_subtitle', gymSubtitle);
-      }
-      if (gymEmail) localStorage.setItem('gym_contact_email', gymEmail);
-      if (gymPhone) localStorage.setItem('gym_contact_phone', gymPhone);
-
-      if (profileUrl) {
-        localStorage.setItem('gym_profile_avatar', profileUrl);
-        applyProfileAvatar(profileUrl);
-      }
-
-      showToast('Brand & Profile settings saved permanently in LocalStorage!', 'success');
-    }
 
     function handleLogoUpload(e) {
       const file = e.target.files[0];
