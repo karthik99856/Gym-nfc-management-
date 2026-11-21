@@ -7,6 +7,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link id="appleTouchIconLink" rel="apple-touch-icon" />
   <link id="pwaManifestLink" rel="manifest" />
   <title>Gym NFC Management System</title>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -2330,32 +2331,57 @@
       const savedBrandLogo = localStorage.getItem('gym_brand_logo');
 
       const initials = gymTitle.slice(0, 4).toUpperCase();
-      const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="110" fill="#16134A"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="160" fill="#FFFFFF">${initials}</text></svg>`;
+      const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#16134A"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="160" fill="#FFFFFF">${initials}</text></svg>`;
       const fallbackIconUrl = 'data:image/svg+xml;base64,' + btoa(svgIcon);
       const activeIconUrl = savedBrandLogo || fallbackIconUrl;
       const iconType = savedBrandLogo && !savedBrandLogo.startsWith('data:image/svg') ? 'image/png' : 'image/svg+xml';
 
+      const appleIcon = document.getElementById('appleTouchIconLink');
+      if (appleIcon) appleIcon.href = activeIconUrl;
+
       const manifest = {
+        id: './gym-nfc-app',
         name: `${gymTitle} - ${gymSubtitle}`,
         short_name: gymTitle,
-        start_url: '.',
+        description: `${gymTitle} NFC Attendance & Member Management App`,
+        start_url: './',
+        scope: './',
         display: 'standalone',
+        orientation: 'any',
         background_color: '#16134A',
         theme_color: '#16134A',
         icons: [
-          { src: activeIconUrl, sizes: '192x192', type: iconType },
-          { src: activeIconUrl, sizes: '512x512', type: iconType }
+          { src: activeIconUrl, sizes: '192x192', type: iconType, purpose: 'any' },
+          { src: activeIconUrl, sizes: '512x512', type: iconType, purpose: 'any' },
+          { src: activeIconUrl, sizes: '512x512', type: iconType, purpose: 'maskable' }
         ]
       };
 
-      const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+      const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
       const manifestUrl = URL.createObjectURL(manifestBlob);
       const manifestLink = document.getElementById('pwaManifestLink');
       if (manifestLink) manifestLink.href = manifestUrl;
     }
 
+    function registerOfflineServiceWorker() {
+      if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+        const swCode = `
+          const CACHE_NAME = 'gym-nfc-native-v1';
+          self.addEventListener('install', (e) => { self.skipWaiting(); });
+          self.addEventListener('activate', (e) => { e.waitUntil(clients.claim()); });
+          self.addEventListener('fetch', (e) => {
+            e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+          });
+        `;
+        const swBlob = new Blob([swCode], { type: 'application/javascript' });
+        const swUrl = URL.createObjectURL(swBlob);
+        navigator.serviceWorker.register(swUrl).catch(() => {});
+      }
+    }
+
     function initPwaInstallSupport() {
       updatePwaManifest();
+      registerOfflineServiceWorker();
 
       window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
@@ -2392,4 +2418,4 @@
     }
   </script>
 </body>
-</html>
+  </html>
