@@ -260,9 +260,9 @@
             <span>Install App</span>
           </button>
 
-          <button type="button" onclick="connectBluetoothReader()" id="headerBleBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sky-50 hover:bg-sky-100 border border-sky-200 text-[11px] font-bold text-sky-700 transition">
-            <i class="fa-brands fa-bluetooth-b text-xs"></i>
-            <span id="headerBleText">Connect Bluetooth</span>
+          <button type="button" onclick="connectSerialReader()" id="headerSerialBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-[11px] font-bold text-indigo-700 transition">
+            <i class="fa-brands fa-usb text-xs"></i>
+            <span id="headerSerialText">Connect Serial</span>
           </button>
 
           <div id="localStorageBadge" class="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-[11px] font-bold text-slate-600">
@@ -472,7 +472,7 @@
                     <i class="fa-solid fa-wifi rotate-90 animate-pulse text-base"></i>
                     <span id="tapInstructionText">Auto-Save Ready: Tap NFC Card or Mobile on RC522 Reader</span>
                   </div>
-                  <p class="text-[11px] font-medium text-indigo-600">Connect Bluetooth above, fill details & tap on RC522!</p>
+                  <p class="text-[11px] font-medium text-indigo-600">Connect Serial Port above, fill details & tap on RC522!</p>
                 </div>
               </div>
             </div>
@@ -651,9 +651,9 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-2">
-              <button type="button" onclick="connectBluetoothReader()" id="bleConnectBtn" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs sm:text-sm font-bold shadow-sm transition active:scale-95">
-                <i class="fa-brands fa-bluetooth-b"></i>
-                <span>Connect Bluetooth NFC</span>
+              <button type="button" onclick="connectSerialReader()" id="serialConnectBtn" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold shadow-sm transition active:scale-95">
+                <i class="fa-brands fa-usb"></i>
+                <span>Connect Serial Port</span>
               </button>
             </div>
           </div>
@@ -772,7 +772,7 @@
                   </div>
                   <div>
                     <h4 class="text-sm font-extrabold text-slate-900">Owner NFC Card (Unlimited Check-In)</h4>
-                    <p class="text-xs text-slate-500">Tap your Owner Card anytime on the USB Serial NFC reader for unlimited check-ins & instant system check.</p>
+                    <p class="text-xs text-slate-500">Tap your Owner Card anytime on the Serial NFC reader for unlimited check-ins & instant system check.</p>
                   </div>
                 </div>
                 <div class="pt-1">
@@ -1032,24 +1032,20 @@
 
     let lineChartInstance = null;
     let barChartInstance = null;
-    let bleDevice = null;
-    let bleRxCharacteristic = null;
-    let bleTxCharacteristic = null;
-    let isBleConnected = false;
-    let bleReceiveBuffer = '';
-
-    const BLE_UART_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
-    const BLE_UART_RX_CHAR_UUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
-    const BLE_UART_TX_CHAR_UUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+    let serialPort = null;
+    let serialReader = null;
+    let isSerialConnected = false;
+    let serialReceiveBuffer = '';
+    let nfcLightTimeout = null;
 
     async function sendHardwareSignal(commandStr) {
-      // Send over Bluetooth BLE if connected
-      if (isBleConnected && bleRxCharacteristic) {
-        try {
-          const encoder = new TextEncoder();
-          await bleRxCharacteristic.writeValue(encoder.encode(commandStr + '\n'));
-        } catch (e) {}
-      }
+      if (!isSerialConnected || !serialPort || !serialPort.writable) return;
+      try {
+        const encoder = new TextEncoder();
+        const writer = serialPort.writable.getWriter();
+        await writer.write(encoder.encode(commandStr + '\n'));
+        writer.releaseLock();
+      } catch (e) {}
     }
 
     function showAccessLightBanner(isAllowed, memberName, expiryDate, subtext) {
@@ -1368,8 +1364,22 @@
       if (text) text.textContent = 'Local Storage Active';
     }
 
+    function initLocalStorageMode() {
+      const dot = document.getElementById('localStorageDot');
+      const text = document.getElementById('localStorageText');
+      if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
+      if (text) text.textContent = 'Local Storage Active';
+    }
+
+    function extractUidFromText(rawText) {
+      if (!rawText) return '';
+      const cleaned = rawText.replace(/UID|CARD|ID|TAG/gi, '').replace(/[^a-zA-Z0-9-]/g, '').toUpperCase().trim();
+      if (cleaned.length >= 4) return cleaned;
+      return '';
+    }
+
     function handleIncomingCardScan(rawUid) {
-      const cleanUid = rawUid.replace(/[^a-zA-Z0-9-]/g, '').toUpperCase();
+      const cleanUid = extractUidFromText(rawUid);
       if (!cleanUid) return;
 
       const ownerTab = document.getElementById('settings-panel-owner-card');
@@ -1461,115 +1471,119 @@
       }
     }
 
-    function parseIncomingReaderStream(chunkText, bufferType) {
-      if (bufferType === 'ble') {
-        bleReceiveBuffer += chunkText;
-        const lines = bleReceiveBuffer.split(/\r?\n/);
-        bleReceiveBuffer = lines.pop();
+    function parseIncomingReaderStream(chunkText, bufferType = 'serial') {
+      if (bufferType === 'serial') {
+        serialReceiveBuffer += chunkText;
+        const lines = serialReceiveBuffer.split(/[\r\n]+/);
+        serialReceiveBuffer = chunkText.endsWith('\n') || chunkText.endsWith('\r') ? '' : (lines.pop() || '');
         for (const line of lines) {
           const trimmed = line.trim();
           if (!trimmed) continue;
-          const uidMatch = trimmed.match(/(?:UID|CARD|ID)?[:=\s]*([0-9A-Fa-f]{2}(?:[:\s-]?[0-9A-Fa-f]{2}){3,6}|NFC-[0-9A-Za-z]+)/i);
+          const uidMatch = trimmed.match(/(?:UID|CARD|ID)?[:=\s]*([0-9A-Fa-f]{2}(?:[:\s-]?[0-9A-Fa-f]{2}){1,9}|[A-Za-z0-9-]{4,20})/i);
           if (uidMatch && uidMatch[1]) {
             const formattedUid = uidMatch[1].replace(/[:\s]/g, '').toUpperCase();
             handleIncomingCardScan(formattedUid);
+          } else {
+            handleIncomingCardScan(trimmed);
           }
         }
       }
     }
 
-    function updateBleButtonState(connected, label = '') {
-      isBleConnected = connected;
-      const btn = document.getElementById('bleConnectBtn');
-      const headerBtn = document.getElementById('headerBleBtn');
-      const headerText = document.getElementById('headerBleText');
+    function updateSerialButtonState(connected, label = '') {
+      isSerialConnected = connected;
+      const btn = document.getElementById('serialConnectBtn');
+      const headerBtn = document.getElementById('headerSerialBtn');
+      const headerText = document.getElementById('headerSerialText');
 
       if (connected) {
         if (btn) {
           btn.className = 'flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold shadow-sm transition';
-          btn.innerHTML = `<i class="fa-brands fa-bluetooth-b"></i><span>Connected: ${label || 'Bluetooth NFC'}</span>`;
+          btn.innerHTML = `<i class="fa-brands fa-usb"></i><span>Connected: ${label || 'Serial Port'}</span>`;
         }
         if (headerBtn) {
           headerBtn.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-[11px] font-bold text-emerald-700 transition';
         }
         if (headerText) {
-          headerText.textContent = label || 'BLE Active';
+          headerText.textContent = label || 'Serial Active';
         }
       } else {
         if (btn) {
-          btn.className = 'flex items-center gap-2 px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs sm:text-sm font-bold shadow-sm transition active:scale-95';
-          btn.innerHTML = `<i class="fa-brands fa-bluetooth-b"></i><span>Connect Bluetooth NFC</span>`;
+          btn.className = 'flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold shadow-sm transition active:scale-95';
+          btn.innerHTML = `<i class="fa-brands fa-usb"></i><span>Connect Serial Port</span>`;
         }
         if (headerBtn) {
-          headerBtn.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sky-50 hover:bg-sky-100 border border-sky-200 text-[11px] font-bold text-sky-700 transition';
+          headerBtn.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-[11px] font-bold text-indigo-700 transition';
         }
         if (headerText) {
-          headerText.textContent = 'Connect Bluetooth';
+          headerText.textContent = 'Connect Serial';
         }
       }
     }
 
-    async function connectBluetoothReader() {
-      if (!('bluetooth' in navigator)) {
-        showToast('Web Bluetooth is not supported in this browser. Please use Google Chrome or Edge on Android/PC.', 'error');
+    async function readSerialLoop() {
+      try {
+        while (serialPort && serialPort.readable && isSerialConnected) {
+          const { value, done } = await serialReader.read();
+          if (done) break;
+          if (value) {
+            parseIncomingReaderStream(value, 'serial');
+          }
+        }
+      } catch (err) {
+        if (isSerialConnected) {
+          showToast('Serial port read interrupted.', 'info');
+        }
+      } finally {
+        if (serialReader) {
+          try { serialReader.releaseLock(); } catch (e) {}
+          serialReader = null;
+        }
+        if (!serialPort || !serialPort.readable) {
+          updateSerialButtonState(false);
+        }
+      }
+    }
+
+    async function connectSerialReader() {
+      if (!('serial' in navigator)) {
+        showToast('Web Serial API is not supported in this browser. Use Google Chrome or Edge.', 'error');
         return;
       }
 
-      if (isBleConnected && bleDevice && bleDevice.gatt.connected) {
+      if (isSerialConnected && serialPort) {
+        isSerialConnected = false;
         try {
-          bleDevice.gatt.disconnect();
+          if (serialReader) {
+            await serialReader.cancel();
+          }
         } catch (e) {}
-        bleDevice = null;
-        bleRxCharacteristic = null;
-        bleTxCharacteristic = null;
-        updateBleButtonState(false);
-        showToast('Bluetooth NFC Reader disconnected', 'info');
+        try {
+          await serialPort.close();
+        } catch (e) {}
+        serialPort = null;
+        serialReader = null;
+        updateSerialButtonState(false);
+        showToast('Serial Port disconnected', 'info');
         return;
       }
 
       try {
-        showToast('Scanning for Bluetooth NFC Reader (ESP32)...', 'info');
-        bleDevice = await navigator.bluetooth.requestDevice({
-          acceptAllDevices: true,
-          optionalServices: [BLE_UART_SERVICE_UUID, '0000ffe0-0000-1000-8000-00805f9b34fb']
-        });
+        showToast('Select your Serial Port (COM / USB)...', 'info');
+        serialPort = await navigator.serial.requestPort();
+        await serialPort.open({ baudRate: 115200 });
 
-        bleDevice.addEventListener('gattserverdisconnected', () => {
-          updateBleButtonState(false);
-          showToast('Bluetooth NFC Reader disconnected.', 'info');
-        });
+        const textDecoder = new TextDecoderStream();
+        serialPort.readable.pipeTo(textDecoder.writable).catch(() => {});
+        serialReader = textDecoder.readable.getReader();
 
-        const server = await bleDevice.gatt.connect();
-        let service = null;
-        try {
-          service = await server.getPrimaryService(BLE_UART_SERVICE_UUID);
-          bleTxCharacteristic = await service.getCharacteristic(BLE_UART_TX_CHAR_UUID);
-          try {
-            bleRxCharacteristic = await service.getCharacteristic(BLE_UART_RX_CHAR_UUID);
-          } catch (e) {}
-        } catch (err) {
-          // Fallback to HM-10 / JDY-31 BLE UART service (0xFFE0 / 0xFFE1)
-          service = await server.getPrimaryService('0000ffe0-0000-1000-8000-00805f9b34fb');
-          bleTxCharacteristic = await service.getCharacteristic('0000ffe1-0000-1000-8000-00805f9b34fb');
-          bleRxCharacteristic = bleTxCharacteristic;
-        }
-
-        await bleTxCharacteristic.startNotifications();
-        bleTxCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
-          const decoder = new TextDecoder('utf-8');
-          const text = decoder.decode(event.target.value);
-          // Ensure newline termination if ESP32 sends full UID in a single packet
-          const normalized = text.includes('\n') ? text : text + '\n';
-          parseIncomingReaderStream(normalized, 'ble');
-        });
-
-        const devName = bleDevice.name || 'BLE NFC';
-        updateBleButtonState(true, devName);
-        showToast(`Connected via Bluetooth (${devName})! Tap card or phone now.`, 'success');
+        updateSerialButtonState(true, 'Serial Ready');
+        showToast('Connected via Serial Port! Tap NFC Card or Mobile now.', 'success');
+        readSerialLoop();
       } catch (err) {
-        updateBleButtonState(false);
+        updateSerialButtonState(false);
         if (err && err.name !== 'NotFoundError') {
-          showToast(`Bluetooth connection failed: ${err.message}`, 'error');
+          showToast(`Serial connection failed: ${err.message}`, 'error');
         }
       }
     }
