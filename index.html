@@ -631,6 +631,7 @@
             <div class="flex flex-wrap gap-2 border-b border-slate-100 pb-4 mb-6">
               <button onclick="switchSettingsTab('general')" data-settings-tab="general" class="settings-tab px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow">General</button>
               <button onclick="switchSettingsTab('card')" data-settings-tab="card" class="settings-tab px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Card Settings</button>
+              <button onclick="switchSettingsTab('owner-card')" data-settings-tab="owner-card" class="settings-tab px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Owner Card</button>
               <button onclick="switchSettingsTab('notifications')" data-settings-tab="notifications" class="settings-tab px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Notifications</button>
               <button onclick="switchSettingsTab('security')" data-settings-tab="security" class="settings-tab px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Security</button>
             </div>
@@ -712,6 +713,30 @@
                 <input id="blockExpiredToggle" type="checkbox" checked class="w-5 h-5 accent-indigo-600 rounded" />
               </div>
               <button onclick="saveCardSettings()" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition">Save Reader Settings</button>
+            </div>
+
+            <!-- Tab: Owner Card (Unlimited Check-In) -->
+            <div id="settings-panel-owner-card" class="settings-panel hidden space-y-4 max-w-xl">
+              <div class="p-5 rounded-2xl border border-indigo-200 bg-indigo-50/50 space-y-3">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-sm">
+                    <i class="fa-solid fa-crown"></i>
+                  </div>
+                  <div>
+                    <h4 class="text-sm font-extrabold text-slate-900">Owner NFC Card (Unlimited Check-In)</h4>
+                    <p class="text-xs text-slate-500">Tap your Owner Card anytime on the NFC reader for unlimited check-ins & instant system check.</p>
+                  </div>
+                </div>
+                <div class="pt-1">
+                  <label class="block text-xs font-bold text-slate-700 mb-1.5">Owner Card UID</label>
+                  <div class="flex gap-2">
+                    <input id="ownerCardUidInput" type="text" placeholder="Tap card on reader or enter UID (e.g. OWNER-01)" class="flex-1 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-mono font-bold text-indigo-700 uppercase outline-none focus:ring-2 focus:ring-indigo-500" />
+                    <button type="button" onclick="saveOwnerCardUid()" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition">
+                      Save Card
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <!-- Tab 3: Notifications -->
@@ -1094,6 +1119,21 @@
       const cleanUid = rawUid.replace(/[^a-zA-Z0-9-]/g, '').toUpperCase();
       if (!cleanUid) return;
 
+      // 1. If Owner Card settings tab is open, capture the tapped UID automatically
+      const ownerCardPanel = document.getElementById('settings-panel-owner-card');
+      if (ownerCardPanel && !ownerCardPanel.classList.contains('hidden')) {
+        document.getElementById('ownerCardUidInput').value = cleanUid;
+        saveOwnerCardUid();
+        return;
+      }
+
+      // 2. Check if tapped card matches the registered Owner Card (Unlimited Check-In)
+      const savedOwnerUid = (localStorage.getItem('gym_owner_card_uid') || '').replace(/[^a-zA-Z0-9-]/g, '').toUpperCase();
+      if (savedOwnerUid && cleanUid === savedOwnerUid) {
+        processOwnerCardTap(cleanUid);
+        return;
+      }
+
       const editModal = document.getElementById('editMemberModal');
       if (editModal && !editModal.classList.contains('hidden')) {
         document.getElementById('editCardId').value = cleanUid;
@@ -1122,6 +1162,43 @@
         speakAnnouncement('Unregistered card. Please register this card first.');
         showToast(`Unknown Card UID (${cleanUid}). Go to Add Member to assign it!`, 'error');
       }
+    }
+
+    function saveOwnerCardUid() {
+      const inputEl = document.getElementById('ownerCardUidInput');
+      if (!inputEl) return;
+      const uid = inputEl.value.trim().toUpperCase();
+      if (!uid) {
+        showToast('Please enter or tap an Owner Card UID first.', 'error');
+        return;
+      }
+      localStorage.setItem('gym_owner_card_uid', uid);
+      inputEl.value = uid;
+      playBuzzerPattern('success');
+      showToast(`Owner Card (${uid}) saved with Unlimited Check-In!`, 'success');
+    }
+
+    function processOwnerCardTap(uid) {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+      const dateStr = '15-11-2026';
+
+      state.todayAttendance += 1;
+      state.transactions.unshift({
+        id: state.transactions.length + 1,
+        name: `Owner Card (${uid})`,
+        action: 'Check-In',
+        time: timeStr,
+        date: dateStr,
+        method: 'Owner NFC (Unlimited)',
+        status: 'Success'
+      });
+
+      persistState();
+      renderAllViews();
+      playBuzzerPattern('success');
+      speakAnnouncement('Tested successfully');
+      showToast(`Tested successfully! Owner Card (${uid}) Unlimited Check-In at ${timeStr}`, 'success');
     }
 
     async function connectEsp32Serial() {
@@ -1798,9 +1875,14 @@
       const savedSubtitle = localStorage.getItem('gym_brand_subtitle');
       const savedAvatar = localStorage.getItem('gym_profile_avatar');
       const savedDailyLimit = localStorage.getItem('gym_checkin_daily_limit');
+      const savedOwnerUid = localStorage.getItem('gym_owner_card_uid');
       
       // Restore the exact section the admin was last working on
       const activeSection = localStorage.getItem('gym_active_section') || 'dashboard';
+
+      if (savedOwnerUid && document.getElementById('ownerCardUidInput')) {
+        document.getElementById('ownerCardUidInput').value = savedOwnerUid;
+      }
 
       if (savedDailyLimit && document.getElementById('checkInDailyLimit')) {
         document.getElementById('checkInDailyLimit').value = savedDailyLimit;
@@ -1832,4 +1914,4 @@
     });
   </script>
 </body>
-</html>
+  </html>
