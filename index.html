@@ -12,7 +12,7 @@
   <title>Gym NFC Management System</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- jsPDF & AutoTable for Excel-style Clean PDF Export -->
+  <!-- jsPDF & AutoTable for Clean PDF Export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
@@ -100,7 +100,7 @@
     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-lg font-bold text-slate-900">Edit Member & NFC Card</h3>
-        <button onclick="closeEditModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600">
+        <button type="button" onclick="closeEditModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
@@ -108,7 +108,7 @@
         <input type="hidden" id="editMemberId" />
         <div>
           <label class="block text-xs font-semibold text-slate-600 mb-1">Full Name</label>
-          <input type="text" id="editName" required class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+          <input type="text" id="editName" required class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm font-semibold focus:ring-2 focus:ring-indigo-500 outline-none" />
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
@@ -128,7 +128,7 @@
               <i class="fa-solid fa-rotate"></i> New ID
             </button>
           </div>
-          <p class="text-[11px] text-slate-400 mt-1">If lost, type new Card ID or tap new card on Bluetooth reader & click Save Changes.</p>
+          <p class="text-[11px] text-slate-400 mt-1">If lost, type new Card ID or tap new card on Serial NFC reader & click Save Changes.</p>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
@@ -183,34 +183,34 @@
               <p id="sidebarGymSubtitle" class="text-[11px] text-indigo-200 font-medium truncate">Management System</p>
             </div>
           </div>
-          <button onclick="toggleMobileSidebar()" class="lg:hidden w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center">
+          <button type="button" onclick="toggleMobileSidebar()" class="lg:hidden w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center">
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
 
         <!-- Menu Items -->
         <nav class="px-3.5 py-5 flex flex-col space-y-1.5">
-          <button onclick="switchSection('dashboard')" data-nav="dashboard" class="nav-btn nav-active w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold text-white transition text-left">
+          <button type="button" onclick="switchSection('dashboard')" data-nav="dashboard" class="nav-btn nav-active w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold text-white transition text-left">
             <i class="fa-solid fa-house w-5 text-center"></i>
             <span>Dashboard</span>
           </button>
-          <button onclick="switchSection('add-member')" data-nav="add-member" class="nav-btn w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium text-indigo-100/80 hover:bg-white/10 hover:text-white transition text-left">
+          <button type="button" onclick="switchSection('add-member')" data-nav="add-member" class="nav-btn w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium text-indigo-100/80 hover:bg-white/10 hover:text-white transition text-left">
             <i class="fa-solid fa-user-plus w-5 text-center"></i>
             <span>Add Member</span>
           </button>
-          <button onclick="switchSection('view-members')" data-nav="view-members" class="nav-btn w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium text-indigo-100/80 hover:bg-white/10 hover:text-white transition text-left">
+          <button type="button" onclick="switchSection('view-members')" data-nav="view-members" class="nav-btn w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium text-indigo-100/80 hover:bg-white/10 hover:text-white transition text-left">
             <i class="fa-solid fa-users w-5 text-center"></i>
             <span>View Members</span>
           </button>
-          <button onclick="switchSection('transactions')" data-nav="transactions" class="nav-btn w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium text-indigo-100/80 hover:bg-white/10 hover:text-white transition text-left">
+          <button type="button" onclick="switchSection('transactions')" data-nav="transactions" class="nav-btn w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium text-indigo-100/80 hover:bg-white/10 hover:text-white transition text-left">
             <i class="fa-solid fa-right-left w-5 text-center"></i>
             <span>Transactions</span>
           </button>
-          <button onclick="switchSection('reports')" data-nav="reports" class="nav-btn w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium text-indigo-100/80 hover:bg-white/10 hover:text-white transition text-left">
+          <button type="button" onclick="switchSection('reports')" data-nav="reports" class="nav-btn w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium text-indigo-100/80 hover:bg-white/10 hover:text-white transition text-left">
             <i class="fa-solid fa-chart-column w-5 text-center"></i>
             <span>Reports</span>
           </button>
-          <button onclick="switchSection('settings')" data-nav="settings" class="nav-btn w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium text-indigo-100/80 hover:bg-white/10 hover:text-white transition text-left">
+          <button type="button" onclick="switchSection('settings')" data-nav="settings" class="nav-btn w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium text-indigo-100/80 hover:bg-white/10 hover:text-white transition text-left">
             <i class="fa-solid fa-gear w-5 text-center"></i>
             <span>Settings</span>
           </button>
@@ -219,11 +219,11 @@
 
       <!-- Bottom Logout -->
       <div class="p-4 border-t border-white/10 space-y-2">
-        <button id="sidebarInstallBtn" onclick="installPwaApp()" class="hidden w-full flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-sm font-bold bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-400/30 transition text-left">
+        <button type="button" id="sidebarInstallBtn" onclick="installPwaApp()" class="hidden w-full flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-sm font-bold bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-400/30 transition text-left">
           <i class="fa-solid fa-download w-5 text-center"></i>
           <span>Install App</span>
         </button>
-        <button onclick="handleAdminLogout()" class="w-full flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-sm font-medium text-indigo-200/80 hover:bg-white/10 hover:text-white transition text-left">
+        <button type="button" onclick="handleAdminLogout()" class="w-full flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-sm font-medium text-indigo-200/80 hover:bg-white/10 hover:text-white transition text-left">
           <i class="fa-solid fa-arrow-right-from-bracket w-5 text-center"></i>
           <span>Logout</span>
         </button>
@@ -235,7 +235,7 @@
       <!-- Top Header Bar -->
       <header class="bg-white/90 backdrop-blur-md border-b border-slate-200/70 px-4 sm:px-8 py-3.5 flex items-center justify-between gap-4 sticky top-0 z-20 shadow-sm">
         <div class="flex items-center gap-3 flex-1 max-w-md">
-          <button onclick="toggleMobileSidebar()" class="lg:hidden p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">
+          <button type="button" onclick="toggleMobileSidebar()" class="lg:hidden p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">
             <i class="fa-solid fa-bars"></i>
           </button>
           <div class="relative w-full">
@@ -246,15 +246,15 @@
 
         <div class="flex items-center gap-2.5 sm:gap-4">
           <!-- Install App Quick Button -->
-          <button id="headerInstallBtn" onclick="installPwaApp()" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-[11px] font-bold text-emerald-700 transition">
+          <button type="button" id="headerInstallBtn" onclick="installPwaApp()" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-[11px] font-bold text-emerald-700 transition">
             <i class="fa-solid fa-download text-xs"></i>
             <span>Install App</span>
           </button>
 
-          <!-- Header Bluetooth Quick-Connect Pill -->
-          <button onclick="connectBluetoothReader()" id="headerBleBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-[11px] font-bold text-indigo-700 transition">
-            <i class="fa-brands fa-bluetooth-b text-xs"></i>
-            <span id="headerBleText">Connect BLE</span>
+          <!-- Header USB Serial Quick-Connect Pill -->
+          <button type="button" onclick="connectSerialReader()" id="headerSerialBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-[11px] font-bold text-indigo-700 transition">
+            <i class="fa-brands fa-usb text-xs"></i>
+            <span id="headerSerialText">Connect Serial</span>
           </button>
 
           <!-- Local Storage Mode Badge -->
@@ -347,12 +347,7 @@
 
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between">
               <div>
-                <div class="flex items-center justify-between mb-4">
-                  <h3 class="text-base font-bold text-slate-900">Recent Activity</h3>
-                  <button onclick="switchSection('transactions')" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
-                    View All <i class="fa-solid fa-arrow-right text-[10px]"></i>
-                  </button>
-                </div>
+                <h3 class="text-base font-bold text-slate-900 mb-4">Recent Activity</h3>
                 <div id="recentActivityList" class="space-y-3.5"></div>
               </div>
             </div>
@@ -369,16 +364,17 @@
           </div>
 
           <form id="addMemberForm" onsubmit="handleAddMember(event)" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Step 1: Personal Details -->
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-4">
               <h3 class="text-base font-bold text-slate-900 flex items-center gap-2 pb-2 border-b border-slate-100">
-                <i class="fa-solid fa-address-card text-indigo-600"></i> Personal Details
+                <i class="fa-solid fa-address-card text-indigo-600"></i> 1. Personal Details
               </h3>
 
               <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1.5">Full Name <span class="text-rose-500">*</span></label>
                 <div class="relative">
-                  <i class="fa-regular fa-user absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-                  <input id="newMemberName" oninput="updateCardPreview()" type="text" required placeholder="Enter member name" class="w-full rounded-xl border border-slate-200 pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+                  <i class="fa-solid fa-user absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                  <input id="newMemberName" oninput="updateCardPreview()" type="text" required placeholder="Enter member full name" class="w-full rounded-xl border border-slate-200 pl-10 pr-4 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-indigo-500 outline-none" />
                 </div>
               </div>
 
@@ -390,37 +386,10 @@
                 </div>
               </div>
 
-              <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1.5">NFC Card UID (Tap on Bluetooth Reader or Auto-Generate)</label>
-                <div class="flex gap-2">
-                  <input id="newMemberCardId" oninput="updateCardPreview()" type="text" required placeholder="e.g. A1B2C3D4" class="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm font-mono font-bold text-indigo-700 outline-none uppercase" />
-                  <button type="button" onclick="generateRandomCardId()" class="px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition">
-                    <i class="fa-solid fa-rotate"></i> Generate ID
-                  </button>
-                </div>
-                <p class="text-[11px] text-slate-500 mt-1">Tips: Connect Bluetooth NFC Reader in the top bar and tap any card to auto-fill UID.</p>
-              </div>
-
-              <div>
-                <label class="block text-xs font-bold text-slate-700 mb-2">NFC Card Type</label>
-                <div class="space-y-2">
-                  <label class="flex items-center gap-3 cursor-pointer p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50">
-                    <input type="radio" name="nfcType" value="Card" checked onchange="updateCardPreview()" class="w-4 h-4 text-indigo-600 focus:ring-indigo-500" />
-                    <i class="fa-solid fa-id-card text-indigo-600"></i>
-                    <span class="text-sm font-semibold text-slate-700">NFC Card (Mandatory)</span>
-                  </label>
-                  <label class="flex items-center gap-3 cursor-pointer p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50">
-                    <input type="radio" name="nfcType" value="Mobile" onchange="updateCardPreview()" class="w-4 h-4 text-indigo-600 focus:ring-indigo-500" />
-                    <i class="fa-solid fa-mobile-screen-button text-slate-600"></i>
-                    <span class="text-sm font-semibold text-slate-700">Mobile NFC (Optional)</span>
-                  </label>
-                </div>
-              </div>
-
-              <div class="pt-2 flex justify-center">
+              <div class="pt-4 flex justify-center">
                 <div class="nfc-card-preview w-72 h-44 rounded-2xl p-5 text-white flex flex-col justify-between relative overflow-hidden">
                   <div class="flex items-center justify-between">
-                    <span id="previewCardUid" class="text-[11px] font-mono text-indigo-300 tracking-wider">UID: NFC-8492</span>
+                    <span id="previewCardUid" class="text-[11px] font-mono text-indigo-300 tracking-wider">WAITING FOR TAP...</span>
                     <span id="previewCardTypeBadge" class="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-white/10 text-indigo-200">NFC Card</span>
                   </div>
                   <div class="flex items-center justify-center gap-3 my-auto">
@@ -429,15 +398,16 @@
                   </div>
                   <div class="text-center">
                     <p id="previewCardHolder" class="text-xs text-indigo-200 font-medium truncate">NEW MEMBER</p>
-                    <p class="text-sm font-extrabold tracking-widest mt-0.5">GYM MEMBER</p>
+                    <p id="previewCardTitle" class="text-sm font-extrabold tracking-widest mt-0.5">GYM NFC CARD</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between">
+            <!-- Step 2: Membership Details & Tap to Save -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between space-y-4">
               <div class="space-y-4">
-                <h3 class="text-base font-bold text-slate-900 pb-2 border-b border-slate-100">Membership Details</h3>
+                <h3 class="text-base font-bold text-slate-900 pb-2 border-b border-slate-100">2. Membership Details</h3>
 
                 <div>
                   <label class="block text-xs font-bold text-slate-700 mb-1.5">Membership Plan <span class="text-rose-500">*</span></label>
@@ -459,20 +429,49 @@
                   </div>
                 </div>
 
-                <div>
-                  <label class="block text-xs font-bold text-slate-700 mb-1.5">Start Date <span class="text-rose-500">*</span></label>
-                  <input id="newMemberStart" onchange="autoCalculateEndDate()" type="date" required class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none bg-white" />
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Start Date <span class="text-rose-500">*</span></label>
+                    <input id="newMemberStart" onchange="autoCalculateEndDate()" type="date" required class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none bg-white" />
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">End Date <span class="text-rose-500">*</span></label>
+                    <input id="newMemberEnd" type="date" required class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none bg-white" />
+                  </div>
                 </div>
 
+                <!-- Choose Card or Mobile NFC -->
                 <div>
-                  <label class="block text-xs font-bold text-slate-700 mb-1.5">End Date <span class="text-rose-500">*</span></label>
-                  <input id="newMemberEnd" type="date" required class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none bg-white" />
+                  <label class="block text-xs font-bold text-slate-700 mb-1.5">Tap Device Type</label>
+                  <div class="grid grid-cols-2 gap-3">
+                    <label class="cursor-pointer">
+                      <input type="radio" name="nfcType" value="Card" checked onchange="updateCardPreview()" class="peer sr-only" />
+                      <div class="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 peer-checked:border-indigo-600 peer-checked:bg-indigo-50 peer-checked:text-indigo-700 transition">
+                        <i class="fa-solid fa-id-card"></i> NFC Card
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="nfcType" value="Mobile" onchange="updateCardPreview()" class="peer sr-only" />
+                      <div class="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 peer-checked:border-indigo-600 peer-checked:bg-indigo-50 peer-checked:text-indigo-700 transition">
+                        <i class="fa-solid fa-mobile-screen-button"></i> Mobile NFC
+                      </div>
+                    </label>
+                  </div>
                 </div>
+
+                <input id="newMemberCardId" type="hidden" />
               </div>
 
-              <button type="submit" class="mt-6 w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 transition active:scale-[0.99]">
-                <i class="fa-solid fa-floppy-disk"></i> Save Member
-              </button>
+              <div class="space-y-2.5 pt-2">
+                <div class="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold">
+                  <i class="fa-solid fa-wifi rotate-90 animate-pulse"></i>
+                  <span id="tapInstructionText">Ready: Tap Card or Mobile on RC522 Reader to Save</span>
+                </div>
+                <button type="button" onclick="saveNewMemberRecord(false)" class="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 transition active:scale-[0.99]">
+                  <i class="fa-solid fa-mobile-screen-button"></i> Save / Tap Mobile NFC
+                </button>
+              </div>
             </div>
           </form>
         </section>
@@ -487,10 +486,10 @@
               <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">View Gym Members</h2>
             </div>
             <div class="flex flex-wrap items-center gap-2">
-              <button onclick="downloadMembersPdf()" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition">
+              <button type="button" onclick="downloadMembersPdf()" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition">
                 <i class="fa-solid fa-file-pdf"></i> Download PDF
               </button>
-              <button onclick="switchSection('add-member')" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center gap-2 shadow-sm">
+              <button type="button" onclick="switchSection('add-member')" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center gap-2 shadow-sm">
                 <i class="fa-solid fa-plus"></i> Add New Member
               </button>
             </div>
@@ -514,7 +513,7 @@
                 <option value="Expired">Expired</option>
                 <option value="Frozen">Frozen</option>
               </select>
-              <button onclick="resetMemberFilters()" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold flex items-center justify-center gap-2 transition">
+              <button type="button" onclick="resetMemberFilters()" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold flex items-center justify-center gap-2 transition">
                 <i class="fa-solid fa-rotate-left"></i> Reset
               </button>
             </div>
@@ -549,7 +548,7 @@
               </div>
               <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Transactions (NFC Entrance Logs)</h2>
             </div>
-            <button onclick="downloadTransactionsPdf()" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition">
+            <button type="button" onclick="downloadTransactionsPdf()" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition">
               <i class="fa-solid fa-file-pdf"></i> Download PDF
             </button>
           </div>
@@ -560,12 +559,11 @@
                 <thead>
                   <tr class="border-b border-slate-200 text-xs font-bold text-slate-600 uppercase tracking-wider bg-slate-50/70">
                     <th class="py-3.5 px-4">#</th>
-                    <th class="py-3.5 px-4">Member Name</th>
-                    <th class="py-3.5 px-4">Action</th>
-                    <th class="py-3.5 px-4">Time</th>
-                    <th class="py-3.5 px-4">Date</th>
-                    <th class="py-3.5 px-4">Method</th>
-                    <th class="py-3.5 px-4">Status</th>
+                    <th class="py-3.5 px-4">Member Name & Card</th>
+                    <th class="py-3.5 px-4">Expiry Date</th>
+                    <th class="py-3.5 px-4">Time & Date</th>
+                    <th class="py-3.5 px-4">Device</th>
+                    <th class="py-3.5 px-4">Access Status</th>
                   </tr>
                 </thead>
                 <tbody id="transactionsTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
@@ -584,9 +582,9 @@
           </div>
 
           <div class="inline-flex bg-white p-1.5 rounded-xl border border-slate-200/80 shadow-sm">
-            <button onclick="switchReportPeriod('daily')" data-report-tab="daily" class="report-tab px-5 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow transition">Daily</button>
-            <button onclick="switchReportPeriod('weekly')" data-report-tab="weekly" class="report-tab px-5 py-2 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition">Weekly</button>
-            <button onclick="switchReportPeriod('monthly')" data-report-tab="monthly" class="report-tab px-5 py-2 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition">Monthly</button>
+            <button type="button" onclick="switchReportPeriod('daily')" data-report-tab="daily" class="report-tab px-5 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow transition">Daily</button>
+            <button type="button" onclick="switchReportPeriod('weekly')" data-report-tab="weekly" class="report-tab px-5 py-2 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition">Weekly</button>
+            <button type="button" onclick="switchReportPeriod('monthly')" data-report-tab="monthly" class="report-tab px-5 py-2 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition">Monthly</button>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -649,19 +647,19 @@
               <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Settings</h2>
             </div>
 
-            <button onclick="connectBluetoothReader()" id="bluetoothConnectBtn" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold shadow-sm transition active:scale-95">
-              <i class="fa-brands fa-bluetooth-b"></i>
-              <span>Connect Bluetooth NFC</span>
+            <button type="button" onclick="connectSerialReader()" id="serialConnectBtn" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold shadow-sm transition active:scale-95">
+              <i class="fa-brands fa-usb"></i>
+              <span>Connect USB Serial NFC</span>
             </button>
           </div>
 
           <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
             <div class="flex flex-wrap gap-2 border-b border-slate-100 pb-4 mb-6">
-              <button onclick="switchSettingsTab('general')" data-settings-tab="general" class="settings-tab px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow">General</button>
-              <button onclick="switchSettingsTab('card')" data-settings-tab="card" class="settings-tab px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Card Settings</button>
-              <button onclick="switchSettingsTab('owner-card')" data-settings-tab="owner-card" class="settings-tab px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Owner Card</button>
-              <button onclick="switchSettingsTab('notifications')" data-settings-tab="notifications" class="settings-tab px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Notifications</button>
-              <button onclick="switchSettingsTab('security')" data-settings-tab="security" class="settings-tab px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Security</button>
+              <button type="button" onclick="switchSettingsTab('general')" data-settings-tab="general" class="settings-tab px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow">General</button>
+              <button type="button" onclick="switchSettingsTab('card')" data-settings-tab="card" class="settings-tab px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Card Settings</button>
+              <button type="button" onclick="switchSettingsTab('owner-card')" data-settings-tab="owner-card" class="settings-tab px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Owner Card</button>
+              <button type="button" onclick="switchSettingsTab('notifications')" data-settings-tab="notifications" class="settings-tab px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Notifications</button>
+              <button type="button" onclick="switchSettingsTab('security')" data-settings-tab="security" class="settings-tab px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Security</button>
             </div>
 
             <!-- Tab 1: General -->
@@ -760,7 +758,7 @@
                 </div>
                 <input id="blockExpiredToggle" type="checkbox" checked class="w-5 h-5 accent-indigo-600 rounded" />
               </div>
-              <button onclick="saveCardSettings()" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition">Save Reader Settings</button>
+              <button type="button" onclick="saveCardSettings()" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition">Save Reader Settings</button>
             </div>
 
             <!-- Tab: Owner Card (Unlimited Check-In) -->
@@ -772,7 +770,7 @@
                   </div>
                   <div>
                     <h4 class="text-sm font-extrabold text-slate-900">Owner NFC Card (Unlimited Check-In)</h4>
-                    <p class="text-xs text-slate-500">Tap your Owner Card anytime on the Bluetooth NFC reader for unlimited check-ins & instant system check.</p>
+                    <p class="text-xs text-slate-500">Tap your Owner Card anytime on the USB Serial NFC reader for unlimited check-ins & instant system check.</p>
                   </div>
                 </div>
                 <div class="pt-1">
@@ -811,19 +809,19 @@
               <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1">Admin Mobile Number</label>
                 <input id="securityNewUsername" type="tel" required placeholder="Enter new mobile number" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500" />
-              </div>
-              <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">New Password</label>
-                <input id="securityNewPassword" type="text" required placeholder="Enter new password" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500" />
-              </div>
-              <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition">
-                Save Mobile Number & Password
-              </button>
-            </form>
-          </div>
-        </section>
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-3 pointer-events-none"></div>
 
-      </main>
+  <!-- Full-Screen NFC Tap Access Light Banner (Green / Red Light Feedback) -->
+  <div id="nfcLightBanner" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/75 backdrop-blur-sm p-4 transition-all">
+    <div id="nfcLightCard" class="max-w-md w-full rounded-3xl p-8 text-center text-white shadow-2xl border-4 transition-all">
+      <div id="nfcLightIconBox" class="w-24 h-24 rounded-full mx-auto mb-5 flex items-center justify-center text-5xl shadow-lg bg-white/20">
+        <i id="nfcLightIcon" class="fa-solid fa-check"></i>
+      </div>
+      <span id="nfcLightBadge" class="inline-block px-4 py-1 rounded-full text-xs font-extrabold uppercase tracking-widest bg-white/20 mb-3">GREEN LIGHT • ACCESS ALLOWED</span>
+      <h2 id="nfcLightName" class="text-2xl sm:text-3xl font-extrabold tracking-tight">Member Name</h2>
+      <p id="nfcLightExpiry" class="text-base sm:text-lg font-bold mt-2 opacity-95">Expiry Date: 01-11-2027</p>
+      <p id="nfcLightSubtext" class="text-xs font-medium mt-3 opacity-80">Valid Membership • Check-In Recorded</p>
     </div>
   </div>
 
@@ -832,7 +830,7 @@
     const DEFAULT_ADMIN_PASS = '1234';
     const MASTER_RECOVERY_KEY = '0987654321';
     const MAX_LOGIN_ATTEMPTS = 5;
-    const LOCKOUT_DURATION_MS = 60 * 60 * 1000; // 1 Hour (3,600,000 ms)
+    const LOCKOUT_DURATION_MS = 60 * 60 * 1000;
     let lockoutCountdownInterval = null;
 
     function getAdminCredentials() {
@@ -991,15 +989,15 @@
 
     const DEFAULT_MEMBERS = [
       { id: 1, cardId: 'NFC-1001', name: 'Rahul Kumar', phone: '9876543210', plan: 'Premium', amount: 12000, startDate: '01-11-2026', endDate: '01-11-2027', nfcType: 'Card', status: 'Active', frozen: false, lastCheckInDate: '' },
-      { id: 2, cardId: 'NFC-1002', name: 'Priya Sharma', phone: '9123456789', plan: 'Standard', amount: 6500, startDate: '05-11-2026', endDate: '05-05-2027', nfcType: 'Mobile', status: 'Active', frozen: false, lastCheckInDate: '' },
+      { id: 2, cardId: 'NFC-1002', name: 'Priya Sharma', phone: '9123456789', plan: 'Standard', amount: 6500, startDate: '05-11-2026', endDate: '05-05-2027', nfcType: 'Card', status: 'Active', frozen: false, lastCheckInDate: '' },
       { id: 3, cardId: 'NFC-1003', name: 'Amit Singh', phone: '9988776655', plan: 'Premium', amount: 12000, startDate: '10-11-2026', endDate: '10-11-2027', nfcType: 'Card', status: 'Active', frozen: false, lastCheckInDate: '' },
-      { id: 4, cardId: 'NFC-1004', name: 'Sneha Reddy', phone: '9001122334', plan: 'Basic', amount: 1500, startDate: '12-10-2026', endDate: '12-11-2026', nfcType: 'Mobile', status: 'Expired', frozen: false, lastCheckInDate: '' },
+      { id: 4, cardId: 'NFC-1004', name: 'Sneha Reddy', phone: '9001122334', plan: 'Basic', amount: 1500, startDate: '12-10-2026', endDate: '12-11-2026', nfcType: 'Card', status: 'Expired', frozen: false, lastCheckInDate: '' },
       { id: 5, cardId: 'NFC-1005', name: 'Vikram Rao', phone: '9848012345', plan: 'Premium', amount: 12000, startDate: '14-10-2026', endDate: '14-10-2027', nfcType: 'Card', status: 'Active', frozen: false, lastCheckInDate: '' }
     ];
 
     const DEFAULT_TRANSACTIONS = [
-      { id: 1, name: 'Rahul Kumar', action: 'Check-In', time: '08:30 AM', date: getTodayFormatted(), method: 'NFC Card', status: 'Success' },
-      { id: 2, name: 'Amit Singh', action: 'Check-In', time: '10:15 AM', date: getTodayFormatted(), method: 'NFC Card', status: 'Success' }
+      { id: 1, name: 'Rahul Kumar', cardId: 'NFC-1001', endDate: '01-11-2027', action: 'Allowed', time: '08:30 AM', date: getTodayFormatted(), method: 'NFC Card', status: 'Success' },
+      { id: 2, name: 'Sneha Reddy', cardId: 'NFC-1004', endDate: '12-11-2026', action: 'Declined (Expired)', time: '09:45 AM', date: getTodayFormatted(), method: 'NFC Card', status: 'Failed' }
     ];
 
     let state = {
@@ -1023,25 +1021,58 @@
 
     let lineChartInstance = null;
     let barChartInstance = null;
-    let bluetoothDevice = null;
-    let isBluetoothConnected = false;
-    let bleReceiveBuffer = '';
+    let serialPort = null;
+    let serialReader = null;
+    let serialWriter = null;
+    let isSerialConnected = false;
+    let serialReceiveBuffer = '';
+    let nfcLightTimeout = null;
 
-    const BLE_SERVICE_UUIDS = [
-      '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
-      '0000ffe0-0000-1000-8000-00805f9b34fb'
-    ];
-    const BLE_TX_CHAR_UUIDS = [
-      '6e400003-b5a3-f393-e0a9-e50e24dcca9e',
-      '0000ffe1-0000-1000-8000-00805f9b34fb'
-    ];
+    async function sendSerialSignal(commandStr) {
+      if (!isSerialConnected || !serialPort || !serialPort.writable) return;
+      try {
+        const encoder = new TextEncoder();
+        const writer = serialPort.writable.getWriter();
+        await writer.write(encoder.encode(commandStr + '\n'));
+        writer.releaseLock();
+      } catch (e) {}
+    }
 
-    function initLocalStorageMode() {
-      const dot = document.getElementById('localStorageDot');
-      const text = document.getElementById('localStorageText');
-      if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
-      if (text) text.textContent = 'Local Storage Mode';
-      persistState();
+    function showAccessLightBanner(isAllowed, memberName, expiryDate, subtext) {
+      const overlay = document.getElementById('nfcLightBanner');
+      const card = document.getElementById('nfcLightCard');
+      const icon = document.getElementById('nfcLightIcon');
+      const badge = document.getElementById('nfcLightBadge');
+      const nameEl = document.getElementById('nfcLightName');
+      const expiryEl = document.getElementById('nfcLightExpiry');
+      const subEl = document.getElementById('nfcLightSubtext');
+
+      if (!overlay || !card) return;
+
+      if (isAllowed) {
+        card.className = 'max-w-md w-full rounded-3xl p-8 text-center text-white shadow-2xl border-4 border-emerald-300 bg-gradient-to-br from-emerald-500 to-green-600 transition-all';
+        icon.className = 'fa-solid fa-circle-check';
+        badge.textContent = 'GREEN LIGHT • ACCESS ALLOWED';
+        sendSerialSignal('GREEN');
+      } else {
+        card.className = 'max-w-md w-full rounded-3xl p-8 text-center text-white shadow-2xl border-4 border-rose-300 bg-gradient-to-br from-rose-600 to-red-700 transition-all';
+        icon.className = 'fa-solid fa-circle-xmark';
+        badge.textContent = 'RED LIGHT • ACCESS DENIED';
+        sendSerialSignal('RED');
+      }
+
+      nameEl.textContent = memberName;
+      expiryEl.textContent = `Expiry Date: ${expiryDate || 'N/A'}`;
+      subEl.textContent = subtext;
+
+      overlay.classList.remove('hidden');
+      overlay.classList.add('flex');
+
+      if (nfcLightTimeout) clearTimeout(nfcLightTimeout);
+      nfcLightTimeout = setTimeout(() => {
+        overlay.classList.add('hidden');
+        overlay.classList.remove('flex');
+      }, 3500);
     }
 
     function persistState() {
@@ -1070,9 +1101,9 @@
 
       const sidebar = document.getElementById('sidebar');
       const backdrop = document.getElementById('sidebarBackdrop');
-      if (!sidebar.classList.contains('-translate-x-full') && window.innerWidth < 1024) {
+      if (sidebar && !sidebar.classList.contains('-translate-x-full') && window.innerWidth < 1024) {
         sidebar.classList.add('-translate-x-full');
-        backdrop.classList.add('hidden');
+        if (backdrop) backdrop.classList.add('hidden');
       }
 
       localStorage.setItem('gym_active_section', sectionId);
@@ -1084,12 +1115,13 @@
     function toggleMobileSidebar() {
       const sidebar = document.getElementById('sidebar');
       const backdrop = document.getElementById('sidebarBackdrop');
-      sidebar.classList.toggle('-translate-x-full');
-      backdrop.classList.toggle('hidden');
+      if (sidebar) sidebar.classList.toggle('-translate-x-full');
+      if (backdrop) backdrop.classList.toggle('hidden');
     }
 
     function showToast(message, type = 'success') {
       const container = document.getElementById('toastContainer');
+      if (!container) return;
       const colors = {
         success: 'bg-emerald-600 text-white',
         error: 'bg-rose-600 text-white',
@@ -1202,98 +1234,126 @@
       const blockExpired = document.getElementById('blockExpiredToggle')?.checked ?? true;
       const dailyLimit = Number(document.getElementById('checkInDailyLimit')?.value || 1);
       const now = new Date();
+      const todayMidnight = new Date();
+      todayMidnight.setHours(0, 0, 0, 0);
       const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
       const dateStr = getTodayFormatted();
 
-      if (member.frozen) {
+      const startDt = parseDdMmYyyy(member.startDate);
+      const endDt = parseDdMmYyyy(member.endDate);
+
+      if (startDt && !isNaN(startDt.getTime()) && todayMidnight < startDt) {
         playBuzzerPattern('error');
-        speakAnnouncement(`Access Denied. ${member.name}, your account is frozen.`);
-        showToast(`Access Denied: ${member.name}'s NFC card is currently FROZEN!`, 'error');
+        speakAnnouncement(`Access Declined. ${member.name}, your membership starts on ${member.startDate}.`);
+        showAccessLightBanner(false, member.name, member.endDate, `Declined • Starts on ${member.startDate}`);
+        state.transactions.unshift({
+          id: Date.now(),
+          name: member.name,
+          cardId: member.cardId,
+          endDate: member.endDate,
+          action: 'Declined (Not Started)',
+          time: timeStr,
+          date: dateStr,
+          method: member.nfcType === 'Mobile' ? 'Mobile NFC' : 'NFC Card',
+          status: 'Failed'
+        });
+        persistState();
+        renderAllViews();
+        showToast(`Declined: ${member.name}'s membership starts on ${member.startDate}!`, 'error');
         return;
       }
 
-      if (member.status === 'Expired' && blockExpired) {
+      const isWithinValidity = (!endDt || isNaN(endDt.getTime())) ? member.status === 'Active' : todayMidnight <= endDt;
+
+      if (member.frozen) {
         playBuzzerPattern('error');
-        speakAnnouncement(`Access Denied. ${member.name}, your membership has expired.`);
+        speakAnnouncement(`Access Declined. ${member.name}, your card is frozen.`);
+        showAccessLightBanner(false, member.name, member.endDate, 'Declined • NFC Device is Frozen');
+        state.transactions.unshift({
+          id: Date.now(),
+          name: member.name,
+          cardId: member.cardId,
+          endDate: member.endDate,
+          action: 'Declined (Frozen)',
+          time: timeStr,
+          date: dateStr,
+          method: member.nfcType === 'Mobile' ? 'Mobile NFC' : 'NFC Card',
+          status: 'Failed'
+        });
+        persistState();
+        renderAllViews();
+        showToast(`Declined: ${member.name}'s NFC is currently FROZEN!`, 'error');
+        return;
+      }
+
+      if ((!isWithinValidity || member.status === 'Expired') && blockExpired) {
+        member.status = 'Expired';
+        playBuzzerPattern('error');
+        speakAnnouncement(`Access Declined. ${member.name}, your membership has expired.`);
+        showAccessLightBanner(false, member.name, member.endDate, 'Declined • Membership Expired');
         const deniedTxn = {
           id: Date.now(),
           name: member.name,
-          action: 'Denied (Expired)',
+          cardId: member.cardId,
+          endDate: member.endDate,
+          action: 'Declined (Expired)',
           time: timeStr,
           date: dateStr,
-          method: member.nfcType === 'Card' ? 'NFC Card' : 'Mobile NFC',
+          method: member.nfcType === 'Mobile' ? 'Mobile NFC' : 'NFC Card',
           status: 'Failed'
         };
         state.transactions.unshift(deniedTxn);
         persistState();
         renderAllViews();
-        showToast(`Access Denied: ${member.name}'s membership is expired!`, 'error');
+        showToast(`Declined: ${member.name}'s membership expired on ${member.endDate}!`, 'error');
         return;
       }
 
-      if (member.lastCheckInDate !== dateStr) {
-        member.lastCheckInDate = dateStr;
-        member.todayCheckInCount = 0;
-      }
+      const todayMemberCheckIns = state.transactions.filter(
+        t => t.name === member.name && t.date === dateStr && t.status === 'Success'
+      ).length;
 
-      const currentCount = member.todayCheckInCount || 0;
-      if (currentCount >= dailyLimit) {
+      if (todayMemberCheckIns >= dailyLimit) {
         playBuzzerPattern('error');
-        speakAnnouncement(`${member.name}, daily check-in limit reached.`);
-        showToast(`${member.name} already checked in ${currentCount} time(s) today!`, 'info');
+        speakAnnouncement(`Daily check-in limit reached for ${member.name}.`);
+        showAccessLightBanner(false, member.name, member.endDate, `Declined • Daily Limit (${todayMemberCheckIns}/${dailyLimit})`);
+        showToast(`Limit Reached: ${member.name} already checked in ${todayMemberCheckIns}/${dailyLimit} time(s) today!`, 'error');
         return;
       }
 
-      member.todayCheckInCount = currentCount + 1;
+      const nextCheckInCount = todayMemberCheckIns + 1;
+      const actionText = dailyLimit > 1 ? `Allowed (${nextCheckInCount}/${dailyLimit})` : 'Allowed';
+      member.lastCheckInDate = dateStr;
 
-      const isSecondTime = member.todayCheckInCount === 2;
-      playBuzzerPattern(isSecondTime ? 'double' : 'success');
+      playBuzzerPattern(nextCheckInCount === 1 ? 'success' : 'double');
+      speakAnnouncement(`Welcome ${member.name}. Access allowed.`);
+      showAccessLightBanner(true, member.name, member.endDate, `Allowed • Valid till ${member.endDate}`);
 
       const successTxn = {
         id: Date.now(),
         name: member.name,
-        action: 'Check-In',
+        cardId: member.cardId,
+        endDate: member.endDate,
+        action: actionText,
         time: timeStr,
         date: dateStr,
-        method: member.nfcType === 'Card' ? 'NFC Card' : 'Mobile NFC',
+        method: member.nfcType === 'Mobile' ? 'Mobile NFC' : 'NFC Card',
         status: 'Success'
       };
       state.transactions.unshift(successTxn);
 
+      sendWhatsAppAlert(member, actionText);
       persistState();
       renderAllViews();
-      speakAnnouncement(`Welcome ${member.name}. Check-In successful.`);
-      sendWhatsAppAlert(member, `Check-In #${member.todayCheckInCount}`);
-      showToast(`${member.name} — Automatic Check-In recorded at ${timeStr}`, 'success');
+      showToast(`Allowed (${nextCheckInCount}/${dailyLimit}): ${member.name}`, 'success');
     }
 
-    function toggleFreezeMember(memberId) {
-      const member = state.members.find(m => m.id === Number(memberId));
-      if (!member) return;
-      member.frozen = !member.frozen;
-      persistState();
-      renderAllViews();
-      showToast(`Member ${member.name} is now ${member.frozen ? 'FROZEN ❄️' : 'ACTIVE ✅'}`, member.frozen ? 'error' : 'success');
-    }
-
-    function saveCardSettings() {
-      const limit = document.getElementById('checkInDailyLimit')?.value || '1';
-      const blockExpired = document.getElementById('blockExpiredToggle')?.checked ?? true;
-      localStorage.setItem('gym_checkin_daily_limit', limit);
-      localStorage.setItem('gym_block_expired', String(blockExpired));
-      showToast(`Card settings saved (${limit} Time${limit === '2' ? 's' : ''}/Day)!`, 'success');
-    }
-
-    function quickTapMember(memberId) {
-      processNfcTapForMember(memberId);
-    }
-
-    function handleScannedCardUid(rawUid) {
+    function handleIncomingCardScan(rawUid) {
       const cleanUid = rawUid.replace(/[^a-zA-Z0-9-]/g, '').toUpperCase();
       if (!cleanUid) return;
 
-      const ownerCardPanel = document.getElementById('settings-panel-owner-card');
-      if (ownerCardPanel && !ownerCardPanel.classList.contains('hidden')) {
+      const ownerTab = document.getElementById('settings-panel-owner-card');
+      if (ownerTab && !ownerTab.classList.contains('hidden')) {
         document.getElementById('ownerCardUidInput').value = cleanUid;
         saveOwnerCardUid();
         return;
@@ -1301,256 +1361,324 @@
 
       const savedOwnerUid = (localStorage.getItem('gym_owner_card_uid') || '').replace(/[^a-zA-Z0-9-]/g, '').toUpperCase();
       if (savedOwnerUid && cleanUid === savedOwnerUid) {
-        processOwnerCardTap(cleanUid);
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+        const dateStr = getTodayFormatted();
+        playBuzzerPattern('success');
+        speakAnnouncement('Welcome Owner. Unlimited check-in successful.');
+        showAccessLightBanner(true, 'Gym Owner', 'Unlimited Validity', 'Owner Master Card Verified');
+        state.transactions.unshift({
+          id: Date.now(),
+          name: 'Gym Owner (Unlimited)',
+          cardId: savedOwnerUid,
+          endDate: 'Unlimited',
+          action: 'Allowed (Owner)',
+          time: timeStr,
+          date: dateStr,
+          method: 'NFC Card',
+          status: 'Success'
+        });
+        persistState();
+        renderAllViews();
+        showToast('Owner Card Verified! Unlimited Check-In Recorded.', 'success');
         return;
       }
 
       const editModal = document.getElementById('editMemberModal');
       if (editModal && !editModal.classList.contains('hidden')) {
         document.getElementById('editCardId').value = cleanUid;
-        playBuzzerPattern('success');
-        showToast(`Scanned Replacement Card UID: ${cleanUid}`, 'success');
+        playBuzzerPattern('register');
+        showToast(`Replacement NFC Scanned: ${cleanUid}`, 'info');
         return;
       }
 
       const addSection = document.getElementById('section-add-member');
       if (addSection && !addSection.classList.contains('hidden')) {
+        const existingMember = state.members.find(
+          m => m.cardId.replace(/[^a-zA-Z0-9-]/g, '').toUpperCase() === cleanUid
+        );
+        if (existingMember) {
+          playBuzzerPattern('error');
+          speakAnnouncement(`Already registered to ${existingMember.name}.`);
+          showToast(`UID ${cleanUid} is already assigned to ${existingMember.name}!`, 'error');
+          return;
+        }
+
         document.getElementById('newMemberCardId').value = cleanUid;
         updateCardPreview();
-        playBuzzerPattern('success');
-        showToast(`Scanned New Card UID: ${cleanUid}`, 'success');
+
+        const nameVal = document.getElementById('newMemberName').value.trim();
+        const phoneVal = document.getElementById('newMemberPhone').value.trim();
+
+        if (nameVal && phoneVal) {
+          saveNewMemberRecord(true);
+        } else {
+          playBuzzerPattern('success');
+          showToast(`NFC (${cleanUid}) captured! Enter Name & Phone above, then tap again or click Save.`, 'info');
+        }
         return;
       }
 
       const matched = state.members.find(
         m => m.cardId.replace(/[^a-zA-Z0-9-]/g, '').toUpperCase() === cleanUid
       );
-
       if (matched) {
         processNfcTapForMember(matched.id);
       } else {
         playBuzzerPattern('error');
-        speakAnnouncement('Unregistered card. Please register this card first.');
-        showToast(`Unknown Card UID (${cleanUid}). Go to Add Member to assign it!`, 'error');
+        speakAnnouncement('Unregistered NFC.');
+        showAccessLightBanner(false, 'Unregistered NFC', 'No Validity', `UID: ${cleanUid} is not registered`);
+        showToast(`Unknown NFC (${cleanUid}). Register it in Add Member!`, 'error');
       }
     }
 
-    function saveOwnerCardUid() {
-      const inputEl = document.getElementById('ownerCardUidInput');
-      if (!inputEl) return;
-      const uid = inputEl.value.trim().toUpperCase();
-      if (!uid) {
-        showToast('Please enter or tap an Owner Card UID first.', 'error');
-        return;
+    function updateSerialButtonState(connected, label = '') {
+      isSerialConnected = connected;
+      const btn = document.getElementById('serialConnectBtn');
+      const headerBtn = document.getElementById('headerSerialBtn');
+      const headerText = document.getElementById('headerSerialText');
+
+      if (connected) {
+        if (btn) {
+          btn.className = 'flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold shadow-sm transition';
+          btn.innerHTML = `<i class="fa-brands fa-usb"></i><span>Connected: ${label || 'USB Serial NFC'}</span>`;
+        }
+        if (headerBtn) {
+          headerBtn.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-[11px] font-bold text-emerald-700 transition';
+        }
+        if (headerText) {
+          headerText.textContent = label || 'Serial Active';
+        }
+      } else {
+        if (btn) {
+          btn.className = 'flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold shadow-sm transition active:scale-95';
+          btn.innerHTML = `<i class="fa-brands fa-usb"></i><span>Connect USB Serial NFC</span>`;
+        }
+        if (headerBtn) {
+          headerBtn.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-[11px] font-bold text-indigo-700 transition';
+        }
+        if (headerText) {
+          headerText.textContent = 'Connect Serial';
+        }
       }
-      localStorage.setItem('gym_owner_card_uid', uid);
-      inputEl.value = uid;
-      playBuzzerPattern('success');
-      showToast(`Owner Card (${uid}) saved with Unlimited Check-In!`, 'success');
     }
 
-    function processOwnerCardTap(uid) {
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-      const dateStr = getTodayFormatted();
-
-      state.transactions.unshift({
-        id: Date.now(),
-        name: `Owner Card (${uid})`,
-        action: 'Check-In',
-        time: timeStr,
-        date: dateStr,
-        method: 'Owner NFC (Unlimited)',
-        status: 'Success'
-      });
-
-      persistState();
-      renderAllViews();
-      playBuzzerPattern('success');
-      speakAnnouncement('Tested successfully');
-      showToast(`Tested successfully! Owner Card (${uid}) Unlimited Check-In at ${timeStr}`, 'success');
-    }
-
-    async function connectBluetoothReader() {
-      if (!navigator.bluetooth) {
-        showToast('Web Bluetooth is not supported in this browser. Use Chrome or Edge.', 'error');
+    async function connectSerialReader() {
+      if (!('serial' in navigator)) {
+        showToast('Web Serial is not supported in this browser. Please use Chrome or Edge on Desktop/Android.', 'error');
         return;
       }
 
-      if (isBluetoothConnected && bluetoothDevice && bluetoothDevice.gatt.connected) {
-        bluetoothDevice.gatt.disconnect();
-        isBluetoothConnected = false;
-        updateBluetoothButtonUI(false);
-        showToast('Bluetooth NFC Reader disconnected.', 'info');
+      if (isSerialConnected && serialPort) {
+        try {
+          if (serialReader) {
+            await serialReader.cancel();
+          }
+          await serialPort.close();
+        } catch (err) {}
+        serialPort = null;
+        serialReader = null;
+        updateSerialButtonState(false);
+        showToast('USB Serial NFC Reader disconnected', 'info');
         return;
       }
 
       try {
-        showToast('Scanning for Bluetooth NFC Reader...', 'info');
-        bluetoothDevice = await navigator.bluetooth.requestDevice({
-          acceptAllDevices: true,
-          optionalServices: BLE_SERVICE_UUIDS
-        });
+        showToast('Select your USB Serial NFC Reader (ESP32 / Arduino)...', 'info');
+        serialPort = await navigator.serial.requestPort();
+        await serialPort.open({ baudRate: 115200 });
 
-        bluetoothDevice.addEventListener('gattserverdisconnected', () => {
-          isBluetoothConnected = false;
-          updateBluetoothButtonUI(false);
-          showToast('Bluetooth NFC Reader disconnected.', 'info');
-        });
+        updateSerialButtonState(true, 'USB Serial Ready');
+        showToast('Connected to USB Serial NFC Reader! Tap any card now.', 'success');
 
-        const server = await bluetoothDevice.gatt.connect();
-        let notifyChar = null;
+        const textDecoder = new TextDecoderStream();
+        serialPort.readable.pipeTo(textDecoder.writable);
+        serialReader = textDecoder.readable.getReader();
 
-        for (const serviceUuid of BLE_SERVICE_UUIDS) {
-          try {
-            const service = await server.getPrimaryService(serviceUuid);
-            for (const charUuid of BLE_TX_CHAR_UUIDS) {
-              try {
-                notifyChar = await service.getCharacteristic(charUuid);
-                if (notifyChar) break;
-              } catch (e) {}
-            }
-            if (notifyChar) break;
-          } catch (e) {}
-        }
-
-        if (!notifyChar) {
-          const services = await server.getPrimaryServices();
-          for (const svc of services) {
-            const chars = await svc.getCharacteristics();
-            for (const c of chars) {
-              if (c.properties.notify || c.properties.indicate) {
-                notifyChar = c;
-                break;
-              }
-            }
-            if (notifyChar) break;
-          }
-        }
-
-        if (!notifyChar) {
-          throw new Error('No readable NFC notification characteristic found on device.');
-        }
-
-        await notifyChar.startNotifications();
-        notifyChar.addEventListener('characteristicvaluechanged', (event) => {
-          const decoder = new TextDecoder('utf-8');
-          const chunk = decoder.decode(event.target.value);
-          bleReceiveBuffer += chunk;
-          const lines = bleReceiveBuffer.split(/\r?\n/);
-          bleReceiveBuffer = lines.pop();
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (trimmed) {
-              const uid = trimmed.startsWith('UID:') ? trimmed.replace('UID:', '').trim() : trimmed;
-              handleScannedCardUid(uid);
-            }
-          }
-        });
-
-        isBluetoothConnected = true;
-        updateBluetoothButtonUI(true, bluetoothDevice.name || 'BLE Reader');
-        playBuzzerPattern('success');
-        showToast(`Connected to ${bluetoothDevice.name || 'Bluetooth NFC Reader'}!`, 'success');
+        readSerialLoop();
       } catch (err) {
-        isBluetoothConnected = false;
-        updateBluetoothButtonUI(false);
-        if (err.name !== 'NotFoundError') {
-          showToast(`Bluetooth error: ${err.message}`, 'error');
+        updateSerialButtonState(false);
+        if (err && err.name !== 'NotFoundError') {
+          showToast(`Serial connection failed: ${err.message}`, 'error');
         }
       }
     }
 
-    function updateBluetoothButtonUI(connected, deviceName = '') {
-      const settingsBtn = document.getElementById('bluetoothConnectBtn');
-      const headerBtn = document.getElementById('headerBleBtn');
-      const headerText = document.getElementById('headerBleText');
+    async function readSerialLoop() {
+      try {
+        while (true) {
+          const { value, done } = await serialReader.read();
+          if (done) break;
+          if (value) {
+            serialReceiveBuffer += value;
+            const lines = serialReceiveBuffer.split(/\r?\n/);
+            serialReceiveBuffer = lines.pop();
 
-      if (connected) {
-        if (settingsBtn) {
-          settingsBtn.className = 'flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-100 border border-emerald-300 text-emerald-800 text-xs sm:text-sm font-bold transition';
-          settingsBtn.innerHTML = `<i class="fa-brands fa-bluetooth-b text-emerald-600"></i> <span>Connected: ${deviceName}</span>`;
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed) continue;
+
+              const uidMatch = trimmed.match(/(?:UID|CARD|ID)?[:=\s]*([0-9A-Fa-f]{2}(?:[:\s-]?[0-9A-Fa-f]{2}){3,6}|NFC-[0-9A-Za-z]+)/i);
+              if (uidMatch && uidMatch[1]) {
+                const formattedUid = uidMatch[1].replace(/[:\s]/g, '').toUpperCase();
+                handleIncomingCardScan(formattedUid);
+              }
+            }
+          }
         }
-        if (headerBtn && headerText) {
-          headerBtn.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-[11px] font-bold text-emerald-700 transition';
-          headerText.textContent = deviceName || 'BLE Connected';
-        }
-      } else {
-        if (settingsBtn) {
-          settingsBtn.className = 'flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold shadow-sm transition active:scale-95';
-          settingsBtn.innerHTML = '<i class="fa-brands fa-bluetooth-b"></i> <span>Connect Bluetooth NFC</span>';
-        }
-        if (headerBtn && headerText) {
-          headerBtn.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-[11px] font-bold text-indigo-700 transition';
-          headerText.textContent = 'Connect BLE';
+      } catch (err) {
+        updateSerialButtonState(false);
+        showToast('USB Serial device disconnected.', 'info');
+      } finally {
+        if (serialReader) {
+          try { serialReader.releaseLock(); } catch (e) {}
         }
       }
+    }
+
+    function saveOwnerCardUid() {
+      const uid = document.getElementById('ownerCardUidInput').value.trim().toUpperCase();
+      if (!uid) {
+        showToast('Please tap or enter an Owner Card UID first.', 'error');
+        return;
+      }
+      localStorage.setItem('gym_owner_card_uid', uid);
+      playBuzzerPattern('register');
+      showToast(`Owner Card (${uid}) saved for unlimited check-in!`, 'success');
     }
 
     function generateRandomCardId() {
-      const num = Math.floor(1000 + Math.random() * 9000);
-      document.getElementById('newMemberCardId').value = `NFC-${num}`;
+      const rand = Math.floor(1000 + Math.random() * 9000);
+      const idStr = `NFC-${rand}`;
+      const inp = document.getElementById('newMemberCardId');
+      if (inp) inp.value = idStr;
       updateCardPreview();
+      return idStr;
     }
 
     function generateEditCardId() {
-      const num = Math.floor(1000 + Math.random() * 9000);
-      document.getElementById('editCardId').value = `NFC-${num}`;
+      const rand = Math.floor(1000 + Math.random() * 9000);
+      const inp = document.getElementById('editCardId');
+      if (inp) inp.value = `NFC-${rand}`;
     }
 
     function updateCardPreview() {
-      const nameVal = document.getElementById('newMemberName').value.trim();
-      const uidVal = document.getElementById('newMemberCardId').value.trim();
-      const typeVal = document.querySelector('input[name="nfcType"]:checked')?.value || 'Card';
-
-      document.getElementById('previewCardHolder').textContent = nameVal ? nameVal.toUpperCase() : 'NEW MEMBER';
-      document.getElementById('previewCardUid').textContent = `UID: ${uidVal || 'NFC-8492'}`;
-      document.getElementById('previewCardTypeBadge').textContent = typeVal === 'Card' ? 'NFC Card' : 'Mobile NFC';
+      const name = document.getElementById('newMemberName')?.value.trim() || 'NEW MEMBER';
+      const uid = document.getElementById('newMemberCardId')?.value.trim().toUpperCase() || 'READY TO TAP';
+      const nfcType = document.querySelector('input[name="nfcType"]:checked')?.value || 'Card';
+      const holderEl = document.getElementById('previewCardHolder');
+      const uidEl = document.getElementById('previewCardUid');
+      const badgeEl = document.getElementById('previewCardTypeBadge');
+      const titleEl = document.getElementById('previewCardTitle');
+      if (holderEl) holderEl.textContent = name.toUpperCase();
+      if (uidEl) uidEl.textContent = uid === 'READY TO TAP' ? uid : `UID: ${uid}`;
+      if (badgeEl) badgeEl.textContent = nfcType === 'Mobile' ? 'Mobile NFC' : 'NFC Card';
+      if (titleEl) titleEl.textContent = nfcType === 'Mobile' ? 'MOBILE NFC PASS' : 'GYM NFC CARD';
     }
 
     function autoCalculateEndDate() {
-      const plan = document.getElementById('newMemberPlan')?.value || 'Premium';
-      const startVal = document.getElementById('newMemberStart')?.value;
-      if (!startVal) return;
+      const plan = document.getElementById('newMemberPlan')?.value;
+      const startInput = document.getElementById('newMemberStart')?.value;
+      if (!startInput) return;
 
-      const d = new Date(startVal);
-      if (isNaN(d.getTime())) return;
+      const startDate = new Date(startInput);
+      if (isNaN(startDate.getTime())) return;
 
-      if (plan === 'Premium') d.setFullYear(d.getFullYear() + 1);
-      else if (plan === 'Standard') d.setMonth(d.getMonth() + 6);
-      else d.setMonth(d.getMonth() + 1);
+      const endDate = new Date(startDate);
+      if (plan === 'Premium') endDate.setFullYear(endDate.getFullYear() + 1);
+      else if (plan === 'Standard') endDate.setMonth(endDate.getMonth() + 6);
+      else endDate.setMonth(endDate.getMonth() + 1);
 
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const dd = String(d.getDate()).padStart(2, '0');
-      document.getElementById('newMemberEnd').value = `${yyyy}-${mm}-${dd}`;
+      const yyyy = endDate.getFullYear();
+      const mm = String(endDate.getMonth() + 1).padStart(2, '0');
+      const dd = String(endDate.getDate()).padStart(2, '0');
+      const endEl = document.getElementById('newMemberEnd');
+      if (endEl) endEl.value = `${yyyy}-${mm}-${dd}`;
     }
 
-    function formatDateDisplay(isoDate) {
-      if (!isoDate || !isoDate.includes('-')) return isoDate;
-      const parts = isoDate.split('-');
-      if (parts[0].length === 4) {
-        return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    function formatDateDisplay(isoDateStr) {
+      if (!isoDateStr) return getTodayFormatted();
+      const parts = isoDateStr.split('-');
+      if (parts.length !== 3) return isoDateStr;
+      return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+
+    function parseDdMmYyyy(dateStr) {
+      if (!dateStr) return null;
+      const parts = dateStr.split('-');
+      if (parts.length !== 3) return null;
+      return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+    }
+
+    function syncMembershipExpirations() {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      let changed = false;
+
+      state.members.forEach(m => {
+        const endDt = parseDdMmYyyy(m.endDate);
+        if (endDt && !isNaN(endDt.getTime())) {
+          if (endDt < today && m.status !== 'Expired') {
+            m.status = 'Expired';
+            changed = true;
+          }
+        }
+      });
+
+      if (changed) {
+        persistState();
       }
-      return isoDate;
     }
 
     function handleAddMember(e) {
-      e.preventDefault();
-      const name = document.getElementById('newMemberName').value.trim();
-      const phone = document.getElementById('newMemberPhone').value.trim();
-      const cardId = document.getElementById('newMemberCardId').value.trim().toUpperCase();
-      const plan = document.getElementById('newMemberPlan').value;
-      const amount = Number(document.getElementById('newMemberAmount').value || 0);
-      const startDate = formatDateDisplay(document.getElementById('newMemberStart').value);
-      const endDate = formatDateDisplay(document.getElementById('newMemberEnd').value);
+      if (e) e.preventDefault();
+      saveNewMemberRecord(false);
+    }
+
+    function saveNewMemberRecord(autoTriggeredByTap = false) {
+      const nameEl = document.getElementById('newMemberName');
+      const phoneEl = document.getElementById('newMemberPhone');
+      const cardIdEl = document.getElementById('newMemberCardId');
+      const planEl = document.getElementById('newMemberPlan');
+      const amountEl = document.getElementById('newMemberAmount');
+      const startEl = document.getElementById('newMemberStart');
+      const endEl = document.getElementById('newMemberEnd');
+
+      const name = nameEl ? nameEl.value.trim() : '';
+      const phone = phoneEl ? phoneEl.value.trim() : '';
       const nfcType = document.querySelector('input[name="nfcType"]:checked')?.value || 'Card';
+      let cardId = cardIdEl ? cardIdEl.value.trim().toUpperCase() : '';
+      const plan = planEl ? planEl.value : 'Premium';
+      const amount = amountEl && amountEl.value !== '' ? Number(amountEl.value) : 0;
+      const startDate = formatDateDisplay(startEl ? startEl.value : getTodayIso());
+      const endDate = formatDateDisplay(endEl ? endEl.value : getTodayIso());
+
+      if (!name) {
+        showToast('Please enter Member Full Name!', 'error');
+        if (nameEl) nameEl.focus();
+        return;
+      }
+      if (!phone) {
+        showToast('Please enter Phone Number!', 'error');
+        if (phoneEl) phoneEl.focus();
+        return;
+      }
+      if (!cardId) {
+        const prefix = nfcType === 'Mobile' ? 'MOB' : 'NFC';
+        cardId = `${prefix}-${Math.floor(1000 + Math.random() * 9000)}`;
+      }
 
       const duplicate = state.members.find(m => m.cardId.toUpperCase() === cardId);
       if (duplicate) {
-        showToast(`Card ID ${cardId} is already assigned to ${duplicate.name}!`, 'error');
+        playBuzzerPattern('error');
+        showToast(`UID ${cardId} is already assigned to ${duplicate.name}!`, 'error');
         return;
       }
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const endDt = parseDdMmYyyy(endDate);
+      const initialStatus = (endDt && !isNaN(endDt.getTime()) && endDt < today) ? 'Expired' : 'Active';
 
       const newMember = {
         id: Date.now(),
@@ -1562,7 +1690,7 @@
         startDate,
         endDate,
         nfcType,
-        status: 'Active',
+        status: initialStatus,
         frozen: false,
         lastCheckInDate: ''
       };
@@ -1572,29 +1700,176 @@
       renderAllViews();
 
       playBuzzerPattern('register');
-      e.target.reset();
-      document.getElementById('newMemberStart').value = getTodayIso();
+      if (autoTriggeredByTap) {
+        speakAnnouncement(`${nfcType === 'Mobile' ? 'Mobile NFC' : 'Card'} registered successfully for ${name}.`);
+      }
+
+      const form = document.getElementById('addMemberForm');
+      if (form) form.reset();
+      if (startEl) startEl.value = getTodayIso();
       autoCalculateEndDate();
-      generateRandomCardId();
+      if (cardIdEl) cardIdEl.value = '';
       updateCardPreview();
 
-      showToast(`Member "${name}" saved to LocalStorage!`, 'success');
+      showToast(`Member "${name}" saved with ${nfcType === 'Mobile' ? 'Mobile NFC' : 'NFC Card'} (${cardId})!`, 'success');
       switchSection('view-members');
     }
 
-    function openEditModal(memberId) {
-      const member = state.members.find(m => m.id === memberId);
-      if (!member) return;
-      document.getElementById('editMemberId').value = member.id;
-      document.getElementById('editName').value = member.name;
-      document.getElementById('editPhone').value = member.phone;
-      document.getElementById('editAmount').value = member.amount ?? 0;
-      document.getElementById('editCardId').value = member.cardId;
-      document.getElementById('editPlan').value = member.plan;
-      document.getElementById('editStatus').value = member.status;
-      document.getElementById('editStartDate').value = member.startDate;
-      document.getElementById('editEndDate').value = member.endDate;
+    function renderAllViews() {
+      syncMembershipExpirations();
+      updateKpiCards();
+      renderRecentActivity();
+      renderMembersTable();
+      renderTransactionsTable();
+      updateDashboardChart();
+      updateReportsSummary();
+    }
 
+    function updateKpiCards() {
+      const total = state.members.length;
+      const active = state.members.filter(m => m.status === 'Active' && !m.frozen).length;
+      const expired = state.members.filter(m => m.status === 'Expired').length;
+      const todayStr = getTodayFormatted();
+      const todayCheckIns = state.transactions.filter(t => t.date === todayStr && t.status === 'Success').length;
+
+      document.getElementById('kpiTotalMembers').textContent = total;
+      document.getElementById('kpiActiveMembers').textContent = active;
+      document.getElementById('kpiExpiredMembers').textContent = expired;
+      document.getElementById('kpiTodayAttendance').textContent = todayCheckIns;
+    }
+
+    function renderRecentActivity() {
+      const container = document.getElementById('recentActivityList');
+      const items = state.transactions.slice(0, 5);
+      if (items.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-400 text-center py-6">No recent activity yet.</p>`;
+        return;
+      }
+      container.innerHTML = items.map(item => {
+        const isSuccess = item.status === 'Success';
+        const iconBg = isSuccess ? 'bg-blue-100 text-blue-600' : 'bg-rose-100 text-rose-600';
+        const icon = isSuccess ? 'fa-right-to-bracket' : 'fa-circle-xmark';
+        const badgeColor = isSuccess ? 'text-emerald-600' : 'text-rose-600';
+        return `
+          <div class="flex items-center justify-between gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-9 h-9 rounded-full ${iconBg} flex items-center justify-center flex-shrink-0">
+                <i class="fa-solid ${icon} text-xs"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="text-xs font-bold text-slate-900 truncate">${item.name}</p>
+                <p class="text-[11px] font-semibold ${badgeColor}">${item.action}</p>
+              </div>
+            </div>
+            <span class="text-[11px] font-medium text-slate-400 whitespace-nowrap">${item.time}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderMembersTable() {
+      const query = (document.getElementById('memberSearchInput')?.value || '').toLowerCase();
+      const planFilter = document.getElementById('memberPlanFilter')?.value || 'All';
+      const statusFilter = document.getElementById('memberStatusFilter')?.value || 'All';
+
+      const filtered = state.members.filter(m => {
+        const matchesQuery = m.name.toLowerCase().includes(query) || m.phone.includes(query) || m.cardId.toLowerCase().includes(query);
+        const matchesPlan = planFilter === 'All' || m.plan === planFilter;
+        const matchesStatus = statusFilter === 'All' ||
+          (statusFilter === 'Frozen' ? m.frozen : (!m.frozen && m.status === statusFilter));
+        return matchesQuery && matchesPlan && matchesStatus;
+      });
+
+      const tbody = document.getElementById('membersTableBody');
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="py-10 text-center text-sm text-slate-400 font-medium">No members found matching your filters.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map((m, idx) => {
+        const planBadge = m.plan === 'Premium'
+          ? 'bg-purple-100 text-purple-700'
+          : m.plan === 'Standard'
+          ? 'bg-sky-100 text-sky-700'
+          : 'bg-slate-100 text-slate-700';
+
+        let statusBadge = '';
+        if (m.frozen) {
+          statusBadge = `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-700"><i class="fa-solid fa-snowflake mr-1"></i>Frozen</span>`;
+        } else if (m.status === 'Active') {
+          statusBadge = `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700">Active</span>`;
+        } else {
+          statusBadge = `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-100 text-rose-700">Expired</span>`;
+        }
+
+        return `
+          <tr class="hover:bg-slate-50/80 transition">
+            <td class="py-3.5 px-3 font-semibold text-slate-500">${idx + 1}</td>
+            <td class="py-3.5 px-3">
+              <p class="font-bold text-slate-900">${m.name}</p>
+              <span class="text-[11px] font-mono text-indigo-600 font-semibold">${m.cardId} • ${m.nfcType === 'Mobile' ? 'Mobile NFC' : 'NFC Card'}</span>
+            </td>
+            <td class="py-3.5 px-3 text-slate-600 font-medium">${m.phone}</td>
+            <td class="py-3.5 px-3"><span class="px-3 py-1 rounded-full text-xs font-bold ${planBadge}">${m.plan}</span></td>
+            <td class="py-3.5 px-3 font-bold text-slate-800">₹${Number(m.amount || 0).toLocaleString('en-IN')}</td>
+            <td class="py-3.5 px-3 text-slate-600 text-xs font-medium">${m.startDate}</td>
+            <td class="py-3.5 px-3 text-slate-600 text-xs font-medium">${m.endDate}</td>
+            <td class="py-3.5 px-3">${statusBadge}</td>
+            <td class="py-3.5 px-3 text-right">
+              <div class="inline-flex items-center gap-1.5">
+                <button type="button" onclick="openEditModal(${m.id})" title="Edit / Replace Lost Card" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">
+                  <i class="fa-solid fa-pen"></i> Edit
+                </button>
+                <button type="button" onclick="toggleFreezeMember(${m.id})" title="${m.frozen ? 'Unfreeze Card' : 'Freeze Card'}" class="px-2.5 py-1.5 rounded-lg ${m.frozen ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'bg-amber-50 text-amber-700 hover:bg-amber-100'} text-xs font-bold transition">
+                  <i class="fa-solid ${m.frozen ? 'fa-fire' : 'fa-snowflake'}"></i> ${m.frozen ? 'Unfreeze' : 'Freeze'}
+                </button>
+                <button type="button" onclick="deleteMember(${m.id})" title="Delete Member" class="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold transition">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function resetMemberFilters() {
+      document.getElementById('memberSearchInput').value = '';
+      document.getElementById('memberPlanFilter').value = 'All';
+      document.getElementById('memberStatusFilter').value = 'All';
+      renderMembersTable();
+    }
+
+    function toggleFreezeMember(id) {
+      const m = state.members.find(x => x.id === id);
+      if (!m) return;
+      m.frozen = !m.frozen;
+      persistState();
+      renderAllViews();
+      showToast(m.frozen ? `NFC Card frozen for ${m.name}` : `NFC Card reactivated for ${m.name}`, 'info');
+    }
+
+    function deleteMember(id) {
+      const m = state.members.find(x => x.id === id);
+      if (!m) return;
+      state.members = state.members.filter(x => x.id !== id);
+      persistState();
+      renderAllViews();
+      showToast(`Member "${m.name}" removed`, 'error');
+    }
+
+    function openEditModal(id) {
+      const m = state.members.find(x => x.id === id);
+      if (!m) return;
+      document.getElementById('editMemberId').value = m.id;
+      document.getElementById('editName').value = m.name;
+      document.getElementById('editPhone').value = m.phone;
+      document.getElementById('editAmount').value = m.amount || 0;
+      document.getElementById('editCardId').value = m.cardId;
+      document.getElementById('editPlan').value = m.plan;
+      document.getElementById('editStatus').value = m.status;
+      document.getElementById('editStartDate').value = m.startDate;
+      document.getElementById('editEndDate').value = m.endDate;
       const modal = document.getElementById('editMemberModal');
       modal.classList.remove('hidden');
       modal.classList.add('flex');
@@ -1609,40 +1884,67 @@
     function saveEditedMember(e) {
       e.preventDefault();
       const id = Number(document.getElementById('editMemberId').value);
-      const member = state.members.find(m => m.id === id);
-      if (!member) return;
+      const m = state.members.find(x => x.id === id);
+      if (!m) return;
 
-      member.name = document.getElementById('editName').value.trim();
-      member.phone = document.getElementById('editPhone').value.trim();
-      member.amount = Number(document.getElementById('editAmount').value || 0);
-      member.cardId = document.getElementById('editCardId').value.trim().toUpperCase();
-      member.plan = document.getElementById('editPlan').value;
-      member.status = document.getElementById('editStatus').value;
-      member.startDate = document.getElementById('editStartDate').value.trim();
-      member.endDate = document.getElementById('editEndDate').value.trim();
+      const newCardId = document.getElementById('editCardId').value.trim().toUpperCase();
+      const duplicateCard = state.members.find(x => x.id !== id && x.cardId.toUpperCase() === newCardId);
+      if (duplicateCard) {
+        playBuzzerPattern('error');
+        showToast(`Card ID ${newCardId} is already assigned to ${duplicateCard.name}!`, 'error');
+        return;
+      }
+
+      m.name = document.getElementById('editName').value.trim();
+      m.phone = document.getElementById('editPhone').value.trim();
+      m.amount = Number(document.getElementById('editAmount').value || 0);
+      m.cardId = newCardId;
+      m.plan = document.getElementById('editPlan').value;
+      m.status = document.getElementById('editStatus').value;
+      m.startDate = document.getElementById('editStartDate').value.trim();
+      m.endDate = document.getElementById('editEndDate').value.trim();
 
       persistState();
       renderAllViews();
       closeEditModal();
-      showToast(`Updated profile & NFC Card (${member.cardId}) for ${member.name}`, 'success');
+      showToast(`Member details & NFC Card (${m.cardId}) updated!`, 'success');
     }
 
-    function deleteMember(memberId) {
-      const member = state.members.find(m => m.id === memberId);
-      if (!member) return;
-      state.members = state.members.filter(m => m.id !== memberId);
-      persistState();
-      renderAllViews();
-      showToast(`Removed member ${member.name}`, 'info');
+    function renderTransactionsTable() {
+      const tbody = document.getElementById('transactionsTableBody');
+      if (state.transactions.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-10 text-center text-sm text-slate-400 font-medium">No NFC card tap logs recorded yet.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = state.transactions.map((t, idx) => {
+        const isSuccess = t.status === 'Success';
+        const statusBadge = isSuccess
+          ? `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-700"><i class="fa-solid fa-circle-check"></i> ${t.action || 'Allowed'}</span>`
+          : `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-rose-100 text-rose-700"><i class="fa-solid fa-circle-xmark"></i> ${t.action || 'Declined'}</span>`;
+
+        return `
+          <tr class="hover:bg-slate-50/80 transition">
+            <td class="py-3.5 px-4 font-semibold text-slate-500">${idx + 1}</td>
+            <td class="py-3.5 px-4">
+              <p class="font-bold text-slate-900">${t.name}</p>
+              <span class="text-[11px] font-mono text-indigo-600 font-semibold">${t.cardId || 'NFC'}</span>
+            </td>
+            <td class="py-3.5 px-4 text-xs font-bold text-slate-700">${t.endDate || 'N/A'}</td>
+            <td class="py-3.5 px-4 text-slate-600 text-xs font-medium">${t.time} • ${t.date}</td>
+            <td class="py-3.5 px-4 text-slate-600 text-xs font-semibold"><i class="fa-solid ${t.method === 'Mobile NFC' ? 'fa-mobile-screen-button' : 'fa-id-card'} text-indigo-500 mr-1"></i> ${t.method || 'NFC Card'}</td>
+            <td class="py-3.5 px-4">${statusBadge}</td>
+          </tr>
+        `;
+      }).join('');
     }
 
     function downloadMembersPdf() {
       if (!window.jspdf || !window.jspdf.jsPDF) {
-        showToast('PDF library is loading, please try again in a moment.', 'info');
+        showToast('PDF library still loading. Please try again in a second.', 'error');
         return;
       }
-      if (!state.members || state.members.length === 0) {
-        showToast('No members available to download.', 'info');
+      if (state.members.length === 0) {
+        showToast('No members available to export.', 'info');
         return;
       }
 
@@ -1650,17 +1952,18 @@
       const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
       const gymTitle = localStorage.getItem('gym_brand_title') || 'Gym NFC';
 
-      doc.setFontSize(16);
-      doc.setTextColor(22, 19, 74);
-      doc.text(`${gymTitle} - Gym Members Report`, 40, 40);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.setTextColor(30, 41, 59);
+      doc.text(`${gymTitle} - Gym Members Report`, 32, 34);
 
-      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
       doc.setTextColor(100, 116, 139);
-      doc.text(`Generated on: ${new Date().toLocaleDateString('en-IN')} | Total Members: ${state.members.length}`, 40, 58);
+      doc.text(`Generated on: ${getTodayFormatted()}  |  Total Members: ${state.members.length}`, 32, 48);
 
-      const columns = ['S.No', 'Name', 'NFC Card ID', 'Phone Number', 'Plan', 'Amount Paid', 'Start Date', 'End Date', 'Status'];
-      const rows = state.members.map((m, index) => [
-        index + 1,
+      const tableRows = state.members.map((m, idx) => [
+        idx + 1,
         m.name,
         m.cardId,
         m.phone,
@@ -1672,27 +1975,41 @@
       ]);
 
       doc.autoTable({
-        startY: 72,
-        head: [columns],
-        body: rows,
+        startY: 58,
+        margin: { left: 32, right: 32 },
+        head: [['#', 'Member Name', 'Card ID', 'Phone', 'Plan', 'Amount', 'Start Date', 'End Date', 'Status']],
+        body: tableRows,
         theme: 'grid',
-        headStyles: { fillColor: [22, 19, 74], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9.5, halign: 'left' },
-        bodyStyles: { fontSize: 9, textColor: [30, 41, 59], lineColor: [203, 213, 225], lineWidth: 0.6 },
-        alternateRowStyles: { fillColor: [248, 250, 252] },
-        margin: { left: 40, right: 40 }
+        styles: {
+          font: 'helvetica',
+          fontSize: 8.5,
+          cellPadding: 5,
+          lineColor: [203, 213, 225],
+          lineWidth: 0.5,
+          textColor: [30, 41, 59]
+        },
+        headStyles: {
+          fillColor: [30, 41, 59],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          halign: 'left'
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252]
+        }
       });
 
-      doc.save(`${gymTitle.replace(/\s+/g, '_')}_Members_List.pdf`);
-      showToast('Members list downloaded as Excel-style PDF!', 'success');
+      doc.save(`Gym_Members_${getTodayFormatted()}.pdf`);
+      showToast('Clean Excel-style Members PDF downloaded!', 'success');
     }
 
     function downloadTransactionsPdf() {
       if (!window.jspdf || !window.jspdf.jsPDF) {
-        showToast('PDF library is loading, please try again in a moment.', 'info');
+        showToast('PDF library still loading. Please try again in a second.', 'error');
         return;
       }
-      if (!state.transactions || state.transactions.length === 0) {
-        showToast('No transactions available to download.', 'info');
+      if (state.transactions.length === 0) {
+        showToast('No attendance logs available to export.', 'info');
         return;
       }
 
@@ -1700,279 +2017,104 @@
       const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
       const gymTitle = localStorage.getItem('gym_brand_title') || 'Gym NFC';
 
-      doc.setFontSize(16);
-      doc.setTextColor(22, 19, 74);
-      doc.text(`${gymTitle} - NFC Transactions Log`, 40, 40);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.setTextColor(30, 41, 59);
+      doc.text(`${gymTitle} - NFC Attendance Logs`, 32, 34);
 
-      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
       doc.setTextColor(100, 116, 139);
-      doc.text(`Generated on: ${new Date().toLocaleDateString('en-IN')} | Total Records: ${state.transactions.length}`, 40, 58);
+      doc.text(`Generated on: ${getTodayFormatted()}  |  Total Logs: ${state.transactions.length}`, 32, 48);
 
-      const columns = ['S.No', 'Member Name', 'Action', 'Time', 'Date', 'Method', 'Status'];
-      const rows = state.transactions.map((t, index) => [
-        index + 1,
-        t.name,
-        t.action,
-        t.time,
-        t.date,
-        t.method,
-        t.status
+      const tableRows = state.transactions.map((t, idx) => [
+        idx + 1,
+        `${t.name} (${t.cardId || ''})`,
+        t.endDate || 'N/A',
+        `${t.time} - ${t.date}`,
+        'NFC Card',
+        t.action || (t.status === 'Success' ? 'Allowed' : 'Declined')
       ]);
 
       doc.autoTable({
-        startY: 72,
-        head: [columns],
-        body: rows,
+        startY: 58,
+        margin: { left: 32, right: 32 },
+        head: [['#', 'Member & Card', 'Expiry Date', 'Time & Date', 'Method', 'Access Status']],
+        body: tableRows,
         theme: 'grid',
-        headStyles: { fillColor: [22, 19, 74], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9.5, halign: 'left' },
-        bodyStyles: { fontSize: 9, textColor: [30, 41, 59], lineColor: [203, 213, 225], lineWidth: 0.6 },
-        alternateRowStyles: { fillColor: [248, 250, 252] },
-        margin: { left: 40, right: 40 }
-      });
-
-      doc.save(`${gymTitle.replace(/\s+/g, '_')}_Transactions_Log.pdf`);
-      showToast('Transactions log downloaded as Excel-style PDF!', 'success');
-    }
-
-    function parseDdMmYyyy(str) {
-      if (!str || !str.includes('-')) return null;
-      const parts = str.split('-');
-      if (parts.length !== 3) return null;
-      if (parts[0].length === 4) {
-        return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-      }
-      return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
-    }
-
-    function syncMembershipExpirations() {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      let changed = false;
-      state.members.forEach(m => {
-        const end = parseDdMmYyyy(m.endDate);
-        if (end && !isNaN(end.getTime())) {
-          if (end < today && m.status === 'Active') {
-            m.status = 'Expired';
-            changed = true;
-          }
+        styles: {
+          font: 'helvetica',
+          fontSize: 8.5,
+          cellPadding: 5,
+          lineColor: [203, 213, 225],
+          lineWidth: 0.5,
+          textColor: [30, 41, 59]
+        },
+        headStyles: {
+          fillColor: [30, 41, 59],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          halign: 'left'
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252]
         }
       });
-      if (changed) persistState();
+
+      doc.save(`Gym_Attendance_Logs_${getTodayFormatted()}.pdf`);
+      showToast('Clean Excel-style Transactions PDF downloaded!', 'success');
     }
 
-    function renderAllViews() {
-      syncMembershipExpirations();
-      updateKPIs();
-      renderRecentActivity();
-      renderMembersTable();
-      renderTransactionsTable();
-      updateDashboardChart();
-    }
+    function updateDashboardChart() {
+      const ctx = document.getElementById('attendanceLineChart');
+      if (!ctx) return;
 
-    function updateKPIs() {
-      const totalCount = state.members.length;
-      const activeCount = state.members.filter(m => m.status === 'Active' && !m.frozen).length;
-      const expiredCount = state.members.filter(m => m.status === 'Expired').length;
-      const todayStr = getTodayFormatted();
-      const todayAttCount = state.transactions.filter(
-        t => t.date === todayStr && t.status === 'Success' && t.action === 'Check-In'
-      ).length;
-
-      document.getElementById('kpiTotalMembers').textContent = totalCount;
-      document.getElementById('kpiActiveMembers').textContent = activeCount;
-      document.getElementById('kpiExpiredMembers').textContent = expiredCount;
-      document.getElementById('kpiTodayAttendance').textContent = todayAttCount;
-      document.getElementById('reportActiveMembers').textContent = activeCount;
-    }
-
-    function renderRecentActivity() {
-      const container = document.getElementById('recentActivityList');
-      const recent = state.transactions.slice(0, 5);
-      const avatarColors = ['bg-emerald-500', 'bg-orange-500', 'bg-blue-600', 'bg-amber-500'];
-
-      if (recent.length === 0) {
-        container.innerHTML = `<p class="text-xs text-slate-400 text-center py-6">No recent check-in activity yet.</p>`;
-        return;
-      }
-
-      container.innerHTML = recent.map((item, idx) => {
-        const bg = item.status === 'Failed' ? 'bg-rose-500' : avatarColors[idx % avatarColors.length];
-        return `
-          <div class="flex items-center gap-3.5 p-2 rounded-xl hover:bg-slate-50 transition">
-            <div class="w-10 h-10 rounded-full ${bg} text-white flex items-center justify-center flex-shrink-0 shadow-sm">
-              <i class="fa-solid fa-user text-sm"></i>
-            </div>
-            <div class="min-w-0 flex-1">
-              <p class="text-sm font-bold text-slate-800 truncate">${item.name}</p>
-              <p class="text-xs text-slate-500">${item.action} - ${item.time}</p>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function resetMemberFilters() {
-      document.getElementById('memberSearchInput').value = '';
-      document.getElementById('memberPlanFilter').value = 'All';
-      document.getElementById('memberStatusFilter').value = 'All';
-      renderMembersTable();
-    }
-
-    function renderMembersTable() {
-      const query = (document.getElementById('memberSearchInput')?.value || '').toLowerCase();
-      const planFilter = document.getElementById('memberPlanFilter')?.value || 'All';
-      const statusFilter = document.getElementById('memberStatusFilter')?.value || 'All';
-      const tbody = document.getElementById('membersTableBody');
-
-      const filtered = state.members.filter(m => {
-        const matchesText = m.name.toLowerCase().includes(query) || m.phone.includes(query) || m.cardId.toLowerCase().includes(query);
-        const matchesPlan = planFilter === 'All' || m.plan === planFilter;
-        const effectiveStatus = m.frozen ? 'Frozen' : m.status;
-        const matchesStatus = statusFilter === 'All' || effectiveStatus === statusFilter;
-        return matchesText && matchesPlan && matchesStatus;
-      });
-
-      if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-slate-400 text-sm">No matching gym members found.</td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = filtered.map((m, index) => {
-        let statusBadge = '';
-        if (m.frozen) {
-          statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-cyan-50 text-cyan-700 border border-cyan-200"><i class="fa-solid fa-snowflake text-[10px]"></i> Frozen</span>`;
-        } else if (m.status === 'Active') {
-          statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-200"><i class="fa-solid fa-circle-check text-[10px]"></i> Active</span>`;
-        } else {
-          statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-orange-50 text-orange-600 border border-orange-200"><i class="fa-solid fa-circle-exclamation text-[10px]"></i> Expired</span>`;
-        }
-
-        const formattedAmount = `₹${Number(m.amount || 0).toLocaleString('en-IN')}`;
-        const freezeBtnText = m.frozen ? '<i class="fa-solid fa-fire text-xs"></i>' : '<i class="fa-solid fa-snowflake text-xs"></i>';
-        const freezeBtnTitle = m.frozen ? 'Unfreeze Member' : 'Freeze Member';
-        const freezeBtnColor = m.frozen ? 'bg-cyan-600 hover:bg-cyan-700 text-white' : 'bg-amber-500 hover:bg-amber-600 text-white';
-
-        return `
-          <tr class="hover:bg-slate-50/80 transition">
-            <td class="py-3.5 px-3 font-semibold text-slate-500">${index + 1}</td>
-            <td class="py-3.5 px-3">
-              <p class="font-bold text-slate-800">${m.name}</p>
-              <span class="text-[11px] font-mono text-indigo-600 font-semibold">${m.cardId}</span>
-            </td>
-            <td class="py-3.5 px-3 text-slate-600 font-medium">${m.phone}</td>
-            <td class="py-3.5 px-3 font-semibold text-slate-700">${m.plan}</td>
-            <td class="py-3.5 px-3 font-bold text-emerald-700">${formattedAmount}</td>
-            <td class="py-3.5 px-3 text-slate-600">${m.startDate}</td>
-            <td class="py-3.5 px-3 text-slate-600">${m.endDate}</td>
-            <td class="py-3.5 px-3">${statusBadge}</td>
-            <td class="py-3.5 px-3 text-right">
-              <div class="inline-flex items-center gap-1.5 justify-end">
-                <button onclick="quickTapMember(${m.id})" title="Manual Check-In" class="w-8 h-8 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 flex items-center justify-center transition">
-                  <i class="fa-solid fa-wifi rotate-90 text-xs"></i>
-                </button>
-                <button onclick="toggleFreezeMember(${m.id})" title="${freezeBtnTitle}" class="w-8 h-8 rounded-lg ${freezeBtnColor} flex items-center justify-center transition">
-                  ${freezeBtnText}
-                </button>
-                <button onclick="openEditModal(${m.id})" title="Edit Member / Replace NFC Card" class="w-8 h-8 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition">
-                  <i class="fa-solid fa-pen text-xs"></i>
-                </button>
-                <button onclick="deleteMember(${m.id})" title="Delete Member" class="w-8 h-8 rounded-lg bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center transition">
-                  <i class="fa-solid fa-trash-can text-xs"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    function renderTransactionsTable() {
-      const tbody = document.getElementById('transactionsTableBody');
-      if (!state.transactions || state.transactions.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="py-10 text-center text-slate-400 text-sm">No NFC check-in logs recorded yet.</td></tr>`;
-        return;
-      }
-      tbody.innerHTML = state.transactions.map((t, index) => {
-        const isCheckIn = t.action === 'Check-In';
-        const isDenied = t.status === 'Failed';
-        const actionBadge = isDenied
-          ? `<span class="inline-flex items-center gap-1.5 font-bold text-rose-600"><i class="fa-solid fa-ban"></i> ${t.action}</span>`
-          : isCheckIn
-            ? `<span class="inline-flex items-center gap-1.5 font-bold text-emerald-600"><i class="fa-solid fa-circle-check"></i> Check-In</span>`
-            : `<span class="inline-flex items-center gap-1.5 font-bold text-rose-500"><i class="fa-solid fa-circle-arrow-right"></i> Check-Out</span>`;
-
-        const statusBadge = isDenied
-          ? `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-600 border border-rose-200"><i class="fa-solid fa-xmark text-[10px]"></i> Denied</span>`
-          : `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-200"><i class="fa-solid fa-circle-check text-[10px]"></i> Success</span>`;
-
-        return `
-          <tr class="hover:bg-slate-50/80 transition">
-            <td class="py-3.5 px-4 font-semibold text-slate-500">${index + 1}</td>
-            <td class="py-3.5 px-4 font-bold text-slate-800">${t.name}</td>
-            <td class="py-3.5 px-4">${actionBadge}</td>
-            <td class="py-3.5 px-4 text-slate-600 font-medium">${t.time}</td>
-            <td class="py-3.5 px-4 text-slate-600">${t.date}</td>
-            <td class="py-3.5 px-4 font-medium text-slate-700">${t.method}</td>
-            <td class="py-3.5 px-4">${statusBadge}</td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    function handleGlobalSearch(e) {
-      const val = e.target.value;
-      document.getElementById('memberSearchInput').value = val;
-      if (val.trim().length > 0) {
-        switchSection('view-members');
-        renderMembersTable();
-      }
-    }
-
-    function getLast7DaysChartData() {
       const labels = [];
-      const successCounts = [];
-      const deniedCounts = [];
+      const successSeries = [];
+      const deniedSeries = [];
 
       for (let i = 6; i >= 0; i--) {
         const d = new Date();
         d.setDate(d.getDate() - i);
-        const dayStr = `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
-        const shortLabel = d.toLocaleDateString('en-US', { weekday: 'short' });
-        labels.push(shortLabel);
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yyyy = d.getFullYear();
+        const fullDateStr = `${dd}-${mm}-${yyyy}`;
+        labels.push(`${dd}/${mm}`);
 
-        const dayTxns = state.transactions.filter(t => t.date === dayStr);
-        successCounts.push(dayTxns.filter(t => t.status === 'Success').length);
-        deniedCounts.push(dayTxns.filter(t => t.status === 'Failed').length);
+        const daySuccess = state.transactions.filter(t => t.date === fullDateStr && t.status === 'Success').length;
+        const dayDenied = state.transactions.filter(t => t.date === fullDateStr && t.status !== 'Success').length;
+        successSeries.push(daySuccess);
+        deniedSeries.push(dayDenied);
       }
 
-      return { labels, successCounts, deniedCounts };
-    }
-
-    function initDashboardChart() {
-      const ctx = document.getElementById('attendanceLineChart').getContext('2d');
-      const chartData = getLast7DaysChartData();
+      if (lineChartInstance) lineChartInstance.destroy();
       lineChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
-          labels: chartData.labels,
+          labels,
           datasets: [
             {
               label: 'Successful Check-In',
-              data: chartData.successCounts,
-              borderColor: '#1D7CF2',
-              backgroundColor: 'rgba(29, 124, 242, 0.1)',
+              data: successSeries,
+              borderColor: '#2563EB',
+              backgroundColor: 'rgba(37, 99, 235, 0.14)',
               borderWidth: 2.5,
+              tension: 0.35,
+              fill: true,
               pointRadius: 4,
-              tension: 0.25
+              pointBackgroundColor: '#2563EB'
             },
             {
               label: 'Denied / Expired',
-              data: chartData.deniedCounts,
+              data: deniedSeries,
               borderColor: '#F43F5E',
-              backgroundColor: 'rgba(244, 63, 94, 0.1)',
-              borderWidth: 2.5,
+              backgroundColor: 'rgba(244, 63, 94, 0.08)',
+              borderWidth: 2,
+              tension: 0.35,
+              fill: true,
               pointRadius: 4,
-              tension: 0.25
+              pointBackgroundColor: '#F43F5E'
             }
           ]
         },
@@ -1981,66 +2123,93 @@
           maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
-            y: { beginAtZero: true, suggestedMax: 10, grid: { color: '#F1F5F9' }, ticks: { stepSize: 1, font: { size: 11 } } },
-            x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+            y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#F1F5F9' }, border: { display: false } },
+            x: { grid: { display: false }, border: { display: false } }
           }
         }
       });
     }
 
-    function updateDashboardChart() {
-      if (!lineChartInstance) return;
-      const chartData = getLast7DaysChartData();
-      lineChartInstance.data.labels = chartData.labels;
-      lineChartInstance.data.datasets[0].data = chartData.successCounts;
-      lineChartInstance.data.datasets[1].data = chartData.deniedCounts;
-      lineChartInstance.update();
-    }
-
-    function renderReportsBarChart(period = 'daily') {
-      const ctx = document.getElementById('reportsBarChart').getContext('2d');
+    function updateReportsSummary() {
       const totalSuccess = state.transactions.filter(t => t.status === 'Success').length;
-      const totalDenied = state.transactions.filter(t => t.status === 'Failed').length;
+      const totalDenied = state.transactions.filter(t => t.status !== 'Success').length;
+      const activeCount = state.members.filter(m => m.status === 'Active' && !m.frozen).length;
 
       document.getElementById('reportTotalCheckIns').textContent = totalSuccess;
       document.getElementById('reportTotalDenied').textContent = totalDenied;
+      document.getElementById('reportActiveMembers').textContent = activeCount;
+    }
 
-      const chartData = getLast7DaysChartData();
-      let labels = chartData.labels;
-      let successSeries = chartData.successCounts;
-      let deniedSeries = chartData.deniedCounts;
+    function switchReportPeriod(period) {
+      document.querySelectorAll('.report-tab').forEach(btn => {
+        if (btn.dataset.reportTab === period) {
+          btn.className = 'report-tab px-5 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow transition';
+        } else {
+          btn.className = 'report-tab px-5 py-2 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition';
+        }
+      });
+      renderReportsBarChart(period);
+    }
 
-      if (period === 'weekly') {
-        labels = ['This Week'];
-        successSeries = [totalSuccess];
-        deniedSeries = [totalDenied];
-      } else if (period === 'monthly') {
-        const monthLabel = new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-        labels = [monthLabel];
-        successSeries = [totalSuccess];
-        deniedSeries = [totalDenied];
+    function renderReportsBarChart(period) {
+      const ctx = document.getElementById('reportsBarChart');
+      if (!ctx) return;
+
+      const labels = [];
+      const successCounts = [];
+      const deniedCounts = [];
+
+      if (period === 'daily') {
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          const dd = String(d.getDate()).padStart(2, '0');
+          const mm = String(d.getMonth() + 1).padStart(2, '0');
+          const yyyy = d.getFullYear();
+          const dateKey = `${dd}-${mm}-${yyyy}`;
+          labels.push(`${dd}/${mm}`);
+          successCounts.push(state.transactions.filter(t => t.date === dateKey && t.status === 'Success').length);
+          deniedCounts.push(state.transactions.filter(t => t.date === dateKey && t.status !== 'Success').length);
+        }
+      } else if (period === 'weekly') {
+        for (let w = 3; w >= 0; w--) {
+          labels.push(w === 0 ? 'This Week' : `${w}w Ago`);
+          let sSum = 0;
+          let dSum = 0;
+          for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+            const d = new Date();
+            d.setDate(d.getDate() - (w * 7 + dayOffset));
+            const dd = String(d.getDate()).padStart(2, '0');
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const yyyy = d.getFullYear();
+            const dateKey = `${dd}-${mm}-${yyyy}`;
+            sSum += state.transactions.filter(t => t.date === dateKey && t.status === 'Success').length;
+            dSum += state.transactions.filter(t => t.date === dateKey && t.status !== 'Success').length;
+          }
+          successCounts.push(sSum);
+          deniedCounts.push(dSum);
+        }
+      } else {
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        for (let m = 5; m >= 0; m--) {
+          const d = new Date();
+          d.setMonth(d.getMonth() - m);
+          const mm = String(d.getMonth() + 1).padStart(2, '0');
+          const yyyy = String(d.getFullYear());
+          labels.push(`${monthNames[d.getMonth()]} ${yyyy.slice(2)}`);
+          successCounts.push(state.transactions.filter(t => t.date && t.date.endsWith(`-${mm}-${yyyy}`) && t.status === 'Success').length);
+          deniedCounts.push(state.transactions.filter(t => t.date && t.date.endsWith(`-${mm}-${yyyy}`) && t.status !== 'Success').length);
+        }
       }
 
       if (barChartInstance) barChartInstance.destroy();
       barChartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: labels,
+          labels,
           datasets: [
-            {
-              label: 'Successful',
-              data: successSeries,
-              backgroundColor: '#3B66F5',
-              borderRadius: 6,
-              barPercentage: 0.55
-            },
-            {
-              label: 'Denied',
-              data: deniedSeries,
-              backgroundColor: '#FB7185',
-              borderRadius: 6,
-              barPercentage: 0.55
-            }
+            { label: 'Successful', data: successCounts, backgroundColor: '#5B46E8', borderRadius: 6, barPercentage: 0.55 },
+            { label: 'Denied', data: deniedCounts, backgroundColor: '#F43F5E', borderRadius: 6, barPercentage: 0.55 }
           ]
         },
         options: {
@@ -2048,30 +2217,19 @@
           maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
-            y: { beginAtZero: true, suggestedMax: 10, grid: { color: '#F1F5F9' }, ticks: { stepSize: 1, font: { size: 11 } } },
-            x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+            y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#F1F5F9' }, border: { display: false } },
+            x: { grid: { display: false }, border: { display: false } }
           }
         }
       });
     }
 
-    function switchReportPeriod(period) {
-      document.querySelectorAll('.report-tab').forEach(tab => {
-        if (tab.dataset.reportTab === period) {
-          tab.className = 'report-tab px-5 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow transition';
-        } else {
-          tab.className = 'report-tab px-5 py-2 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition';
-        }
-      });
-      renderReportsBarChart(period);
-    }
-
-    function switchSettingsTab(tabName) {
+    function switchSettingsTab(tabId) {
       document.querySelectorAll('.settings-panel').forEach(p => p.classList.add('hidden'));
-      document.getElementById(`settings-panel-${tabName}`).classList.remove('hidden');
+      document.getElementById(`settings-panel-${tabId}`).classList.remove('hidden');
 
       document.querySelectorAll('.settings-tab').forEach(btn => {
-        if (btn.dataset.settingsTab === tabName) {
+        if (btn.dataset.settingsTab === tabId) {
           btn.className = 'settings-tab px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow';
         } else {
           btn.className = 'settings-tab px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100';
@@ -2079,72 +2237,68 @@
       });
     }
 
-    function applyProfileAvatar(srcUrl) {
-      const headerAvatar = document.getElementById('headerProfileAvatar');
-      const previewAvatar = document.getElementById('settingsProfileAvatarPreview');
-      if (srcUrl && srcUrl.trim().length > 0) {
-        const imgHtml = `<img src="${srcUrl}" alt="Profile" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<i class=\\'fa-solid fa-user-tie\\'></i>'" />`;
-        if (headerAvatar) headerAvatar.innerHTML = imgHtml;
-        if (previewAvatar) previewAvatar.innerHTML = imgHtml;
-      } else {
-        const iconHtml = `<i class="fa-solid fa-user-tie"></i>`;
-        if (headerAvatar) headerAvatar.innerHTML = iconHtml;
-        if (previewAvatar) previewAvatar.innerHTML = iconHtml;
-      }
+    function applyBrandIdentity(title, subtitle, logoSrc) {
+      const safeTitle = title || 'Gym NFC';
+      const safeSubtitle = subtitle || 'Management System';
+
+      document.title = `${safeTitle} - ${safeSubtitle}`;
+      const sidebarTitle = document.getElementById('sidebarGymTitle');
+      const sidebarSub = document.getElementById('sidebarGymSubtitle');
+      const loginTitle = document.getElementById('loginBrandTitle');
+      const loginSub = document.getElementById('loginBrandSubtitle');
+
+      if (sidebarTitle) sidebarTitle.textContent = safeTitle;
+      if (sidebarSub) sidebarSub.textContent = safeSubtitle;
+      if (loginTitle) loginTitle.textContent = safeTitle;
+      if (loginSub) loginSub.textContent = safeSubtitle;
+
+      const logoContainers = ['sidebarBrandLogoBox', 'loginBrandLogoBox', 'settingsBrandLogoPreview'];
+      logoContainers.forEach(boxId => {
+        const el = document.getElementById(boxId);
+        if (!el) return;
+        if (logoSrc) {
+          el.innerHTML = `<img src="${logoSrc}" alt="${safeTitle}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<i class=\\'fa-solid fa-dumbbell\\'></i>'" />`;
+        } else {
+          el.innerHTML = `<i class="fa-solid fa-dumbbell"></i>`;
+        }
+      });
     }
 
-    function applyBrandLogo(logoUrl) {
-      const sidebarBox = document.getElementById('sidebarBrandLogoBox');
-      const loginBox = document.getElementById('loginBrandLogoBox');
-      const settingsBox = document.getElementById('settingsBrandLogoPreview');
-
-      if (logoUrl && logoUrl.trim().length > 0) {
-        const imgHtml = `<img src="${logoUrl}" alt="Brand Logo" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<i class=\\'fa-solid fa-dumbbell\\'></i>'" />`;
-        if (sidebarBox) sidebarBox.innerHTML = imgHtml;
-        if (loginBox) loginBox.innerHTML = imgHtml;
-        if (settingsBox) settingsBox.innerHTML = imgHtml;
-      } else {
-        const defaultIcon = `<i class="fa-solid fa-dumbbell"></i>`;
-        if (sidebarBox) sidebarBox.innerHTML = defaultIcon;
-        if (loginBox) loginBox.innerHTML = defaultIcon;
-        if (settingsBox) settingsBox.innerHTML = defaultIcon;
-      }
+    function applyProfileAvatar(profileSrc) {
+      const headerAvatar = document.getElementById('headerProfileAvatar');
+      const settingsAvatar = document.getElementById('settingsProfileAvatarPreview');
+      [headerAvatar, settingsAvatar].forEach(el => {
+        if (!el) return;
+        if (profileSrc) {
+          el.innerHTML = `<img src="${profileSrc}" alt="Admin" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<i class=\\'fa-solid fa-user-tie\\'></i>'" />`;
+        } else {
+          el.innerHTML = `<i class="fa-solid fa-user-tie"></i>`;
+        }
+      });
     }
 
     function previewBrandLive() {
-      const gymName = document.getElementById('settingGymName').value.trim() || 'Gym NFC';
-      const gymSubtitle = document.getElementById('settingGymSubtitle').value.trim() || 'Management System';
-      const brandLogoUrl = document.getElementById('settingBrandLogoUrl').value.trim();
-
-      document.getElementById('sidebarGymTitle').textContent = gymName;
-      document.getElementById('loginBrandTitle').textContent = gymName;
-      document.getElementById('sidebarGymSubtitle').textContent = gymSubtitle;
-      document.getElementById('loginBrandSubtitle').textContent = gymSubtitle;
-      document.title = `${gymName} - ${gymSubtitle}`;
-
-      if (brandLogoUrl) {
-        applyBrandLogo(brandLogoUrl);
-      } else {
-        const savedLogo = localStorage.getItem('gym_brand_logo') || '';
-        applyBrandLogo(savedLogo);
-      }
+      const name = document.getElementById('settingGymName').value.trim() || 'Gym NFC';
+      const subtitle = document.getElementById('settingGymSubtitle').value.trim() || 'Management System';
+      const urlInput = document.getElementById('settingBrandLogoUrl').value.trim();
+      const savedDataLogo = localStorage.getItem('gym_brand_logo') || '';
+      const activeLogo = urlInput || savedDataLogo;
+      applyBrandIdentity(name, subtitle, activeLogo);
     }
 
     function handleBrandLogoUpload(e) {
       const file = e.target.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = function(evt) {
-        const dataUrl = evt.target.result;
+      reader.onload = ev => {
+        const dataUrl = ev.target.result;
+        localStorage.setItem('gym_brand_logo', dataUrl);
         document.getElementById('settingBrandLogoUrl').value = '';
-        try {
-          localStorage.setItem('gym_brand_logo', dataUrl);
-          applyBrandLogo(dataUrl);
-          updatePwaManifest();
-          showToast('App & Gym Logo updated everywhere!', 'success');
-        } catch (err) {
-          showToast('Logo image too large for LocalStorage. Try a smaller image.', 'error');
-        }
+        const name = document.getElementById('settingGymName').value.trim() || 'Gym NFC';
+        const subtitle = document.getElementById('settingGymSubtitle').value.trim() || 'Management System';
+        applyBrandIdentity(name, subtitle, dataUrl);
+        updateDynamicPwaManifest();
+        showToast('App & Sidebar Logo updated!', 'success');
       };
       reader.readAsDataURL(file);
     }
@@ -2152,62 +2306,49 @@
     function resetBrandLogo() {
       localStorage.removeItem('gym_brand_logo');
       document.getElementById('settingBrandLogoUrl').value = '';
-      applyBrandLogo('');
-      updatePwaManifest();
+      const name = document.getElementById('settingGymName').value.trim() || 'Gym NFC';
+      const subtitle = document.getElementById('settingGymSubtitle').value.trim() || 'Management System';
+      applyBrandIdentity(name, subtitle, '');
+      updateDynamicPwaManifest();
       showToast('Default Gym icon restored!', 'info');
     }
 
     function saveGeneralSettings(e) {
       e.preventDefault();
-      const gymName = document.getElementById('settingGymName').value.trim();
-      const gymSubtitle = document.getElementById('settingGymSubtitle').value.trim();
-      const brandLogoUrl = document.getElementById('settingBrandLogoUrl').value.trim();
+      const name = document.getElementById('settingGymName').value.trim() || 'Gym NFC';
+      const subtitle = document.getElementById('settingGymSubtitle').value.trim() || 'Management System';
+      const logoUrl = document.getElementById('settingBrandLogoUrl').value.trim();
       const profileUrl = document.getElementById('settingProfileLogoUrl').value.trim();
-      const gymEmail = document.getElementById('settingGymEmail').value.trim();
-      const gymPhone = document.getElementById('settingGymPhone').value.trim();
+      const email = document.getElementById('settingGymEmail').value.trim();
+      const phone = document.getElementById('settingGymPhone').value.trim();
 
-      if (gymName) {
-        document.getElementById('sidebarGymTitle').textContent = gymName;
-        document.getElementById('loginBrandTitle').textContent = gymName;
-        localStorage.setItem('gym_brand_title', gymName);
-      }
-      if (gymSubtitle) {
-        document.getElementById('sidebarGymSubtitle').textContent = gymSubtitle;
-        document.getElementById('loginBrandSubtitle').textContent = gymSubtitle;
-        localStorage.setItem('gym_brand_subtitle', gymSubtitle);
-      }
-      if (gymName || gymSubtitle) {
-        document.title = `${gymName || 'Gym NFC'} - ${gymSubtitle || 'Management System'}`;
-      }
-      if (brandLogoUrl) {
-        localStorage.setItem('gym_brand_logo', brandLogoUrl);
-        applyBrandLogo(brandLogoUrl);
-      }
-      if (gymEmail) localStorage.setItem('gym_contact_email', gymEmail);
-      if (gymPhone) localStorage.setItem('gym_contact_phone', gymPhone);
+      localStorage.setItem('gym_brand_title', name);
+      localStorage.setItem('gym_brand_subtitle', subtitle);
+      localStorage.setItem('gym_contact_email', email);
+      localStorage.setItem('gym_contact_phone', phone);
 
+      if (logoUrl) {
+        localStorage.setItem('gym_brand_logo', logoUrl);
+      }
       if (profileUrl) {
-        localStorage.setItem('gym_profile_avatar', profileUrl);
+        localStorage.setItem('gym_profile_logo', profileUrl);
         applyProfileAvatar(profileUrl);
       }
 
-      updatePwaManifest();
-      showToast('Gym Logo, Name & Settings updated everywhere!', 'success');
+      const activeLogo = logoUrl || localStorage.getItem('gym_brand_logo') || '';
+      applyBrandIdentity(name, subtitle, activeLogo);
+      updateDynamicPwaManifest();
+      showToast('Gym Name & Logo updated across the entire app!', 'success');
     }
 
     function handleLogoUpload(e) {
       const file = e.target.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = function(evt) {
-        const dataUrl = evt.target.result;
-        document.getElementById('gymLogoPreview').src = dataUrl;
-        try {
-          localStorage.setItem('gym_cover_photo', dataUrl);
-          showToast('Gym photo saved permanently in LocalStorage!', 'success');
-        } catch (err) {
-          showToast('Image too large for LocalStorage. Try a smaller photo.', 'error');
-        }
+      reader.onload = ev => {
+        document.getElementById('gymLogoPreview').src = ev.target.result;
+        localStorage.setItem('gym_cover_photo', ev.target.result);
+        showToast('Gym cover photo updated!', 'success');
       };
       reader.readAsDataURL(file);
     }
@@ -2216,206 +2357,161 @@
       const file = e.target.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = function(evt) {
-        const dataUrl = evt.target.result;
+      reader.onload = ev => {
+        const dataUrl = ev.target.result;
+        localStorage.setItem('gym_profile_logo', dataUrl);
         document.getElementById('settingProfileLogoUrl').value = '';
-        try {
-          localStorage.setItem('gym_profile_avatar', dataUrl);
-          applyProfileAvatar(dataUrl);
-          showToast('Profile logo uploaded & saved!', 'success');
-        } catch (err) {
-          showToast('Image too large for LocalStorage. Try a smaller photo.', 'error');
-        }
+        applyProfileAvatar(dataUrl);
+        showToast('Admin profile logo updated!', 'success');
       };
       reader.readAsDataURL(file);
     }
 
+    function saveCardSettings() {
+      const limit = document.getElementById('checkInDailyLimit').value;
+      localStorage.setItem('gym_checkin_daily_limit', limit);
+      showToast(`NFC Reader settings saved! Daily limit: ${limit} Time(s)/Day`, 'success');
+    }
+
+    function handleGlobalSearch(e) {
+      const val = e.target.value.trim();
+      if (val.length > 0) {
+        switchSection('view-members');
+        document.getElementById('memberSearchInput').value = val;
+        renderMembersTable();
+      }
+    }
+
+    let deferredInstallPrompt = null;
+
+    function buildAppIconSvgDataUri() {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#16134A"/><stop offset="100%" stop-color="#5B46E8"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="url(#g)"/><g fill="#FFFFFF"><rect x="116" y="196" width="32" height="120" rx="10"/><rect x="158" y="172" width="36" height="168" rx="12"/><rect x="194" y="238" width="124" height="36" rx="8"/><rect x="318" y="172" width="36" height="168" rx="12"/><rect x="364" y="196" width="32" height="120" rx="10"/></g></svg>`;
+      return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    }
+
+    function updateDynamicPwaManifest() {
+      try {
+        const appName = localStorage.getItem('gym_brand_title') || 'Gym NFC';
+        const customLogo = localStorage.getItem('gym_brand_logo') || '';
+        const iconUrl = (customLogo && (customLogo.startsWith('http') || customLogo.startsWith('data:image/')))
+          ? customLogo
+          : buildAppIconSvgDataUri();
+
+        const appleIconEl = document.getElementById('appleTouchIconLink');
+        if (appleIconEl) appleIconEl.href = iconUrl;
+
+        const manifestObj = {
+          name: `${appName} Management System`,
+          short_name: appName.slice(0, 14),
+          start_url: window.location.href,
+          display: 'standalone',
+          background_color: '#16134A',
+          theme_color: '#16134A',
+          icons: [
+            { src: iconUrl, sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+            { src: iconUrl, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+          ]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
+        const manifestUrl = URL.createObjectURL(manifestBlob);
+        const manifestEl = document.getElementById('pwaManifestLink');
+        if (manifestEl) manifestEl.href = manifestUrl;
+      } catch (e) {}
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      const headerBtn = document.getElementById('headerInstallBtn');
+      const sidebarBtn = document.getElementById('sidebarInstallBtn');
+      if (headerBtn) { headerBtn.classList.remove('hidden'); headerBtn.classList.add('flex'); }
+      if (sidebarBtn) { sidebarBtn.classList.remove('hidden'); sidebarBtn.classList.add('flex'); }
+    });
+
+    window.addEventListener('appinstalled', () => {
+      deferredInstallPrompt = null;
+      const headerBtn = document.getElementById('headerInstallBtn');
+      const sidebarBtn = document.getElementById('sidebarInstallBtn');
+      if (headerBtn) headerBtn.classList.add('hidden');
+      if (sidebarBtn) sidebarBtn.classList.add('hidden');
+      showToast('App installed on your Home Screen!', 'success');
+    });
+
+    async function installPwaApp() {
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        const { outcome } = await deferredInstallPrompt.userChoice;
+        if (outcome === 'accepted') {
+          deferredInstallPrompt = null;
+        }
+      } else {
+        showToast('To install: Open browser menu (⋮ or Share) and tap "Add to Home Screen".', 'info');
+      }
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
+      const todayBadge = document.getElementById('dashboardDateBadge');
+      if (todayBadge) {
+        todayBadge.innerHTML = `<i class="fa-regular fa-calendar text-indigo-600 mr-1.5"></i>Today: ${getTodayFormatted()}`;
+      }
+
+      document.getElementById('newMemberStart').value = getTodayIso();
+      autoCalculateEndDate();
+      if (document.getElementById('newMemberCardId')) {
+        document.getElementById('newMemberCardId').value = '';
+      }
+      updateCardPreview();
+
+      const savedBrandTitle = localStorage.getItem('gym_brand_title') || 'Gym NFC';
+      const savedBrandSubtitle = localStorage.getItem('gym_brand_subtitle') || 'Management System';
+      const savedBrandLogo = localStorage.getItem('gym_brand_logo') || '';
+      const savedProfileLogo = localStorage.getItem('gym_profile_logo') || '';
+      const savedCoverPhoto = localStorage.getItem('gym_cover_photo') || '';
+      const savedEmail = localStorage.getItem('gym_contact_email') || 'info@nextgenfitness.com';
+      const savedPhone = localStorage.getItem('gym_contact_phone') || '+91 98765 43210';
+      const savedOwnerCard = localStorage.getItem('gym_owner_card_uid') || '';
+
+      document.getElementById('settingGymName').value = savedBrandTitle;
+      document.getElementById('settingGymSubtitle').value = savedBrandSubtitle;
+      if (savedBrandLogo.startsWith('http')) {
+        document.getElementById('settingBrandLogoUrl').value = savedBrandLogo;
+      }
+      if (savedProfileLogo.startsWith('http')) {
+        document.getElementById('settingProfileLogoUrl').value = savedProfileLogo;
+      }
+      if (savedCoverPhoto) {
+        document.getElementById('gymLogoPreview').src = savedCoverPhoto;
+      }
+      document.getElementById('settingGymEmail').value = savedEmail;
+      document.getElementById('settingGymPhone').value = savedPhone;
+      if (savedOwnerCard && document.getElementById('ownerCardUidInput')) {
+        document.getElementById('ownerCardUidInput').value = savedOwnerCard;
+      }
+
+      applyBrandIdentity(savedBrandTitle, savedBrandSubtitle, savedBrandLogo);
+      applyProfileAvatar(savedProfileLogo);
+      updateDynamicPwaManifest();
+
+      const savedLimit = localStorage.getItem('gym_checkin_daily_limit');
+      if (savedLimit && document.getElementById('checkInDailyLimit')) {
+        document.getElementById('checkInDailyLimit').value = savedLimit;
+      }
+
       const creds = getAdminCredentials();
-      checkLoginLockoutStatus();
-
-      const dateBadge = document.getElementById('dashboardDateBadge');
-      if (dateBadge) {
-        const formattedToday = new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
-        dateBadge.innerHTML = `<i class="fa-regular fa-calendar text-indigo-600 mr-1.5"></i>${formattedToday}`;
-      }
-
-      const startInp = document.getElementById('newMemberStart');
-      if (startInp) {
-        startInp.value = getTodayIso();
-        autoCalculateEndDate();
-      }
-
+      document.getElementById('headerAdminName').textContent = creds.username === DEFAULT_ADMIN_USER ? 'Admin' : creds.username;
       if (localStorage.getItem('gym_admin_logged_in') === 'true') {
         document.getElementById('loginOverlay').classList.add('hidden');
       } else {
         document.getElementById('loginOverlay').classList.remove('hidden');
+        checkLoginLockoutStatus();
       }
 
-      document.getElementById('headerAdminName').textContent = creds.username;
-      const secUser = document.getElementById('securityNewUsername');
-      const secPass = document.getElementById('securityNewPassword');
-      if (secUser) secUser.value = creds.username;
-      if (secPass) secPass.value = creds.password;
-
-      const savedTitle = localStorage.getItem('gym_brand_title');
-      const savedSubtitle = localStorage.getItem('gym_brand_subtitle');
-      const savedBrandLogo = localStorage.getItem('gym_brand_logo');
-      const savedAvatar = localStorage.getItem('gym_profile_avatar');
-      const savedCoverPhoto = localStorage.getItem('gym_cover_photo');
-      const savedEmail = localStorage.getItem('gym_contact_email');
-      const savedPhone = localStorage.getItem('gym_contact_phone');
-      const savedDailyLimit = localStorage.getItem('gym_checkin_daily_limit');
-      const savedBlockExpired = localStorage.getItem('gym_block_expired');
-      const savedOwnerUid = localStorage.getItem('gym_owner_card_uid');
-      const activeSection = localStorage.getItem('gym_active_section') || 'dashboard';
-
-      if (savedOwnerUid && document.getElementById('ownerCardUidInput')) {
-        document.getElementById('ownerCardUidInput').value = savedOwnerUid;
-      }
-      if (savedDailyLimit && document.getElementById('checkInDailyLimit')) {
-        document.getElementById('checkInDailyLimit').value = savedDailyLimit;
-      }
-      if (savedBlockExpired !== null && document.getElementById('blockExpiredToggle')) {
-        document.getElementById('blockExpiredToggle').checked = savedBlockExpired === 'true';
-      }
-      if (savedEmail && document.getElementById('settingGymEmail')) {
-        document.getElementById('settingGymEmail').value = savedEmail;
-      }
-      if (savedPhone && document.getElementById('settingGymPhone')) {
-        document.getElementById('settingGymPhone').value = savedPhone;
-      }
-      if (savedCoverPhoto && document.getElementById('gymLogoPreview')) {
-        document.getElementById('gymLogoPreview').src = savedCoverPhoto;
-      }
-      if (savedTitle) {
-        document.getElementById('sidebarGymTitle').textContent = savedTitle;
-        document.getElementById('loginBrandTitle').textContent = savedTitle;
-        document.getElementById('settingGymName').value = savedTitle;
-      }
-      if (savedSubtitle) {
-        document.getElementById('sidebarGymSubtitle').textContent = savedSubtitle;
-        document.getElementById('loginBrandSubtitle').textContent = savedSubtitle;
-        document.getElementById('settingGymSubtitle').value = savedSubtitle;
-      }
-      if (savedTitle || savedSubtitle) {
-        document.title = `${savedTitle || 'Gym NFC'} - ${savedSubtitle || 'Management System'}`;
-      }
-      if (savedBrandLogo) {
-        if (!savedBrandLogo.startsWith('data:')) {
-          document.getElementById('settingBrandLogoUrl').value = savedBrandLogo;
-        }
-        applyBrandLogo(savedBrandLogo);
-      }
-      if (savedAvatar) {
-        if (!savedAvatar.startsWith('data:')) {
-          document.getElementById('settingProfileLogoUrl').value = savedAvatar;
-        }
-        applyProfileAvatar(savedAvatar);
-      }
-
-      switchSection(activeSection);
-      generateRandomCardId();
-      updateCardPreview();
-      initDashboardChart();
-      renderAllViews();
       initLocalStorageMode();
-      initPwaInstallSupport();
+      renderAllViews();
+
+      // Always open Dashboard as the default home page
+      switchSection('dashboard');
     });
-
-    let deferredInstallPrompt = null;
-
-    function updatePwaManifest() {
-      const gymTitle = localStorage.getItem('gym_brand_title') || 'Gym NFC';
-      const gymSubtitle = localStorage.getItem('gym_brand_subtitle') || 'Management System';
-      const savedBrandLogo = localStorage.getItem('gym_brand_logo');
-
-      const initials = gymTitle.slice(0, 4).toUpperCase();
-      const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#16134A"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="160" fill="#FFFFFF">${initials}</text></svg>`;
-      const fallbackIconUrl = 'data:image/svg+xml;base64,' + btoa(svgIcon);
-      const activeIconUrl = savedBrandLogo || fallbackIconUrl;
-      const iconType = savedBrandLogo && !savedBrandLogo.startsWith('data:image/svg') ? 'image/png' : 'image/svg+xml';
-
-      const appleIcon = document.getElementById('appleTouchIconLink');
-      if (appleIcon) appleIcon.href = activeIconUrl;
-
-      const manifest = {
-        id: './gym-nfc-app',
-        name: `${gymTitle} - ${gymSubtitle}`,
-        short_name: gymTitle,
-        description: `${gymTitle} NFC Attendance & Member Management App`,
-        start_url: './',
-        scope: './',
-        display: 'standalone',
-        orientation: 'any',
-        background_color: '#16134A',
-        theme_color: '#16134A',
-        icons: [
-          { src: activeIconUrl, sizes: '192x192', type: iconType, purpose: 'any' },
-          { src: activeIconUrl, sizes: '512x512', type: iconType, purpose: 'any' },
-          { src: activeIconUrl, sizes: '512x512', type: iconType, purpose: 'maskable' }
-        ]
-      };
-
-      const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
-      const manifestUrl = URL.createObjectURL(manifestBlob);
-      const manifestLink = document.getElementById('pwaManifestLink');
-      if (manifestLink) manifestLink.href = manifestUrl;
-    }
-
-    function registerOfflineServiceWorker() {
-      if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
-        const swCode = `
-          const CACHE_NAME = 'gym-nfc-native-v1';
-          self.addEventListener('install', (e) => { self.skipWaiting(); });
-          self.addEventListener('activate', (e) => { e.waitUntil(clients.claim()); });
-          self.addEventListener('fetch', (e) => {
-            e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
-          });
-        `;
-        const swBlob = new Blob([swCode], { type: 'application/javascript' });
-        const swUrl = URL.createObjectURL(swBlob);
-        navigator.serviceWorker.register(swUrl).catch(() => {});
-      }
-    }
-
-    function initPwaInstallSupport() {
-      updatePwaManifest();
-      registerOfflineServiceWorker();
-
-      window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredInstallPrompt = e;
-        const headerBtn = document.getElementById('headerInstallBtn');
-        const sidebarBtn = document.getElementById('sidebarInstallBtn');
-        if (headerBtn) {
-          headerBtn.classList.remove('hidden');
-          headerBtn.classList.add('flex');
-        }
-        if (sidebarBtn) sidebarBtn.classList.remove('hidden');
-      });
-
-      window.addEventListener('appinstalled', () => {
-        deferredInstallPrompt = null;
-        const headerBtn = document.getElementById('headerInstallBtn');
-        const sidebarBtn = document.getElementById('sidebarInstallBtn');
-        if (headerBtn) headerBtn.classList.add('hidden');
-        if (sidebarBtn) sidebarBtn.classList.add('hidden');
-        showToast('App installed on your device!', 'success');
-      });
-    }
-
-    async function installPwaApp() {
-      if (!deferredInstallPrompt) {
-        showToast('Browser menu (⋮) lo "Add to Home Screen" / "Install App" click cheyandi.', 'info');
-        return;
-      }
-      deferredInstallPrompt.prompt();
-      const { outcome } = await deferredInstallPrompt.userChoice;
-      if (outcome === 'accepted') {
-        deferredInstallPrompt = null;
-      }
-    }
   </script>
 </body>
-  </html>
+              </html>
