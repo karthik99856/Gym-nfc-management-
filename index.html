@@ -1038,6 +1038,10 @@
     let isBleConnected = false;
     let bleReceiveBuffer = '';
 
+    const BLE_UART_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+    const BLE_UART_RX_CHAR_UUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+    const BLE_UART_TX_CHAR_UUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+
     async function sendHardwareSignal(commandStr) {
       // Send over Bluetooth BLE if connected
       if (isBleConnected && bleRxCharacteristic) {
@@ -1046,70 +1050,6 @@
           await bleRxCharacteristic.writeValue(encoder.encode(commandStr + '\n'));
         } catch (e) {}
       }
-    }
-
-    function persistState() {
-// ... existing code ... -->
-      if (!isWithinValidity || member.status === 'Expired') {
-        member.status = 'Expired';
-        playBuzzerPattern('error');
-        speakAnnouncement(`Your login failed due to your plan is expired`);
-        sendHardwareSignal('RED');
-        const deniedTxn = {
-          id: Date.now(),
-          name: member.name,
-          cardId: member.cardId,
-          endDate: member.endDate,
-          action: 'Expired (Plan Expired)',
-          time: timeStr,
-          date: dateStr,
-          method: member.nfcType === 'Mobile' ? 'Mobile NFC' : 'NFC Card',
-          status: 'Failed'
-        };
-        state.transactions.unshift(deniedTxn);
-        persistState();
-        renderAllViews();
-        showToast(`${member.name}: Your login failed due to your plan is expired`, 'error');
-        return;
-      }
-
-      const todayMemberCheckIns = state.transactions.filter(
-        t => t.name === member.name && t.date === dateStr && t.status === 'Success'
-      ).length;
-
-      if (todayMemberCheckIns >= dailyLimit) {
-        playBuzzerPattern('error');
-        speakAnnouncement(`Daily check-in limit reached for ${member.name}.`);
-        showToast(`Limit Reached: ${member.name} already checked in ${todayMemberCheckIns}/${dailyLimit} time(s) today!`, 'error');
-        return;
-      }
-
-      const nextCheckInCount = todayMemberCheckIns + 1;
-      const actionText = dailyLimit > 1 ? `Checked In (${nextCheckInCount}/${dailyLimit})` : 'Check-In Successful';
-      member.lastCheckInDate = dateStr;
-
-      playBuzzerPattern(nextCheckInCount === 1 ? 'success' : 'double');
-      speakAnnouncement(`${member.name}, your check-in successful`);
-      sendHardwareSignal('GREEN');
-
-      const successTxn = {
-        id: Date.now(),
-        name: member.name,
-        cardId: member.cardId,
-        endDate: member.endDate,
-        action: actionText,
-        time: timeStr,
-        date: dateStr,
-        method: member.nfcType === 'Mobile' ? 'Mobile NFC' : 'NFC Card',
-        status: 'Success'
-      };
-      state.transactions.unshift(successTxn);
-
-      sendWhatsAppAlert(member, actionText);
-      persistState();
-      renderAllViews();
-      showToast(`${member.name}, your check-in successful`, 'success');
-    }
     }
 
     function showAccessLightBanner(isAllowed, memberName, expiryDate, subtext) {
@@ -1418,10 +1358,10 @@
       sendWhatsAppAlert(member, actionText);
       persistState();
       renderAllViews();
-      showToast(`GREEN LIGHT (${nextCheckInCount}/${dailyLimit}): ${member.name}`, 'success');
+      showToast(`${member.name}, your check-in successful`, 'success');
     }
 
-    function initLocalStorageMode() {
+    function showAccessLightBanner(isAllowed, memberName, expiryDate, subtext) {
       const dot = document.getElementById('localStorageDot');
       const text = document.getElementById('localStorageText');
       if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
@@ -1620,7 +1560,7 @@
           const text = decoder.decode(event.target.value);
           // Ensure newline termination if ESP32 sends full UID in a single packet
           const normalized = text.includes('\n') ? text : text + '\n';
-          parseIncomingReaderStream(normalized);
+          parseIncomingReaderStream(normalized, 'ble');
         });
 
         const devName = bleDevice.name || 'BLE NFC';
