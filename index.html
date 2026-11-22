@@ -217,9 +217,9 @@
         </div>
 
         <div class="flex items-center gap-2.5 sm:gap-4">
-          <button type="button" onclick="connectBluetoothReader()" id="headerBluetoothBtn" class="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition">
-            <i class="fa-brands fa-bluetooth-b"></i>
-            <span id="headerBluetoothText">Connect Bluetooth</span>
+          <button type="button" onclick="connectSerialReader()" id="headerSerialBtn" class="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition">
+            <i class="fa-brands fa-usb"></i>
+            <span id="headerSerialText">Connect Serial</span>
           </button>
 
           <button type="button" onclick="triggerDesktopAppInstall()" id="installAppBtn" class="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-sm transition">
@@ -371,7 +371,7 @@
                     <i class="fa-solid fa-wifi rotate-90 animate-pulse text-base"></i>
                     <span id="tapInstructionText">Tap NFC Card on RC522 Reader to Save Member</span>
                   </div>
-                  <p id="bluetoothRawDebug" class="text-[11px] font-mono text-indigo-600">Bluetooth Status: Auto-pairing ready (Click "Connect Bluetooth" at top)</p>
+                  <p id="serialRawDebug" class="text-[11px] font-mono text-indigo-600">Serial Status: Not Connected (Click "Connect Serial" at top)</p>
                 </div>
               </div>
             </div>
@@ -522,21 +522,13 @@
         <section id="section-settings" class="hidden space-y-6">
           <div class="flex flex-wrap items-center justify-between gap-3">
             <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Settings</h2>
-            <button type="button" onclick="connectBluetoothReader()" id="bluetoothConnectBtn" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold shadow-sm transition">
-              <i class="fa-brands fa-bluetooth-b"></i>
-              <span>Connect / Auto-Pair Bluetooth</span>
+            <button type="button" onclick="connectSerialReader()" id="serialConnectBtn" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold shadow-sm transition">
+              <i class="fa-brands fa-usb"></i>
+              <span>Connect Serial Port</span>
             </button>
           </div>
 
           <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-5 max-w-xl">
-            <div class="flex items-center justify-between p-4 rounded-xl border border-indigo-200 bg-indigo-50/50">
-              <div>
-                <p class="text-sm font-bold text-slate-900">Bluetooth Auto-Pairing & Auto-Reconnect</p>
-                <p class="text-xs text-slate-500">Automatically remembers and reconnects to your saved NFC Bluetooth device.</p>
-              </div>
-              <input id="bluetoothAutoPairToggle" type="checkbox" checked onchange="saveBluetoothAutoPairSetting()" class="w-4 h-4 rounded text-indigo-600 cursor-pointer" />
-            </div>
-
             <div class="flex items-center justify-between p-4 rounded-xl border border-slate-200">
               <div>
                 <p class="text-sm font-bold text-slate-800">Daily Check-In Limit</p>
@@ -714,20 +706,16 @@
       })()
     };
 
-    // Bluetooth BLE state with auto-pairing / auto-reconnect support
-    let bleDevice = null;
-    let bleServer = null;
-    let bleNotifyChar = null;
-    let isBluetoothConnected = false;
-    let bluetoothReceiveBuffer = '';
-    let bluetoothFlushTimer = null;
-    let bluetoothReconnectTimer = null;
-    let manualBluetoothDisconnect = false;
+    let serialPort = null;
+    let serialReader = null;
+    let isSerialConnected = false;
+    let serialReceiveBuffer = '';
+    let serialFlushTimer = null;
     let nfcLightTimeout = null;
     let lineChartInstance = null;
     let barChartInstance = null;
     let appReadyTimestamp = Date.now();
-    let bluetoothConnectedAt = 0;
+    let serialConnectedAt = 0;
 
     function persistState() {
       try {
@@ -1031,209 +1019,207 @@
     }
 
     function handleIncomingCardScan(rawUid) {
-      // Ignore startup noise, bluetooth connect flush, or non-UID text
+      // Ignore startup noise, serial boot flush, or non-UID text
       if (Date.now() - appReadyTimestamp < 2000) return;
-      if (bluetoothConnectedAt && Date.now() - bluetoothConnectedAt < 1800) return;
+      if (serialConnectedAt && Date.now() - serialConnectedAt < 1800) return;
       const uid = String(rawUid || '').replace(/[^a-zA-Z0-9:-]/g, '').toUpperCase();
       if (!uid || uid.length < 4 || uid.length > 24) return;
-      if (/^(WAITING|READY|STATUS|RC522|ESP32|BLUETOOTH|BLE|CONNECTED|INIT|BOOT|LOAD|ENTRY|MODE|RST|CLK|SPI|ETS|CONFIGSIP|DEVICE|FIRMWARE)/.test(uid)) return;
-    function updateBluetoothButtonState(connected, statusLabel = '') {
-      isBluetoothConnected = connected;
-      const headerBtn = document.getElementById('headerBluetoothBtn');
-      const headerText = document.getElementById('headerBluetoothText');
-      const debugEl = document.getElementById('bluetoothRawDebug');
+      if (/^(WAITING|READY|STATUS|RC522|ESP32|SERIAL|CONNECTED|INIT|BOOT|LOAD|ENTRY|MODE|RST|CLK|SPI|ETS|CONFIGSIP|DEVICE|FIRMWARE)/.test(uid)) return;
+
+      const liveTapText = document.getElementById('liveTapText');
+      if (liveTapText) liveTapText.textContent = `Last Tap: ${uid}`;
+
+      // If user is on Add Member screen, bind card and save member immediately
+      const addSection = document.getElementById('section-add-member');
+      if (addSection && !addSection.classList.contains('hidden')) {
+        const uidInput = document.getElementById('newMemberCardId');
+        const uidBadge = document.getElementById('previewCardUid');
+        if (uidInput) uidInput.value = uid;
+        if (uidBadge) uidBadge.textContent = uid;
+        handleAddMember(null, uid);
+        return;
+      }
+
+      // Check Owner Card
+      const ownerUid = (localStorage.getItem('gym_owner_card_uid') || '').trim().toUpperCase();
+      const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const todayStr = getTodayFormatted();
+
+      if (ownerUid && uid === ownerUid) {
+        state.transactions.unshift({
+          id: Date.now(),
+          name: 'Gym Owner',
+          cardId: uid,
+          endDate: 'Unlimited',
+          action: 'Allowed',
+          time: nowTime,
+          date: todayStr,
+          method: 'NFC Card',
+          status: 'Success'
+        });
+        persistState();
+        refreshAllViews();
+        playBuzzerPattern('success');
+        speakVoiceAlert('Owner Accepted');
+        showAccessLightBanner(true, 'Gym Owner', 'Unlimited Access', 'Owner Master Card');
+        return;
+      }
+
+      const member = state.members.find(m => m.cardId.toUpperCase() === uid);
+      if (!member) {
+        state.transactions.unshift({
+          id: Date.now(),
+          name: 'Unknown Card',
+          cardId: uid,
+          endDate: '-',
+          action: 'Unregistered',
+          time: nowTime,
+          date: todayStr,
+          method: 'NFC Card',
+          status: 'Denied'
+        });
+        persistState();
+        refreshAllViews();
+        playBuzzerPattern('error');
+        speakVoiceAlert('Card Not Registered');
+        showAccessLightBanner(false, 'Not Registered', `Card: ${uid}`, 'Register card in Add Member');
+        return;
+      }
+
+      const daysLeft = getDaysRemaining(member.endDate);
+      if (daysLeft < 0 || member.status === 'Expired') {
+        member.status = 'Expired';
+        state.transactions.unshift({
+          id: Date.now(),
+          name: member.name,
+          cardId: uid,
+          endDate: member.endDate,
+          action: 'Expired',
+          time: nowTime,
+          date: todayStr,
+          method: 'NFC Card',
+          status: 'Denied'
+        });
+        persistState();
+        refreshAllViews();
+        playBuzzerPattern('error');
+        speakVoiceAlert(`${member.name} Expired`);
+        showAccessLightBanner(false, member.name, 'Membership Expired', `Expiry Date: ${member.endDate}`);
+        return;
+      }
+
+      // Check daily check-in limit
+      const dailyLimit = Number(document.getElementById('checkInDailyLimit')?.value || 1);
+      const todayScans = state.transactions.filter(t => t.cardId === uid && t.date === todayStr && t.status === 'Success').length;
+      if (todayScans >= dailyLimit) {
+        playBuzzerPattern('error');
+        speakVoiceAlert(`${member.name} Already Checked In`);
+        showAccessLightBanner(false, member.name, `${daysLeft} Days Left`, `Daily limit (${dailyLimit}) reached`);
+        return;
+      }
+
+      state.transactions.unshift({
+        id: Date.now(),
+        name: member.name,
+        cardId: uid,
+        endDate: member.endDate,
+        action: 'Allowed',
+        time: nowTime,
+        date: todayStr,
+        method: 'NFC Card',
+        status: 'Success'
+      });
+      persistState();
+      refreshAllViews();
+
+      playBuzzerPattern('success');
+      speakVoiceAlert(`${member.name} Accepted`);
+      showAccessLightBanner(true, member.name, `${daysLeft} Days Left`, `Expiry Date: ${member.endDate}`);
+
+      if (daysLeft <= 3 && localStorage.getItem('gym_auto_whatsapp_tap') === 'true') {
+        sendMemberReminderWhatsApp(member.id);
+      }
+    }
+
+    function updateSerialButtonState(connected) {
+      isSerialConnected = connected;
+      const headerBtn = document.getElementById('headerSerialBtn');
+      const headerText = document.getElementById('headerSerialText');
+      const debugEl = document.getElementById('serialRawDebug');
       if (connected) {
         if (headerBtn) headerBtn.className = 'flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-emerald-600 text-white text-xs font-bold shadow-sm';
-        if (headerText) headerText.textContent = 'Bluetooth Connected';
-        if (debugEl) debugEl.textContent = statusLabel || 'Bluetooth connected & auto-paired. Now you can start your taps!';
+        if (headerText) headerText.textContent = 'Serial Connected';
+        if (debugEl) debugEl.textContent = 'Serial port connected successfully. Now you can start your taps!';
       } else {
         if (headerBtn) headerBtn.className = 'flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm';
-        if (headerText) headerText.textContent = 'Connect Bluetooth';
-        if (debugEl) debugEl.textContent = statusLabel || 'Bluetooth Status: Ready for Auto-Pairing (Click "Connect Bluetooth" at top)';
+        if (headerText) headerText.textContent = 'Connect Serial';
+        if (debugEl) debugEl.textContent = 'Serial Status: Not Connected (Click "Connect Serial" at top)';
       }
     }
 
-    function isBluetoothAutoPairEnabled() {
-      const saved = localStorage.getItem('gym_bt_autopair');
-      return saved === null ? true : saved === 'true';
-    }
-
-    function saveBluetoothAutoPairSetting() {
-      const toggle = document.getElementById('bluetoothAutoPairToggle');
-      const enabled = toggle ? toggle.checked : true;
-      localStorage.setItem('gym_bt_autopair', enabled ? 'true' : 'false');
-      showToast(enabled ? 'Bluetooth Auto-Pairing enabled!' : 'Bluetooth Auto-Pairing disabled', 'info');
-    }
-
-    function processBluetoothChunk(chunkText) {
-      bluetoothReceiveBuffer += String(chunkText || '');
-      if (bluetoothFlushTimer) clearTimeout(bluetoothFlushTimer);
-      const lines = bluetoothReceiveBuffer.split(/\r?\n/);
-      bluetoothReceiveBuffer = lines.pop() || '';
-      lines.forEach(line => {
-        const cleaned = line.trim();
-        if (cleaned) handleIncomingCardScan(cleaned);
-      });
-      if (bluetoothReceiveBuffer.trim().length >= 4) {
-        bluetoothFlushTimer = setTimeout(() => {
-          const rem = bluetoothReceiveBuffer.trim();
-          bluetoothReceiveBuffer = '';
-          if (rem) handleIncomingCardScan(rem);
-        }, 120);
-      }
-    }
-
-    async function attachBleGattAndNotify(device, isAutoReconnect = false) {
-      if (!device || !device.gatt) return false;
-      try {
-        bleServer = await device.gatt.connect();
-        let foundChar = null;
-
-        // Try common Nordic UART / custom BLE services first, then scan all available services
-        const candidateServices = [
-          '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
-          '0000ffe0-0000-1000-8000-00805f9b34fb',
-          '4fafc201-1fb5-459e-8fcc-c5c9c331914b'
-        ];
-
-        for (const svcUuid of candidateServices) {
-          try {
-            const svc = await bleServer.getPrimaryService(svcUuid);
-            const chars = await svc.getCharacteristics();
-            foundChar = chars.find(c => c.properties.notify || c.properties.indicate);
-            if (foundChar) break;
-          } catch (e) {}
-        }
-
-        if (!foundChar) {
-          const allServices = await bleServer.getPrimaryServices();
-          for (const svc of allServices) {
-            const chars = await svc.getCharacteristics();
-            foundChar = chars.find(c => c.properties.notify || c.properties.indicate);
-            if (foundChar) break;
-          }
-        }
-
-        if (!foundChar) {
-          throw new Error('No BLE notify characteristic found on device');
-        }
-
-        bleNotifyChar = foundChar;
-        await bleNotifyChar.startNotifications();
-        bleNotifyChar.addEventListener('characteristicvaluechanged', (event) => {
-          const decoder = new TextDecoder('utf-8');
-          const text = decoder.decode(event.target.value);
-          processBluetoothChunk(text);
-        });
-
-        bluetoothReceiveBuffer = '';
-        bluetoothConnectedAt = Date.now();
-        localStorage.setItem('gym_bt_device_name', device.name || 'Gym_NFC_ESP32');
-        updateBluetoothButtonState(true, `Connected to ${device.name || 'Bluetooth NFC'} (Auto-Pair Active). Tap card!`);
-
-        if (!isAutoReconnect) {
-          playBuzzerPattern('success');
-          speakVoiceAlert('Bluetooth connected successfully. Now you can start your taps.');
-          showAccessLightBanner(true, 'Bluetooth Connected', 'Auto-Pairing Enabled', device.name || 'Gym NFC Reader');
-          showToast(`Connected to ${device.name || 'Bluetooth NFC'}!`, 'success');
-        } else {
-          showToast(`Auto-reconnected to ${device.name || 'Bluetooth NFC'}!`, 'success');
-        }
-        return true;
-      } catch (err) {
-        updateBluetoothButtonState(false, `Bluetooth connection failed: ${err.message || err}`);
-        return false;
-      }
-    }
-
-    function scheduleBluetoothAutoReconnect() {
-      if (manualBluetoothDisconnect || !isBluetoothAutoPairEnabled() || !bleDevice) return;
-      if (bluetoothReconnectTimer) clearTimeout(bluetoothReconnectTimer);
-      updateBluetoothButtonState(false, 'Bluetooth disconnected. Auto-reconnecting...');
-      bluetoothReconnectTimer = setTimeout(async () => {
-        if (!manualBluetoothDisconnect && bleDevice && !isBluetoothConnected) {
-          await attachBleGattAndNotify(bleDevice, true);
-          if (!isBluetoothConnected) scheduleBluetoothAutoReconnect();
-        }
-      }, 2000);
-    }
-
-    async function tryAutoPairSavedBluetoothDevice() {
-      if (!isBluetoothAutoPairEnabled()) return;
-      if (!('bluetooth' in navigator) || !navigator.bluetooth.getDevices) return;
-      try {
-        const pairedDevices = await navigator.bluetooth.getDevices();
-        if (!pairedDevices || pairedDevices.length === 0) return;
-        const savedName = (localStorage.getItem('gym_bt_device_name') || '').toLowerCase();
-        const target = pairedDevices.find(d => (d.name || '').toLowerCase().includes('nfc') || (d.name || '').toLowerCase().includes('esp') || (savedName && (d.name || '').toLowerCase() === savedName)) || pairedDevices[0];
-        if (!target) return;
-
-        bleDevice = target;
-        bleDevice.removeEventListener('gattserverdisconnected', scheduleBluetoothAutoReconnect);
-        bleDevice.addEventListener('gattserverdisconnected', scheduleBluetoothAutoReconnect);
-
-        if (target.watchAdvertisements) {
-          target.addEventListener('advertisementreceived', async () => {
-            if (!isBluetoothConnected && !manualBluetoothDisconnect) {
-              await attachBleGattAndNotify(target, true);
-            }
-          }, { once: true });
-          try { await target.watchAdvertisements(); } catch (e) {}
-        }
-
-        await attachBleGattAndNotify(target, true);
-      } catch (e) {}
-    }
-
-    async function connectBluetoothReader() {
-      const debugEl = document.getElementById('bluetoothRawDebug');
-      if (!('bluetooth' in navigator)) {
-        const msg = 'Web Bluetooth not supported here! Open on Chrome (Android/Desktop) or use HTTPS/localhost.';
+    async function connectSerialReader() {
+      const debugEl = document.getElementById('serialRawDebug');
+      if (!('serial' in navigator)) {
+        const msg = 'Serial Port blocked in Preview! Save this file as index.html on your PC and open directly in Google Chrome.';
         if (debugEl) debugEl.textContent = msg;
         showToast(msg, 'error');
         return;
       }
 
-      if (isBluetoothConnected && bleDevice) {
-        manualBluetoothDisconnect = true;
-        if (bluetoothReconnectTimer) clearTimeout(bluetoothReconnectTimer);
+      if (isSerialConnected && serialPort) {
         try {
-          if (bleDevice.gatt && bleDevice.gatt.connected) {
-            bleDevice.gatt.disconnect();
-          }
+          if (serialReader) await serialReader.cancel();
+          await serialPort.close();
         } catch (e) {}
-        bleNotifyChar = null;
-        bleServer = null;
-        bluetoothReceiveBuffer = '';
-        updateBluetoothButtonState(false, 'Bluetooth disconnected manually.');
-        showToast('Bluetooth disconnected', 'info');
+        serialPort = null;
+        serialReceiveBuffer = '';
+        updateSerialButtonState(false);
+        showToast('Serial port disconnected', 'info');
         return;
       }
 
       try {
-        manualBluetoothDisconnect = false;
-        let device = bleDevice;
-        if (!device) {
-          device = await navigator.bluetooth.requestDevice({
-            acceptAllDevices: true,
-            optionalServices: [
-              '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
-              '0000ffe0-0000-1000-8000-00805f9b34fb',
-              '4fafc201-1fb5-459e-8fcc-c5c9c331914b'
-            ]
-          });
+        serialPort = await navigator.serial.requestPort();
+        await serialPort.open({ baudRate: 115200 });
+        serialReceiveBuffer = '';
+        serialConnectedAt = Date.now();
+        updateSerialButtonState(true);
+        playBuzzerPattern('success');
+        speakVoiceAlert('Serial port connected successfully. Now you can start your taps.');
+        showAccessLightBanner(true, 'Serial Port Connected Successfully', 'Now you can start your taps!', 'Ready to scan NFC cards');
+        showToast('Serial port connected successfully. Now you can start your taps!', 'success');
+
+        const decoder = new TextDecoderStream();
+        serialPort.readable.pipeTo(decoder.writable);
+        serialReader = decoder.readable.getReader();
+
+        while (true) {
+          const { value, done } = await serialReader.read();
+          if (done) break;
+          if (value) {
+            serialReceiveBuffer += value;
+            if (serialFlushTimer) clearTimeout(serialFlushTimer);
+            const lines = serialReceiveBuffer.split(/\r?\n/);
+            serialReceiveBuffer = lines.pop() || '';
+            lines.forEach(l => processSerialLine(l));
+
+            if (serialReceiveBuffer.trim().length >= 6) {
+              serialFlushTimer = setTimeout(() => {
+                const rem = serialReceiveBuffer.trim();
+                serialReceiveBuffer = '';
+                if (rem) processSerialLine(rem);
+              }, 150);
+            }
+          }
         }
-
-        bleDevice = device;
-        bleDevice.removeEventListener('gattserverdisconnected', scheduleBluetoothAutoReconnect);
-        bleDevice.addEventListener('gattserverdisconnected', scheduleBluetoothAutoReconnect);
-
-        await attachBleGattAndNotify(bleDevice, false);
       } catch (err) {
-        if (err && err.name !== 'NotFoundError') {
-          const msg = `Bluetooth Error: ${err.message || err}`;
+        updateSerialButtonState(false);
+        if (err && (err.name === 'SecurityError' || String(err).includes('permissions policy'))) {
+          const msg = 'Preview blocks Serial Port! Save as index.html and open directly in Chrome.';
           if (debugEl) debugEl.textContent = msg;
           showToast(msg, 'error');
+        } else if (err && err.name !== 'NotFoundError') {
+          showToast(`Serial Error: ${err.message}`, 'error');
         }
       }
     }
@@ -1556,14 +1542,11 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       appReadyTimestamp = Date.now();
-      bluetoothReceiveBuffer = '';
+      serialReceiveBuffer = '';
       document.getElementById('dashboardDateBadge').textContent = `Today • ${getTodayFormatted()}`;
       document.getElementById('newMemberStart').value = getTodayIso();
       autoCalculateEndDate();
       document.getElementById('ownerCardUidInput').value = localStorage.getItem('gym_owner_card_uid') || '';
-      const btToggle = document.getElementById('bluetoothAutoPairToggle');
-      if (btToggle) btToggle.checked = isBluetoothAutoPairEnabled();
-      tryAutoPairSavedBluetoothDevice();
       const savedSheetUrl = localStorage.getItem('gym_google_sheet_url') || '';
       const sheetInput = document.getElementById('googleSheetUrlInput');
       if (sheetInput) sheetInput.value = savedSheetUrl;
