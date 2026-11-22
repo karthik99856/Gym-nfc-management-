@@ -866,8 +866,39 @@
 
     function simulateTestTap() {
       const randomUid = 'A4F9' + Math.floor(1000 + Math.random() * 9000);
+      const debugEl = document.getElementById('serialRawDebug');
+      if (debugEl) debugEl.textContent = `Simulated Tap UID: "${randomUid}"`;
       handleIncomingCardScan(randomUid);
     }
+
+    let hidKeyBuffer = '';
+    let hidKeyTimer = null;
+    document.addEventListener('keydown', (e) => {
+      const activeTag = document.activeElement ? document.activeElement.tagName : '';
+      const isTextInput = activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT';
+      if (isTextInput) return;
+
+      if (e.key === 'Enter') {
+        if (hidKeyBuffer.trim().length >= 4) {
+          const uid = hidKeyBuffer.trim().toUpperCase();
+          hidKeyBuffer = '';
+          handleIncomingCardScan(uid);
+        }
+        return;
+      }
+
+      if (e.key && e.key.length === 1 && /[a-zA-Z0-9:-]/.test(e.key)) {
+        hidKeyBuffer += e.key;
+        if (hidKeyTimer) clearTimeout(hidKeyTimer);
+        hidKeyTimer = setTimeout(() => {
+          if (hidKeyBuffer.trim().length >= 4) {
+            const uid = hidKeyBuffer.trim().toUpperCase();
+            hidKeyBuffer = '';
+            handleIncomingCardScan(uid);
+          }
+        }, 120);
+      }
+    });
 
     function handleIncomingCardScan(rawUid) {
       const uid = String(rawUid || '').replace(/[^a-zA-Z0-9:-]/g, '').toUpperCase();
@@ -904,7 +935,6 @@
         return;
       }
 
-      // Check-In Mode when outside Add Member
       const ownerUid = (localStorage.getItem('gym_owner_card_uid') || '').trim().toUpperCase();
       const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const todayStr = getTodayFormatted();
@@ -977,10 +1007,10 @@
       const debugEl = document.getElementById('serialRawDebug');
       if (debugEl) debugEl.textContent = `ESP32 Raw Data: "${cleaned}"`;
 
-      if (/READY|INITIALIZED|SCAN|WAITING/i.test(cleaned)) return;
-
-      const uidMatch = cleaned.match(/(?:UID[:=\s-]*)?([0-9A-Fa-f]{2}(?:[:\s-]?[0-9A-Fa-f]{2}){3,6})/);
-      const token = uidMatch ? uidMatch[1].replace(/[:\s-]/g, '').toUpperCase() : cleaned.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+      const uidMatch = cleaned.match(/(?:UID[:=\s-]*)?([0-9A-Fa-f]{2}(?:[:\s-]?[0-9A-Fa-f]{2}){1,7})/);
+      const token = uidMatch
+        ? uidMatch[1].replace(/[:\s-]/g, '').toUpperCase()
+        : cleaned.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
       if (token.length >= 4) {
         handleIncomingCardScan(token);
       }
