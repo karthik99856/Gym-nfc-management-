@@ -265,6 +265,11 @@
             <span id="headerSerialText">Connect Serial</span>
           </button>
 
+          <div id="liveTapBadge" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-[11px] font-mono font-bold text-amber-800">
+            <i class="fa-solid fa-wifi rotate-90 text-amber-600"></i>
+            <span id="liveTapText">Last Tap: None</span>
+          </div>
+
           <div id="localStorageBadge" class="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-[11px] font-bold text-slate-600">
             <span id="localStorageDot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
             <span id="localStorageText">Local Storage Mode</span>
@@ -1036,7 +1041,19 @@
     let serialReader = null;
     let isSerialConnected = false;
     let serialReceiveBuffer = '';
+    let serialFlushTimer = null;
     let nfcLightTimeout = null;
+
+    // Unlock browser speech synthesis on first user click/tap
+    window.addEventListener('pointerdown', () => {
+      try {
+        if ('speechSynthesis' in window) {
+          const silentUtterance = new SpeechSynthesisUtterance('');
+          silentUtterance.volume = 0;
+          window.speechSynthesis.speak(silentUtterance);
+        }
+      } catch (e) {}
+    }, { once: true });
 
     async function sendHardwareSignal(commandStr) {
       if (!isSerialConnected || !serialPort || !serialPort.writable) return;
@@ -1357,13 +1374,6 @@
       showToast(`${member.name}, your check-in successful`, 'success');
     }
 
-    function showAccessLightBanner(isAllowed, memberName, expiryDate, subtext) {
-      const dot = document.getElementById('localStorageDot');
-      const text = document.getElementById('localStorageText');
-      if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
-      if (text) text.textContent = 'Local Storage Active';
-    }
-
     function initLocalStorageMode() {
       const dot = document.getElementById('localStorageDot');
       const text = document.getElementById('localStorageText');
@@ -1381,6 +1391,9 @@
     function handleIncomingCardScan(rawUid) {
       const cleanUid = extractUidFromText(rawUid);
       if (!cleanUid) return;
+
+      const liveTapText = document.getElementById('liveTapText');
+      if (liveTapText) liveTapText.textContent = `Last Tap: ${cleanUid}`;
 
       const ownerTab = document.getElementById('settings-panel-owner-card');
       if (ownerTab && !ownerTab.classList.contains('hidden')) {
@@ -1458,34 +1471,52 @@
         return;
       }
 
-      const matched = state.members.find(
+      const member = state.members.find(
         m => m.cardId.replace(/[^a-zA-Z0-9-]/g, '').toUpperCase() === cleanUid
       );
-      if (matched) {
-        processNfcTapForMember(matched.id);
-      } else {
+
+      if (!member) {
         playBuzzerPattern('error');
-        speakAnnouncement('Unregistered NFC.');
-        showAccessLightBanner(false, 'Unregistered NFC', 'No Validity', `UID: ${cleanUid} is not registered`);
-        showToast(`Unknown NFC (${cleanUid}). Register it in Add Member!`, 'error');
+        speakAnnouncement('Unregistered card. Please register this card in Add Member.');
+        showAccessLightBanner(false, `Unknown UID: ${cleanUid}`, 'Unregistered', 'Go to Add Member & tap to register');
+        showToast(`Unregistered NFC (${cleanUid})! Open Add Member to register.`, 'error');
+        return;
+      }
+
+      processNfcTapForMember(member.id);
+    }
+
+    function processSerialLine(line) {
+      const trimmed = line.trim();
+      if (!trimmed) return;
+      const uidMatch = trimmed.match(/(?:UID|CARD|ID)?[:=\s]*([0-9A-Fa-f]{2}(?:[:\s-]?[0-9A-Fa-f]{2}){1,9}|[A-Za-z0-9-]{4,20})/i);
+      if (uidMatch && uidMatch[1]) {
+        const formattedUid = uidMatch[1].replace(/[:\s]/g, '').toUpperCase();
+        handleIncomingCardScan(formattedUid);
+      } else {
+        handleIncomingCardScan(trimmed);
       }
     }
 
     function parseIncomingReaderStream(chunkText, bufferType = 'serial') {
       if (bufferType === 'serial') {
         serialReceiveBuffer += chunkText;
+        if (serialFlushTimer) clearTimeout(serialFlushTimer);
+
         const lines = serialReceiveBuffer.split(/[\r\n]+/);
-        serialReceiveBuffer = chunkText.endsWith('\n') || chunkText.endsWith('\r') ? '' : (lines.pop() || '');
+        serialReceiveBuffer = (chunkText.endsWith('\n') || chunkText.endsWith('\r')) ? '' : (lines.pop() || '');
+
         for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed) continue;
-          const uidMatch = trimmed.match(/(?:UID|CARD|ID)?[:=\s]*([0-9A-Fa-f]{2}(?:[:\s-]?[0-9A-Fa-f]{2}){1,9}|[A-Za-z0-9-]{4,20})/i);
-          if (uidMatch && uidMatch[1]) {
-            const formattedUid = uidMatch[1].replace(/[:\s]/g, '').toUpperCase();
-            handleIncomingCardScan(formattedUid);
-          } else {
-            handleIncomingCardScan(trimmed);
-          }
+          processSerialLine(line);
+        }
+
+        // Auto-flush remaining buffer after 100ms even if newline is omitted
+        if (serialReceiveBuffer.trim().length >= 4) {
+          serialFlushTimer = setTimeout(() => {
+            const leftover = serialReceiveBuffer;
+            serialReceiveBuffer = '';
+            processSerialLine(leftover);
+          }, 100);
         }
       }
     }
