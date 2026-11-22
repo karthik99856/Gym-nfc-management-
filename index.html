@@ -341,19 +341,9 @@
 
                 <div>
                   <label class="block text-xs font-bold text-slate-700 mb-1.5">Tap Device Type</label>
-                  <div class="grid grid-cols-2 gap-3">
-                    <label class="cursor-pointer">
-                      <input type="radio" name="nfcType" value="Card" checked onchange="updateCardPreview()" class="peer sr-only" />
-                      <div class="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 peer-checked:border-indigo-600 peer-checked:bg-indigo-50 peer-checked:text-indigo-700">
-                        <i class="fa-solid fa-id-card"></i> NFC Card
-                      </div>
-                    </label>
-                    <label class="cursor-pointer">
-                      <input type="radio" name="nfcType" value="Mobile" onchange="updateCardPreview()" class="peer sr-only" />
-                      <div class="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 peer-checked:border-indigo-600 peer-checked:bg-indigo-50 peer-checked:text-indigo-700">
-                        <i class="fa-solid fa-mobile-screen-button"></i> Mobile NFC
-                      </div>
-                    </label>
+                  <div class="p-3 rounded-xl border border-indigo-200 bg-indigo-50/70 text-xs font-bold text-indigo-800 flex items-center gap-2">
+                    <i class="fa-solid fa-id-card"></i>
+                    <span>NFC Card Only (Tap Card on RC522 Reader)</span>
                   </div>
                 </div>
 
@@ -364,18 +354,9 @@
                 <div class="flex flex-col items-center justify-center gap-1.5 py-4 px-4 rounded-xl bg-indigo-50 border-2 border-dashed border-indigo-300 text-indigo-800 text-xs font-bold text-center">
                   <div class="flex items-center gap-2 text-sm text-indigo-700">
                     <i class="fa-solid fa-wifi rotate-90 animate-pulse text-base"></i>
-                    <span id="tapInstructionText">Auto-Save Ready: Tap NFC Card or Mobile on RC522 Reader</span>
+                    <span id="tapInstructionText">Tap NFC Card on RC522 Reader to Save Member</span>
                   </div>
                   <p id="serialRawDebug" class="text-[11px] font-mono text-indigo-600">Serial Status: Not Connected (Click "Connect Serial" at top)</p>
-                </div>
-
-                <div class="flex items-center gap-2 pt-1">
-                  <button type="button" onclick="simulateTestTap()" class="flex-1 py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold flex items-center justify-center gap-2 transition">
-                    <i class="fa-solid fa-vial"></i> Test Auto-Feed Tap
-                  </button>
-                  <button type="submit" class="flex-1 py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center justify-center gap-2 transition">
-                    <i class="fa-solid fa-floppy-disk"></i> Manual Save
-                  </button>
                 </div>
               </div>
             </div>
@@ -537,10 +518,9 @@
       <div class="w-24 h-24 rounded-full mx-auto mb-5 flex items-center justify-center text-5xl shadow-lg bg-white/20">
         <i id="nfcLightIcon" class="fa-solid fa-check"></i>
       </div>
-      <span id="nfcLightBadge" class="inline-block px-4 py-1 rounded-full text-xs font-extrabold uppercase tracking-widest bg-white/20 mb-3">GREEN LIGHT</span>
-      <h2 id="nfcLightName" class="text-2xl sm:text-3xl font-extrabold">Member Name</h2>
-      <p id="nfcLightExpiry" class="text-base sm:text-lg font-bold mt-2 opacity-95">Expiry Date</p>
-      <p id="nfcLightSubtext" class="text-xs font-medium mt-3 opacity-80">Check-In Recorded</p>
+      <h2 id="nfcLightName" class="text-3xl sm:text-4xl font-extrabold">Member Name</h2>
+      <p id="nfcLightExpiry" class="text-lg sm:text-xl font-bold mt-3 opacity-95">0 Days Left</p>
+      <p id="nfcLightSubtext" class="text-sm font-semibold mt-2 opacity-85">Expiry: DD-MM-YYYY</p>
     </div>
   </div>
 
@@ -634,7 +614,7 @@
     let nfcLightTimeout = null;
     let lineChartInstance = null;
     let barChartInstance = null;
-
+    let appReadyTimestamp = Date.now();
     function persistState() {
       try {
         localStorage.setItem('gym_nfc_members', JSON.stringify(state.members));
@@ -689,7 +669,6 @@
       const banner = document.getElementById('nfcLightBanner');
       const card = document.getElementById('nfcLightCard');
       const icon = document.getElementById('nfcLightIcon');
-      const badge = document.getElementById('nfcLightBadge');
       const nameEl = document.getElementById('nfcLightName');
       const expEl = document.getElementById('nfcLightExpiry');
       const subEl = document.getElementById('nfcLightSubtext');
@@ -701,15 +680,13 @@
       if (isAllowed) {
         card.classList.add('bg-emerald-600', 'border-emerald-300', 'green-light-active');
         icon.className = 'fa-solid fa-check';
-        badge.textContent = 'GREEN LIGHT • ACCESS ALLOWED';
       } else {
         card.classList.add('bg-rose-600', 'border-rose-300', 'red-light-active');
         icon.className = 'fa-solid fa-xmark';
-        badge.textContent = 'RED LIGHT • ACCESS DENIED';
       }
 
       nameEl.textContent = memberName;
-      expEl.textContent = expiryDate ? `Expiry Date: ${expiryDate}` : 'Unregistered Card';
+      expEl.textContent = expiryDate || '';
       subEl.textContent = subtext || '';
 
       banner.classList.remove('hidden');
@@ -719,6 +696,14 @@
         banner.classList.add('hidden');
         banner.classList.remove('flex');
       }, 4000);
+    }
+
+    function getDaysRemaining(ddmmyyyy) {
+      if (!ddmmyyyy || !ddmmyyyy.includes('-')) return 0;
+      const [d, m, y] = ddmmyyyy.split('-').map(Number);
+      const exp = new Date(y, m - 1, d, 23, 59, 59);
+      const now = new Date();
+      return Math.max(0, Math.ceil((exp - now) / (1000 * 60 * 60 * 24)));
     }
 
     function isDateExpired(ddmmyyyy) {
@@ -787,15 +772,13 @@
     function updateCardPreview() {
       const name = document.getElementById('newMemberName')?.value.trim() || 'NEW MEMBER';
       const uid = document.getElementById('newMemberCardId')?.value.trim() || 'WAITING FOR TAP...';
-      const typeRadio = document.querySelector('input[name="nfcType"]:checked');
-      const nfcType = typeRadio ? typeRadio.value : 'Card';
 
       const holderEl = document.getElementById('previewCardHolder');
       const uidEl = document.getElementById('previewCardUid');
       const badgeEl = document.getElementById('previewCardTypeBadge');
       if (holderEl) holderEl.textContent = name.toUpperCase();
       if (uidEl) uidEl.textContent = uid;
-      if (badgeEl) badgeEl.textContent = nfcType === 'Mobile' ? 'Mobile NFC' : 'NFC Card';
+      if (badgeEl) badgeEl.textContent = 'NFC Card';
     }
 
     function saveMemberRecord(name, phone, plan, amount, startIso, endIso, cardId, nfcType) {
@@ -850,59 +833,54 @@
       const amount = document.getElementById('newMemberAmount').value;
       const startIso = document.getElementById('newMemberStart').value || getTodayIso();
       const endIso = document.getElementById('newMemberEnd').value || getTodayIso();
-      let cardId = document.getElementById('newMemberCardId').value.trim();
-      const typeRadio = document.querySelector('input[name="nfcType"]:checked');
-      const nfcType = typeRadio ? typeRadio.value : 'Card';
+      const cardId = document.getElementById('newMemberCardId').value.trim();
 
       if (!name || !phone) {
         showToast('Enter Name and Phone Number first!', 'warning');
         return;
       }
       if (!cardId) {
-        cardId = 'NFC-' + Math.floor(1000 + Math.random() * 9000);
+        showToast('Please tap an NFC Card on the reader!', 'warning');
+        return;
       }
-      saveMemberRecord(name, phone, plan, amount, startIso, endIso, cardId, nfcType);
+      saveMemberRecord(name, phone, plan, amount, startIso, endIso, cardId, 'Card');
     }
 
-    function simulateTestTap() {
-      const randomUid = 'A4F9' + Math.floor(1000 + Math.random() * 9000);
-      const debugEl = document.getElementById('serialRawDebug');
-      if (debugEl) debugEl.textContent = `Simulated Tap UID: "${randomUid}"`;
-      handleIncomingCardScan(randomUid);
-    }
-
+    // Listen to USB Keyboard/HID wedge NFC readers only after startup settles
     let hidKeyBuffer = '';
     let hidKeyTimer = null;
     document.addEventListener('keydown', (e) => {
+      if (Date.now() - appReadyTimestamp < 2500) return;
       const activeTag = document.activeElement ? document.activeElement.tagName : '';
       const isTextInput = activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT';
       if (isTextInput) return;
 
       if (e.key === 'Enter') {
-        if (hidKeyBuffer.trim().length >= 4) {
+        if (hidKeyBuffer.trim().length >= 6) {
           const uid = hidKeyBuffer.trim().toUpperCase();
           hidKeyBuffer = '';
           handleIncomingCardScan(uid);
+        } else {
+          hidKeyBuffer = '';
         }
         return;
       }
 
-      if (e.key && e.key.length === 1 && /[a-zA-Z0-9:-]/.test(e.key)) {
+      if (e.key && e.key.length === 1 && /^[a-zA-Z0-9:-]$/.test(e.key)) {
         hidKeyBuffer += e.key;
         if (hidKeyTimer) clearTimeout(hidKeyTimer);
         hidKeyTimer = setTimeout(() => {
-          if (hidKeyBuffer.trim().length >= 4) {
-            const uid = hidKeyBuffer.trim().toUpperCase();
-            hidKeyBuffer = '';
-            handleIncomingCardScan(uid);
-          }
+          hidKeyBuffer = '';
         }, 120);
       }
     });
 
     function handleIncomingCardScan(rawUid) {
+      // Ignore startup noise or non-UID text
+      if (Date.now() - appReadyTimestamp < 2000) return;
       const uid = String(rawUid || '').replace(/[^a-zA-Z0-9:-]/g, '').toUpperCase();
-      if (!uid || uid.length < 3) return;
+      if (!uid || uid.length < 4 || uid.length > 24) return;
+      if (/^(WAITING|READY|STATUS|RC522|ESP32|SERIAL|CONNECTED|INIT|BOOT|LOAD|ENTRY|MODE|RST|CLK|SPI)/.test(uid)) return;
 
       const liveTapText = document.getElementById('liveTapText');
       if (liveTapText) liveTapText.textContent = `Last Tap: ${uid}`;
@@ -920,21 +898,19 @@
         const amount = document.getElementById('newMemberAmount').value || '0';
         const startIso = document.getElementById('newMemberStart').value || getTodayIso();
         const endIso = document.getElementById('newMemberEnd').value || getTodayIso();
-        const typeRadio = document.querySelector('input[name="nfcType"]:checked');
-        const nfcType = typeRadio ? typeRadio.value : 'Card';
 
         if (!name || !phone) {
-          playBuzzerPattern('error');
-          showToast(`Card ${uid} scanned! Enter Name & Phone first, then tap again to auto-save.`, 'warning');
+          showToast(`Card ${uid} scanned! Enter Name & Phone first, then tap again to save.`, 'warning');
           if (!name) document.getElementById('newMemberName').focus();
           else document.getElementById('newMemberPhone').focus();
           return;
         }
 
-        saveMemberRecord(name, phone, plan, amount, startIso, endIso, uid, nfcType);
+        saveMemberRecord(name, phone, plan, amount, startIso, endIso, uid, 'Card');
         return;
       }
 
+      // Check-In Mode when outside Add Member
       const ownerUid = (localStorage.getItem('gym_owner_card_uid') || '').trim().toUpperCase();
       const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const todayStr = getTodayFormatted();
@@ -946,8 +922,8 @@
         });
         persistState();
         playBuzzerPattern('success');
-        speakVoiceAlert('Welcome Owner');
-        showAccessLightBanner(true, 'Gym Owner', 'UNLIMITED', 'Owner VIP Check-In');
+        speakVoiceAlert('Owner Accepted');
+        showAccessLightBanner(true, 'Gym Owner', 'Unlimited Days Left', 'Expiry: Unlimited');
         refreshAllViews();
         return;
       }
@@ -960,11 +936,15 @@
         });
         persistState();
         playBuzzerPattern('error');
-        speakVoiceAlert('Card not registered');
-        showAccessLightBanner(false, `Card: ${uid}`, '', 'Unregistered NFC Card');
+        speakVoiceAlert('Not Registered');
+        showAccessLightBanner(false, uid, '0 Days Left', 'Expiry: Not Registered');
         refreshAllViews();
         return;
       }
+
+      const daysLeft = getDaysRemaining(member.endDate);
+      const daysText = `${daysLeft} ${daysLeft === 1 ? 'Day' : 'Days'} Left`;
+      const expirySubtext = `Expiry Date: ${member.endDate}`;
 
       const expired = isDateExpired(member.endDate) || member.status === 'Expired';
       if (expired) {
@@ -975,8 +955,8 @@
         });
         persistState();
         playBuzzerPattern('error');
-        speakVoiceAlert(`Access denied. ${member.name}, your membership expired on ${member.endDate}`);
-        showAccessLightBanner(false, member.name, member.endDate, 'Membership Expired • Please Renew');
+        speakVoiceAlert(`${member.name} Expired`);
+        showAccessLightBanner(false, member.name, '0 Days Left', expirySubtext);
         refreshAllViews();
         return;
       }
@@ -985,8 +965,8 @@
       const todayCount = state.transactions.filter(t => t.cardId === member.cardId && t.date === todayStr && t.status === 'Success').length;
       if (todayCount >= dailyLimit) {
         playBuzzerPattern('error');
-        speakVoiceAlert(`${member.name}, already checked in today`);
-        showAccessLightBanner(false, member.name, member.endDate, `Daily Check-In Limit (${dailyLimit}/day) Reached`);
+        speakVoiceAlert(`${member.name} Already Checked In`);
+        showAccessLightBanner(false, member.name, daysText, expirySubtext);
         return;
       }
 
@@ -996,8 +976,8 @@
       });
       persistState();
       playBuzzerPattern('success');
-      speakVoiceAlert(`Welcome ${member.name}. Valid until ${member.endDate}`);
-      showAccessLightBanner(true, member.name, member.endDate, 'Valid Membership • Check-In Recorded');
+      speakVoiceAlert(`${member.name} Accepted`);
+      showAccessLightBanner(true, member.name, daysText, expirySubtext);
       refreshAllViews();
     }
 
@@ -1007,12 +987,16 @@
       const debugEl = document.getElementById('serialRawDebug');
       if (debugEl) debugEl.textContent = `ESP32 Raw Data: "${cleaned}"`;
 
-      const uidMatch = cleaned.match(/(?:UID[:=\s-]*)?([0-9A-Fa-f]{2}(?:[:\s-]?[0-9A-Fa-f]{2}){1,7})/);
-      const token = uidMatch
-        ? uidMatch[1].replace(/[:\s-]/g, '').toUpperCase()
-        : cleaned.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-      if (token.length >= 4) {
-        handleIncomingCardScan(token);
+      // Only accept explicit UID:... lines or clean hex card UIDs (4-16 hex chars)
+      const explicitMatch = cleaned.match(/UID[:=\s-]*([0-9A-Fa-f]{4,16})/i);
+      if (explicitMatch) {
+        handleIncomingCardScan(explicitMatch[1].toUpperCase());
+        return;
+      }
+
+      const hexOnly = cleaned.replace(/[^0-9A-Fa-f]/g, '').toUpperCase();
+      if (/^[0-9A-F]{6,16}$/.test(hexOnly) && !/^(0+|F+|DEAD|BEEF|CAFE|BABE)$/.test(hexOnly)) {
+        handleIncomingCardScan(hexOnly);
       }
     }
 
@@ -1024,7 +1008,7 @@
       if (connected) {
         if (headerBtn) headerBtn.className = 'flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-emerald-600 text-white text-xs font-bold shadow-sm';
         if (headerText) headerText.textContent = 'Serial Connected';
-        if (debugEl) debugEl.textContent = 'Serial Connected! Waiting for NFC card tap...';
+        if (debugEl) debugEl.textContent = 'Serial port is connected successfully! Ready for card tap...';
       } else {
         if (headerBtn) headerBtn.className = 'flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm';
         if (headerText) headerText.textContent = 'Connect Serial';
@@ -1047,6 +1031,7 @@
           await serialPort.close();
         } catch (e) {}
         serialPort = null;
+        serialReceiveBuffer = '';
         updateSerialButtonState(false);
         showToast('Serial port disconnected', 'info');
         return;
@@ -1055,8 +1040,11 @@
       try {
         serialPort = await navigator.serial.requestPort();
         await serialPort.open({ baudRate: 115200 });
+        serialReceiveBuffer = '';
         updateSerialButtonState(true);
-        showToast('ESP32 Serial Reader Connected!', 'success');
+        playBuzzerPattern('success');
+        showAccessLightBanner(true, 'Serial Port Connected', '', 'Serial port is connected successfully');
+        showToast('Serial port is connected successfully', 'success');
 
         const decoder = new TextDecoderStream();
         serialPort.readable.pipeTo(decoder.writable);
@@ -1072,12 +1060,12 @@
             serialReceiveBuffer = lines.pop() || '';
             lines.forEach(l => processSerialLine(l));
 
-            if (serialReceiveBuffer.trim().length >= 4) {
+            if (serialReceiveBuffer.trim().length >= 6) {
               serialFlushTimer = setTimeout(() => {
                 const rem = serialReceiveBuffer.trim();
                 serialReceiveBuffer = '';
                 if (rem) processSerialLine(rem);
-              }, 120);
+              }, 150);
             }
           }
         }
@@ -1323,6 +1311,9 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
+      appReadyTimestamp = Date.now();
+      hidKeyBuffer = '';
+      serialReceiveBuffer = '';
       document.getElementById('dashboardDateBadge').textContent = `Today • ${getTodayFormatted()}`;
       document.getElementById('newMemberStart').value = getTodayIso();
       autoCalculateEndDate();
