@@ -55,100 +55,6 @@
   <!-- Toast Container -->
   <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-3 pointer-events-none"></div>
 
-  <!-- ESP32 Bluetooth Code Modal -->
-  <div id="esp32CodeModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/75 backdrop-blur-sm p-4">
-    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] flex flex-col">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-        <div>
-          <h3 class="text-lg font-extrabold text-slate-900">ESP32 Bluetooth (BLE) + RC522 Code</h3>
-          <p class="text-xs text-slate-500">Upload this code once to ESP32. No USB drivers needed after upload!</p>
-        </div>
-        <button type="button" onclick="closeEsp32CodeModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-      <div class="my-4 flex-1 overflow-y-auto bg-slate-900 rounded-2xl p-4 text-emerald-300 font-mono text-xs leading-relaxed">
-        <pre id="esp32CodeBlock">#include &lt;SPI.h&gt;
-#include &lt;MFRC522.h&gt;
-#include &lt;BLEDevice.h&gt;
-#include &lt;BLEServer.h&gt;
-#include &lt;BLEUtils.h&gt;
-#include &lt;BLE2902.h&gt;
-
-#define SS_PIN  5
-#define RST_PIN 22
-
-MFRC522 mfrc522(SS_PIN, RST_PIN);
-
-#define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
-#define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
-
-BLECharacteristic *pCharacteristic;
-bool deviceConnected = false;
-
-class MyServerCallbacks: public BLEServerCallbacks {
-  void onConnect(BLEServer* pServer) { deviceConnected = true; }
-  void onDisconnect(BLEServer* pServer) {
-    deviceConnected = false;
-    BLEDevice::startAdvertising();
-  }
-};
-
-void setup() {
-  Serial.begin(115200);
-  SPI.begin();
-  mfrc522.PCD_Init();
-
-  BLEDevice::init("ESP32_NFC_Reader");
-  BLEServer *pServer = BLEDevice::createServer();
-  pServer-&gt;setCallbacks(new MyServerCallbacks());
-
-  BLEService *pService = pServer-&gt;createService(SERVICE_UUID);
-  pCharacteristic = pService-&gt;createCharacteristic(
-    CHARACTERISTIC_UUID,
-    BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY
-  );
-  pCharacteristic-&gt;addDescriptor(new BLE2902());
-  pService-&gt;start();
-
-  BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
-  pAdvertising-&gt;addServiceUUID(SERVICE_UUID);
-  pAdvertising-&gt;setScanResponse(true);
-  BLEDevice::startAdvertising();
-}
-
-void loop() {
-  if (!mfrc522.PICC_IsNewCardPresent() || !mfrc522.PICC_ReadCardSerial()) {
-    delay(50);
-    return;
-  }
-
-  String uid = "";
-  for (byte i = 0; i &lt; mfrc522.uid.size; i++) {
-    if (mfrc522.uid.uidByte[i] &lt; 0x10) uid += "0";
-    uid += String(mfrc522.uid.uidByte[i], HEX);
-  }
-  uid.toUpperCase();
-
-  if (deviceConnected) {
-    pCharacteristic-&gt;setValue(uid.c_str());
-    pCharacteristic-&gt;notify();
-  }
-
-  mfrc522.PICC_HaltA();
-  mfrc522.PCD_StopCrypto1();
-  delay(1200);
-}</pre>
-      </div>
-      <div class="flex items-center justify-between gap-3 pt-2">
-        <span class="text-[11px] font-semibold text-slate-500">Pins: SDA=D5, SCK=D18, MOSI=D23, MISO=D19, RST=D22, 3.3V, GND</span>
-        <button type="button" onclick="copyEsp32Code()" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center gap-2">
-          <i class="fa-solid fa-copy"></i> Copy ESP32 Code
-        </button>
-      </div>
-    </div>
-  </div>
-
   <!-- Admin Login Overlay -->
   <div id="loginOverlay" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-md p-4 hidden">
     <div class="bg-white rounded-3xl max-w-sm w-full p-7 shadow-2xl border border-slate-100">
@@ -317,14 +223,9 @@ void loop() {
         </div>
 
         <div class="flex items-center gap-2.5 sm:gap-4">
-          <button type="button" onclick="openEsp32CodeModal()" class="flex items-center gap-1.5 px-3 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold border border-slate-200 transition">
-            <i class="fa-solid fa-code"></i>
-            <span class="hidden sm:inline">ESP32 Code</span>
-          </button>
-
-          <button type="button" onclick="connectBluetoothReader()" id="headerBleBtn" class="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition">
-            <i class="fa-brands fa-bluetooth-b"></i>
-            <span id="headerBleText">Connect Bluetooth</span>
+          <button type="button" onclick="connectSerialReader()" id="headerSerialBtn" class="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition">
+            <i class="fa-brands fa-usb"></i>
+            <span id="headerSerialText">Connect Serial</span>
           </button>
 
           <div id="liveTapBadge" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-[11px] font-mono font-bold text-amber-800">
@@ -465,7 +366,7 @@ void loop() {
                     <i class="fa-solid fa-wifi rotate-90 animate-pulse text-base"></i>
                     <span id="tapInstructionText">Tap NFC Card on RC522 Reader to Save Member</span>
                   </div>
-                  <p id="bleRawDebug" class="text-[11px] font-mono text-indigo-600">Bluetooth Status: Not Connected (Click "Connect Bluetooth" at top)</p>
+                  <p id="serialRawDebug" class="text-[11px] font-mono text-indigo-600">Serial Status: Not Connected (Click "Connect Serial" at top)</p>
                 </div>
               </div>
             </div>
@@ -662,16 +563,10 @@ void loop() {
         <section id="section-settings" class="hidden space-y-6">
           <div class="flex flex-wrap items-center justify-between gap-3">
             <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Settings</h2>
-            <div class="flex items-center gap-2">
-              <button type="button" onclick="openEsp32CodeModal()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-bold transition">
-                <i class="fa-solid fa-code"></i>
-                <span>ESP32 Bluetooth Code</span>
-              </button>
-              <button type="button" onclick="connectBluetoothReader()" id="bleConnectBtn" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold shadow-sm transition">
-                <i class="fa-brands fa-bluetooth-b"></i>
-                <span>Connect Bluetooth</span>
-              </button>
-            </div>
+            <button type="button" onclick="connectSerialReader()" id="serialConnectBtn" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold shadow-sm transition">
+              <i class="fa-brands fa-usb"></i>
+              <span>Connect Serial Port</span>
+            </button>
           </div>
 
           <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-5 max-w-xl">
@@ -813,11 +708,11 @@ void loop() {
       })()
     };
 
-    const BLE_SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
-    const BLE_CHARACTERISTIC_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
-    let bleDevice = null;
-    let bleCharacteristic = null;
-    let isBleConnected = false;
+    let serialPort = null;
+    let serialReader = null;
+    let isSerialConnected = false;
+    let serialReceiveBuffer = '';
+    let serialFlushTimer = null;
     let nfcLightTimeout = null;
     let lineChartInstance = null;
     let barChartInstance = null;
@@ -826,11 +721,14 @@ void loop() {
     let lastCardTapTime = 0;
     let lastCardTapUid = '';
 
-    // Process incoming Bluetooth UID data from ESP32 BLE
-    function processBluetoothUid(rawLine) {
+    // Process incoming Serial data from your existing ESP32 USB Serial code
+    function processSerialLine(rawLine) {
       if (!rawLine) return;
       const cleaned = rawLine.replace(/[^A-Za-z0-9:-]/g, '').trim().toUpperCase();
       if (!cleaned || cleaned.length < 4) return;
+
+      // Ignore boot messages from ESP32
+      if (cleaned.includes('ETS') || cleaned.includes('RST') || cleaned.includes('BOOT') || cleaned.includes('READY')) return;
 
       const uidMatch = cleaned.match(/([0-9A-F]{2}[:-]?){3,7}[0-9A-F]{2}/);
       const uid = uidMatch ? uidMatch[0].replace(/[:-]/g, '') : cleaned;
@@ -845,37 +743,10 @@ void loop() {
       const liveTapText = document.getElementById('liveTapText');
       if (liveTapText) liveTapText.textContent = `Last Tap: ${uid}`;
 
-      const debugEl = document.getElementById('bleRawDebug');
+      const debugEl = document.getElementById('serialRawDebug');
       if (debugEl) debugEl.textContent = `Last Scanned UID: ${uid}`;
 
       handleIncomingNfcUid(uid);
-    }
-
-    function openEsp32CodeModal() {
-      const modal = document.getElementById('esp32CodeModal');
-      if (modal) {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-      }
-    }
-
-    function closeEsp32CodeModal() {
-      const modal = document.getElementById('esp32CodeModal');
-      if (modal) {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-      }
-    }
-
-    function copyEsp32Code() {
-      const codeText = document.getElementById('esp32CodeBlock')?.innerText || '';
-      const tempArea = document.createElement('textarea');
-      tempArea.value = codeText;
-      document.body.appendChild(tempArea);
-      tempArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(tempArea);
-      showToast('ESP32 Bluetooth Code copied!', 'success');
     }
 
     function handleIncomingNfcUid(uid) {
@@ -1293,68 +1164,68 @@ void loop() {
         if (debugEl) debugEl.textContent = 'Serial Status: Not Connected (Click "Connect Serial" at top)';
       }
     }
-    function updateBluetoothButtonState(connected, deviceName = 'ESP32_NFC_Reader') {
-      isBleConnected = connected;
-      const headerBtn = document.getElementById('headerBleBtn');
-      const headerText = document.getElementById('headerBleText');
-      const debugEl = document.getElementById('bleRawDebug');
-      if (connected) {
-        if (headerBtn) headerBtn.className = 'flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-emerald-600 text-white text-xs font-bold shadow-sm';
-        if (headerText) headerText.textContent = 'Bluetooth Connected';
-        if (debugEl) debugEl.textContent = `Connected to ${deviceName}! Ready for card tap...`;
-      } else {
-        if (headerBtn) headerBtn.className = 'flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm';
-        if (headerText) headerText.textContent = 'Connect Bluetooth';
-        if (debugEl) debugEl.textContent = 'Bluetooth Status: Not Connected (Click "Connect Bluetooth" at top)';
-      }
-    }
 
-    async function connectBluetoothReader() {
-      const debugEl = document.getElementById('bleRawDebug');
-      if (!('bluetooth' in navigator)) {
-        const msg = 'Web Bluetooth not supported here! Open in Google Chrome on Android/PC.';
+    async function connectSerialReader() {
+      const debugEl = document.getElementById('serialRawDebug');
+      if (!('serial' in navigator)) {
+        const msg = 'Serial Port blocked in Preview! Save this file as index.html on your PC and open directly in Google Chrome.';
         if (debugEl) debugEl.textContent = msg;
         showToast(msg, 'error');
         return;
       }
 
-      if (isBleConnected && bleDevice && bleDevice.gatt.connected) {
-        bleDevice.gatt.disconnect();
-        updateBluetoothButtonState(false);
-        showToast('Bluetooth disconnected', 'info');
+      if (isSerialConnected && serialPort) {
+        try {
+          if (serialReader) await serialReader.cancel();
+          await serialPort.close();
+        } catch (e) {}
+        serialPort = null;
+        serialReceiveBuffer = '';
+        updateSerialButtonState(false);
+        showToast('Serial port disconnected', 'info');
         return;
       }
 
       try {
-        bleDevice = await navigator.bluetooth.requestDevice({
-          filters: [{ namePrefix: 'ESP32' }, { services: [BLE_SERVICE_UUID] }],
-          optionalServices: [BLE_SERVICE_UUID]
-        });
-
-        bleDevice.addEventListener('gattserverdisconnected', () => {
-          updateBluetoothButtonState(false);
-          showToast('ESP32 Bluetooth disconnected', 'warning');
-        });
-
-        const server = await bleDevice.gatt.connect();
-        const service = await server.getPrimaryService(BLE_SERVICE_UUID);
-        bleCharacteristic = await service.getCharacteristic(BLE_CHARACTERISTIC_UUID);
-
-        await bleCharacteristic.startNotifications();
-        bleCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
-          const decoder = new TextDecoder('utf-8');
-          const uidStr = decoder.decode(event.target.value);
-          processBluetoothUid(uidStr);
-        });
-
-        updateBluetoothButtonState(true, bleDevice.name || 'ESP32_NFC_Reader');
+        serialPort = await navigator.serial.requestPort();
+        await serialPort.open({ baudRate: 115200 });
+        serialReceiveBuffer = '';
+        updateSerialButtonState(true);
         playBuzzerPattern('success');
-        showAccessLightBanner(true, 'Bluetooth Connected', bleDevice.name || 'ESP32_NFC_Reader', 'Wireless NFC Reader Ready');
-        showToast('Bluetooth connected successfully!', 'success');
+        showAccessLightBanner(true, 'Serial Port Connected', '', 'Serial port is connected successfully');
+        showToast('Serial port is connected successfully', 'success');
+
+        const decoder = new TextDecoderStream();
+        serialPort.readable.pipeTo(decoder.writable);
+        serialReader = decoder.readable.getReader();
+
+        while (true) {
+          const { value, done } = await serialReader.read();
+          if (done) break;
+          if (value) {
+            serialReceiveBuffer += value;
+            if (serialFlushTimer) clearTimeout(serialFlushTimer);
+            const lines = serialReceiveBuffer.split(/\r?\n/);
+            serialReceiveBuffer = lines.pop() || '';
+            lines.forEach(l => processSerialLine(l));
+
+            if (serialReceiveBuffer.trim().length >= 6) {
+              serialFlushTimer = setTimeout(() => {
+                const rem = serialReceiveBuffer.trim();
+                serialReceiveBuffer = '';
+                if (rem) processSerialLine(rem);
+              }, 150);
+            }
+          }
+        }
       } catch (err) {
-        updateBluetoothButtonState(false);
-        if (err && err.name !== 'NotFoundError') {
-          showToast(`Bluetooth Error: ${err.message}`, 'error');
+        updateSerialButtonState(false);
+        if (err && (err.name === 'SecurityError' || String(err).includes('permissions policy'))) {
+          const msg = 'Preview blocks Serial Port! Save as index.html and open directly in Chrome.';
+          if (debugEl) debugEl.textContent = msg;
+          showToast(msg, 'error');
+        } else if (err && err.name !== 'NotFoundError') {
+          showToast(`Serial Error: ${err.message}`, 'error');
         }
       }
     }
@@ -1653,6 +1524,8 @@ void loop() {
     window.addEventListener('DOMContentLoaded', () => {
       initPwaInstaller();
       appReadyTimestamp = Date.now();
+      hidKeyBuffer = '';
+      serialReceiveBuffer = '';
       document.getElementById('dashboardDateBadge').textContent = `Today • ${getTodayFormatted()}`;
       document.getElementById('newMemberStart').value = getTodayIso();
       autoCalculateEndDate();
