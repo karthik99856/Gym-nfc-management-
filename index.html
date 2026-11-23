@@ -829,12 +829,10 @@ void loop() {
     // Process incoming Bluetooth UID data from ESP32 BLE
     function processBluetoothUid(rawLine) {
       if (!rawLine) return;
-      const cleaned = rawLine.replace(/[^A-Za-z0-9:-]/g, '').trim().toUpperCase();
+      const cleaned = rawLine.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase();
       if (!cleaned || cleaned.length < 4) return;
 
-      const uidMatch = cleaned.match(/([0-9A-F]{2}[:-]?){3,7}[0-9A-F]{2}/);
-      const uid = uidMatch ? uidMatch[0].replace(/[:-]/g, '') : cleaned;
-      if (!uid || uid.length < 4) return;
+      const uid = cleaned;
 
       // Prevent duplicate reads within 1.5 seconds
       const now = Date.now();
@@ -879,11 +877,14 @@ void loop() {
     }
 
     function handleIncomingNfcUid(uid) {
+      const cleanUid = String(uid || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+      if (!cleanUid) return;
+
       // 1. If Add Member page is open, fill Card UID & auto-save if details are entered
       const addSec = document.getElementById('section-add-member');
       if (addSec && !addSec.classList.contains('hidden')) {
         const cardInp = document.getElementById('newMemberCardId');
-        if (cardInp) cardInp.value = uid;
+        if (cardInp) cardInp.value = cleanUid;
         updateCardPreview();
 
         const name = document.getElementById('newMemberName')?.value.trim();
@@ -894,34 +895,37 @@ void loop() {
         const endIso = document.getElementById('newMemberEnd')?.value;
 
         if (name && phone && amount) {
-          saveMemberRecord(name, phone, plan, amount, startIso, endIso, uid, 'Card');
+          const saved = saveMemberRecord(name, phone, plan, amount, startIso, endIso, cleanUid, 'Card');
+          if (saved) {
+            setTimeout(() => switchSection('dashboard'), 700);
+          }
         } else {
           playBuzzerPattern('success');
-          showToast(`Card ${uid} captured! Enter Name, Phone & Amount, then tap again.`, 'info');
+          showToast(`Card ${cleanUid} captured! Enter Name, Phone & Amount, then tap again.`, 'info');
         }
         return;
       }
 
       // 2. Check Owner Master Card
-      const ownerUid = (localStorage.getItem('gym_owner_card_uid') || '').trim().toUpperCase();
-      if (ownerUid && uid === ownerUid) {
+      const ownerUid = (localStorage.getItem('gym_owner_card_uid') || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+      if (ownerUid && cleanUid === ownerUid) {
         playBuzzerPattern('success');
         speakVoiceAlert('Owner Accepted');
         showAccessLightBanner(true, 'Owner Access', 'Unlimited', 'Master NFC Card');
         return;
       }
 
-      // 3. Check Registered Member
-      const member = state.members.find(m => m.cardId.toUpperCase() === uid);
+      // 3. Check Registered Member (normalize stored cardId too)
+      const member = state.members.find(m => String(m.cardId || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase() === cleanUid);
       const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const dateStr = getTodayFormatted();
 
       if (!member) {
         playBuzzerPattern('error');
         speakVoiceAlert('Unregistered Card');
-        showAccessLightBanner(false, 'Unregistered Card', uid, 'Access Denied');
+        showAccessLightBanner(false, 'Unregistered Card', cleanUid, 'Access Denied');
         state.transactions.unshift({
-          id: Date.now(), name: 'Unknown Card', cardId: uid, endDate: '-',
+          id: Date.now(), name: 'Unknown Card', cardId: cleanUid, endDate: '-',
           action: 'Declined (Unregistered)', time: timeStr, date: dateStr, method: 'NFC Card', status: 'Denied'
         });
         persistState();
@@ -936,7 +940,7 @@ void loop() {
         speakVoiceAlert(`${member.name} Expired`);
         showAccessLightBanner(false, member.name, 'Membership Expired', `Expired on: ${member.endDate}`);
         state.transactions.unshift({
-          id: Date.now(), name: member.name, cardId: uid, endDate: member.endDate,
+          id: Date.now(), name: member.name, cardId: cleanUid, endDate: member.endDate,
           action: 'Declined (Expired)', time: timeStr, date: dateStr, method: 'NFC Card', status: 'Denied'
         });
         persistState();
@@ -946,13 +950,13 @@ void loop() {
 
       // Check Daily Limit
       const limit = Number(document.getElementById('checkInDailyLimit')?.value || 1);
-      const todayVisits = state.transactions.filter(t => t.cardId.toUpperCase() === uid && t.date === dateStr && t.status === 'Success').length;
+      const todayVisits = state.transactions.filter(t => String(t.cardId || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase() === cleanUid && t.date === dateStr && t.status === 'Success').length;
       if (todayVisits >= limit) {
         playBuzzerPattern('error');
         speakVoiceAlert('Daily limit reached');
         showAccessLightBanner(false, member.name, 'Daily Limit Reached', `Already checked in ${todayVisits} time(s) today`);
         state.transactions.unshift({
-          id: Date.now(), name: member.name, cardId: uid, endDate: member.endDate,
+          id: Date.now(), name: member.name, cardId: cleanUid, endDate: member.endDate,
           action: 'Declined (Limit Reached)', time: timeStr, date: dateStr, method: 'NFC Card', status: 'Denied'
         });
         persistState();
@@ -966,7 +970,7 @@ void loop() {
       speakVoiceAlert(`${member.name} Accepted`);
       showAccessLightBanner(true, member.name, `${daysLeft} Days Left`, `Expiry: ${member.endDate}`);
       state.transactions.unshift({
-        id: Date.now(), name: member.name, cardId: uid, endDate: member.endDate,
+        id: Date.now(), name: member.name, cardId: cleanUid, endDate: member.endDate,
         action: 'Allowed', time: timeStr, date: dateStr, method: 'NFC Card', status: 'Success'
       });
       persistState();
