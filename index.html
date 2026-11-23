@@ -4,6 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#16134A" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Gym NFC" />
+  <link id="pwaManifestLink" rel="manifest" />
+  <link id="pwaIconLink" rel="apple-touch-icon" />
   <title>Gym NFC Management System</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -145,8 +151,8 @@
     <div id="sidebarBackdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-900/50 z-30 hidden lg:hidden"></div>
 
     <!-- Sidebar -->
-    <aside id="sidebar" class="sidebar-bg text-white w-64 flex-shrink-0 flex flex-col justify-between fixed lg:static inset-y-0 left-0 z-40 transform -translate-x-full lg:translate-x-0 transition-transform duration-200 ease-in-out shadow-xl lg:shadow-none overflow-y-auto">
-      <div>
+    <aside id="sidebar" class="sidebar-bg text-white w-64 h-dvh flex-shrink-0 flex flex-col justify-between fixed lg:sticky top-0 left-0 z-40 transform -translate-x-full lg:translate-x-0 transition-transform duration-200 ease-in-out shadow-xl lg:shadow-none">
+      <div class="flex-1 overflow-y-auto">
         <div class="px-6 py-6 flex items-center justify-between border-b border-white/10">
           <div class="flex items-center gap-3 min-w-0">
             <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white text-xl flex-shrink-0">
@@ -190,8 +196,12 @@
         </nav>
       </div>
 
-      <div class="p-4 border-t border-white/10">
-        <button type="button" onclick="handleAdminLogout()" class="w-full flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-sm font-medium text-indigo-200/80 hover:bg-white/10 hover:text-white transition text-left">
+      <div class="p-4 border-t border-white/10 space-y-2 mt-auto bg-[#100D3A]">
+        <button type="button" onclick="triggerInstallApp()" id="sidebarInstallBtn" class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-md transition text-left">
+          <i class="fa-solid fa-download w-5 text-center"></i>
+          <span>Download App</span>
+        </button>
+        <button type="button" onclick="handleAdminLogout()" class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold text-rose-200 hover:bg-rose-500/20 hover:text-white transition text-left">
           <i class="fa-solid fa-arrow-right-from-bracket w-5 text-center"></i>
           <span>Logout</span>
         </button>
@@ -341,19 +351,9 @@
 
                 <div>
                   <label class="block text-xs font-bold text-slate-700 mb-1.5">Tap Device Type</label>
-                  <div class="grid grid-cols-2 gap-3">
-                    <label class="cursor-pointer">
-                      <input type="radio" name="nfcType" value="Card" checked onchange="updateCardPreview()" class="peer sr-only" />
-                      <div class="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 peer-checked:border-indigo-600 peer-checked:bg-indigo-50 peer-checked:text-indigo-700">
-                        <i class="fa-solid fa-id-card"></i> NFC Card
-                      </div>
-                    </label>
-                    <label class="cursor-pointer">
-                      <input type="radio" name="nfcType" value="Mobile" onchange="updateCardPreview()" class="peer sr-only" />
-                      <div class="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 peer-checked:border-indigo-600 peer-checked:bg-indigo-50 peer-checked:text-indigo-700">
-                        <i class="fa-solid fa-mobile-screen-button"></i> Mobile NFC
-                      </div>
-                    </label>
+                  <div class="p-3 rounded-xl border border-indigo-200 bg-indigo-50/70 text-xs font-bold text-indigo-800 flex items-center gap-2">
+                    <i class="fa-solid fa-id-card"></i>
+                    <span>NFC Card Only (Tap Card on RC522 Reader)</span>
                   </div>
                 </div>
 
@@ -364,18 +364,9 @@
                 <div class="flex flex-col items-center justify-center gap-1.5 py-4 px-4 rounded-xl bg-indigo-50 border-2 border-dashed border-indigo-300 text-indigo-800 text-xs font-bold text-center">
                   <div class="flex items-center gap-2 text-sm text-indigo-700">
                     <i class="fa-solid fa-wifi rotate-90 animate-pulse text-base"></i>
-                    <span id="tapInstructionText">Auto-Save Ready: Tap NFC Card or Mobile on RC522 Reader</span>
+                    <span id="tapInstructionText">Tap NFC Card on RC522 Reader to Save Member</span>
                   </div>
                   <p id="serialRawDebug" class="text-[11px] font-mono text-indigo-600">Serial Status: Not Connected (Click "Connect Serial" at top)</p>
-                </div>
-
-                <div class="flex items-center gap-2 pt-1">
-                  <button type="button" onclick="simulateTestTap()" class="flex-1 py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold flex items-center justify-center gap-2 transition">
-                    <i class="fa-solid fa-vial"></i> Test Auto-Feed Tap
-                  </button>
-                  <button type="submit" class="flex-1 py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center justify-center gap-2 transition">
-                    <i class="fa-solid fa-floppy-disk"></i> Manual Save
-                  </button>
                 </div>
               </div>
             </div>
@@ -464,26 +455,106 @@
 
         <!-- 5. REPORTS -->
         <section id="section-reports" class="hidden space-y-6">
-          <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Reports</h2>
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Daily & Overall Reports</h2>
+              <p id="reportsDateSubtitle" class="text-xs font-medium text-slate-500 mt-0.5">Today's Entrance & Membership Summary</p>
+            </div>
+            <button type="button" onclick="downloadTransactionsPdf()" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-2 shadow-sm">
+              <i class="fa-solid fa-file-pdf"></i> Download Report PDF
+            </button>
+          </div>
+
+          <!-- Today's Detailed Scan Breakdown Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold text-slate-500 uppercase">Today Visited</span>
+                <span class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm"><i class="fa-solid fa-users-viewfinder"></i></span>
+              </div>
+              <h4 id="reportTodayVisited" class="text-2xl font-extrabold text-slate-900">0</h4>
+              <p class="text-[11px] text-slate-400 mt-1">Total card taps today</p>
+            </div>
+
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-emerald-100">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold text-emerald-700 uppercase">Today Accepted</span>
+                <span class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm"><i class="fa-solid fa-user-check"></i></span>
+              </div>
+              <h4 id="reportTodayAccepted" class="text-2xl font-extrabold text-emerald-600">0</h4>
+              <p class="text-[11px] text-slate-400 mt-1">Present members today</p>
+            </div>
+
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-amber-100">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold text-amber-700 uppercase">Today Expired</span>
+                <span class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-sm"><i class="fa-solid fa-calendar-xmark"></i></span>
+              </div>
+              <h4 id="reportTodayExpired" class="text-2xl font-extrabold text-amber-600">0</h4>
+              <p class="text-[11px] text-slate-400 mt-1">Expired cards tapped today</p>
+            </div>
+
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-rose-100">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold text-rose-700 uppercase">Today Declined</span>
+                <span class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-sm"><i class="fa-solid fa-ban"></i></span>
+              </div>
+              <h4 id="reportTodayDeclined" class="text-2xl font-extrabold text-rose-600">0</h4>
+              <p class="text-[11px] text-slate-400 mt-1">All denied taps today</p>
+            </div>
+
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold text-slate-500 uppercase">Total Expired</span>
+                <span class="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center text-sm"><i class="fa-solid fa-user-clock"></i></span>
+              </div>
+              <h4 id="reportTotalExpiredMembers" class="text-2xl font-extrabold text-slate-900">0</h4>
+              <p class="text-[11px] text-slate-400 mt-1">Overall expired members</p>
+            </div>
+          </div>
+
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
               <h3 class="text-base font-bold text-slate-900 mb-4">Attendance Report</h3>
               <div class="h-64 w-full"><canvas id="reportsBarChart"></canvas></div>
             </div>
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-4">
-              <h3 class="text-base font-bold text-slate-900">Summary</h3>
+              <h3 class="text-base font-bold text-slate-900">Overall Summary</h3>
               <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
-                <p class="text-xs font-semibold text-slate-500">Total Successful Check-Ins</p>
+                <p class="text-xs font-semibold text-slate-500">Total Successful Check-Ins (All Time)</p>
                 <h4 id="reportTotalCheckIns" class="text-2xl font-extrabold text-slate-900">0</h4>
               </div>
               <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
-                <p class="text-xs font-semibold text-slate-500">Denied / Expired Scans</p>
+                <p class="text-xs font-semibold text-slate-500">Total Declined / Expired Scans</p>
                 <h4 id="reportTotalDenied" class="text-2xl font-extrabold text-slate-900">0</h4>
               </div>
               <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
                 <p class="text-xs font-semibold text-slate-500">Active Members</p>
                 <h4 id="reportActiveMembers" class="text-2xl font-extrabold text-slate-900">0</h4>
               </div>
+            </div>
+          </div>
+
+          <!-- Today's Scan Activity Table -->
+          <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-100 space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-base font-bold text-slate-900">Today's Entrance Log Breakdown</h3>
+              <span id="reportTodayBadge" class="text-xs font-bold px-3 py-1 rounded-full bg-indigo-50 text-indigo-700">Today</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse min-w-[650px]">
+                <thead>
+                  <tr class="border-b border-slate-200 text-xs font-bold text-slate-600 uppercase bg-slate-50/70">
+                    <th class="py-3 px-4">#</th>
+                    <th class="py-3 px-4">Member Name</th>
+                    <th class="py-3 px-4">Card UID</th>
+                    <th class="py-3 px-4">Time</th>
+                    <th class="py-3 px-4">Expiry Date</th>
+                    <th class="py-3 px-4">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="reportTodayTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
+              </table>
             </div>
           </div>
         </section>
@@ -518,6 +589,18 @@
               </div>
             </div>
 
+            <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/50 space-y-2">
+              <div class="flex items-center justify-between">
+                <p class="text-sm font-bold text-slate-900">Google Sheets Sync (New Members Only)</p>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Auto-Sync</span>
+              </div>
+              <p class="text-xs text-slate-500">Paste your Google Apps Script Web App URL below. Only newly added members will be sent to Google Sheets.</p>
+              <div class="flex gap-2">
+                <input id="googleSheetsUrlInput" type="url" placeholder="https://script.google.com/macros/s/.../exec" class="flex-1 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-mono" />
+                <button type="button" onclick="saveGoogleSheetsUrl()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">Save URL</button>
+              </div>
+            </div>
+
             <form onsubmit="saveSecurityCredentials(event)" class="space-y-3 pt-2 border-t border-slate-100">
               <p class="text-sm font-bold text-slate-900">Admin Credentials</p>
               <input id="securityNewUsername" type="tel" required placeholder="New Mobile Number" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm" />
@@ -537,10 +620,9 @@
       <div class="w-24 h-24 rounded-full mx-auto mb-5 flex items-center justify-center text-5xl shadow-lg bg-white/20">
         <i id="nfcLightIcon" class="fa-solid fa-check"></i>
       </div>
-      <span id="nfcLightBadge" class="inline-block px-4 py-1 rounded-full text-xs font-extrabold uppercase tracking-widest bg-white/20 mb-3">GREEN LIGHT</span>
-      <h2 id="nfcLightName" class="text-2xl sm:text-3xl font-extrabold">Member Name</h2>
-      <p id="nfcLightExpiry" class="text-base sm:text-lg font-bold mt-2 opacity-95">Expiry Date</p>
-      <p id="nfcLightSubtext" class="text-xs font-medium mt-3 opacity-80">Check-In Recorded</p>
+      <h2 id="nfcLightName" class="text-3xl sm:text-4xl font-extrabold">Member Name</h2>
+      <p id="nfcLightExpiry" class="text-lg sm:text-xl font-bold mt-3 opacity-95">0 Days Left</p>
+      <p id="nfcLightSubtext" class="text-sm font-semibold mt-2 opacity-85">Expiry: DD-MM-YYYY</p>
     </div>
   </div>
 
@@ -634,6 +716,193 @@
     let nfcLightTimeout = null;
     let lineChartInstance = null;
     let barChartInstance = null;
+    let appReadyTimestamp = Date.now();
+    let deferredInstallPrompt = null;
+    let lastCardTapTime = 0;
+    let lastCardTapUid = '';
+
+    // Process incoming Serial data from your existing ESP32 USB Serial code
+    function processSerialLine(rawLine) {
+      if (!rawLine) return;
+      const cleaned = rawLine.replace(/[^A-Za-z0-9:-]/g, '').trim().toUpperCase();
+      if (!cleaned || cleaned.length < 4) return;
+
+      // Ignore boot messages from ESP32
+      if (cleaned.includes('ETS') || cleaned.includes('RST') || cleaned.includes('BOOT') || cleaned.includes('READY')) return;
+
+      const uidMatch = cleaned.match(/([0-9A-F]{2}[:-]?){3,7}[0-9A-F]{2}/);
+      const uid = uidMatch ? uidMatch[0].replace(/[:-]/g, '') : cleaned;
+      if (!uid || uid.length < 4) return;
+
+      // Prevent duplicate reads within 1.5 seconds
+      const now = Date.now();
+      if (uid === lastCardTapUid && (now - lastCardTapTime) < 1500) return;
+      lastCardTapUid = uid;
+      lastCardTapTime = now;
+
+      const liveTapText = document.getElementById('liveTapText');
+      if (liveTapText) liveTapText.textContent = `Last Tap: ${uid}`;
+
+      const debugEl = document.getElementById('serialRawDebug');
+      if (debugEl) debugEl.textContent = `Last Scanned UID: ${uid}`;
+
+      handleIncomingNfcUid(uid);
+    }
+
+    function handleIncomingNfcUid(uid) {
+      // 1. If Add Member page is open, fill Card UID & auto-save if details are entered
+      const addSec = document.getElementById('section-add-member');
+      if (addSec && !addSec.classList.contains('hidden')) {
+        const cardInp = document.getElementById('newMemberCardId');
+        if (cardInp) cardInp.value = uid;
+        updateCardPreview();
+
+        const name = document.getElementById('newMemberName')?.value.trim();
+        const phone = document.getElementById('newMemberPhone')?.value.trim();
+        const plan = document.getElementById('newMemberPlan')?.value;
+        const amount = document.getElementById('newMemberAmount')?.value;
+        const startIso = document.getElementById('newMemberStart')?.value;
+        const endIso = document.getElementById('newMemberEnd')?.value;
+
+        if (name && phone && amount) {
+          saveMemberRecord(name, phone, plan, amount, startIso, endIso, uid, 'Card');
+        } else {
+          playBuzzerPattern('success');
+          showToast(`Card ${uid} captured! Enter Name, Phone & Amount, then tap again.`, 'info');
+        }
+        return;
+      }
+
+      // 2. Check Owner Master Card
+      const ownerUid = (localStorage.getItem('gym_owner_card_uid') || '').trim().toUpperCase();
+      if (ownerUid && uid === ownerUid) {
+        playBuzzerPattern('success');
+        speakVoiceAlert('Owner Accepted');
+        showAccessLightBanner(true, 'Owner Access', 'Unlimited', 'Master NFC Card');
+        return;
+      }
+
+      // 3. Check Registered Member
+      const member = state.members.find(m => m.cardId.toUpperCase() === uid);
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const dateStr = getTodayFormatted();
+
+      if (!member) {
+        playBuzzerPattern('error');
+        speakVoiceAlert('Unregistered Card');
+        showAccessLightBanner(false, 'Unregistered Card', uid, 'Access Denied');
+        state.transactions.unshift({
+          id: Date.now(), name: 'Unknown Card', cardId: uid, endDate: '-',
+          action: 'Declined (Unregistered)', time: timeStr, date: dateStr, method: 'NFC Card', status: 'Denied'
+        });
+        persistState();
+        refreshAllViews();
+        return;
+      }
+
+      const expired = isDateExpired(member.endDate) || member.status === 'Expired';
+      if (expired) {
+        member.status = 'Expired';
+        playBuzzerPattern('error');
+        speakVoiceAlert(`${member.name} Expired`);
+        showAccessLightBanner(false, member.name, 'Membership Expired', `Expired on: ${member.endDate}`);
+        state.transactions.unshift({
+          id: Date.now(), name: member.name, cardId: uid, endDate: member.endDate,
+          action: 'Declined (Expired)', time: timeStr, date: dateStr, method: 'NFC Card', status: 'Denied'
+        });
+        persistState();
+        refreshAllViews();
+        return;
+      }
+
+      // Check Daily Limit
+      const limit = Number(document.getElementById('checkInDailyLimit')?.value || 1);
+      const todayVisits = state.transactions.filter(t => t.cardId.toUpperCase() === uid && t.date === dateStr && t.status === 'Success').length;
+      if (todayVisits >= limit) {
+        playBuzzerPattern('error');
+        speakVoiceAlert('Daily limit reached');
+        showAccessLightBanner(false, member.name, 'Daily Limit Reached', `Already checked in ${todayVisits} time(s) today`);
+        state.transactions.unshift({
+          id: Date.now(), name: member.name, cardId: uid, endDate: member.endDate,
+          action: 'Declined (Limit Reached)', time: timeStr, date: dateStr, method: 'NFC Card', status: 'Denied'
+        });
+        persistState();
+        refreshAllViews();
+        return;
+      }
+
+      // Allowed!
+      const daysLeft = getDaysRemaining(member.endDate);
+      playBuzzerPattern('success');
+      speakVoiceAlert(`${member.name} Accepted`);
+      showAccessLightBanner(true, member.name, `${daysLeft} Days Left`, `Expiry: ${member.endDate}`);
+      state.transactions.unshift({
+        id: Date.now(), name: member.name, cardId: uid, endDate: member.endDate,
+        action: 'Allowed', time: timeStr, date: dateStr, method: 'NFC Card', status: 'Success'
+      });
+      persistState();
+      refreshAllViews();
+    }
+
+    // Setup PWA App Icon, Manifest & Service Worker so "Download / Install App" works on Home Screen
+    function initPwaInstaller() {
+      try {
+        const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#16134A"/><stop offset="100%" stop-color="#5B46E8"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="url(#g)"/><g fill="#ffffff"><rect x="112" y="196" width="36" height="120" rx="12"/><rect x="158" y="166" width="42" height="180" rx="14"/><rect x="210" y="236" width="92" height="40" rx="10"/><rect x="312" y="166" width="42" height="180" rx="14"/><rect x="364" y="196" width="36" height="120" rx="12"/></g></svg>`;
+        const iconUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(iconSvg);
+        const iconLink = document.getElementById('pwaIconLink');
+        if (iconLink) iconLink.href = iconUrl;
+
+        const manifestObj = {
+          name: 'Gym NFC Management System',
+          short_name: 'Gym NFC',
+          start_url: window.location.href,
+          display: 'standalone',
+          background_color: '#16134A',
+          theme_color: '#16134A',
+          icons: [
+            { src: iconUrl, sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
+            { src: iconUrl, sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
+          ]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
+        const manifestLink = document.getElementById('pwaManifestLink');
+        if (manifestLink) manifestLink.href = URL.createObjectURL(manifestBlob);
+
+        if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+          const swCode = `self.addEventListener('fetch', function(e) {});`;
+          const swBlob = new Blob([swCode], { type: 'application/javascript' });
+          navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(() => {});
+        }
+      } catch (e) {}
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+    });
+
+    window.addEventListener('appinstalled', () => {
+      deferredInstallPrompt = null;
+      showToast('App installed to Home Screen!', 'success');
+    });
+
+    async function triggerInstallApp() {
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        const choice = await deferredInstallPrompt.userChoice;
+        if (choice && choice.outcome === 'accepted') {
+          showToast('Installing Gym NFC App to Home Screen...', 'success');
+        }
+        deferredInstallPrompt = null;
+      } else {
+        const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+        if (isIos) {
+          showToast('Tap Share icon at bottom → "Add to Home Screen"', 'info');
+        } else {
+          showToast('Open browser menu (⋮) → Tap "Install app" or "Add to Home screen"', 'info');
+        }
+      }
+    }
 
     function persistState() {
       try {
@@ -689,7 +958,6 @@
       const banner = document.getElementById('nfcLightBanner');
       const card = document.getElementById('nfcLightCard');
       const icon = document.getElementById('nfcLightIcon');
-      const badge = document.getElementById('nfcLightBadge');
       const nameEl = document.getElementById('nfcLightName');
       const expEl = document.getElementById('nfcLightExpiry');
       const subEl = document.getElementById('nfcLightSubtext');
@@ -701,15 +969,13 @@
       if (isAllowed) {
         card.classList.add('bg-emerald-600', 'border-emerald-300', 'green-light-active');
         icon.className = 'fa-solid fa-check';
-        badge.textContent = 'GREEN LIGHT • ACCESS ALLOWED';
       } else {
         card.classList.add('bg-rose-600', 'border-rose-300', 'red-light-active');
         icon.className = 'fa-solid fa-xmark';
-        badge.textContent = 'RED LIGHT • ACCESS DENIED';
       }
 
       nameEl.textContent = memberName;
-      expEl.textContent = expiryDate ? `Expiry Date: ${expiryDate}` : 'Unregistered Card';
+      expEl.textContent = expiryDate || '';
       subEl.textContent = subtext || '';
 
       banner.classList.remove('hidden');
@@ -719,6 +985,14 @@
         banner.classList.add('hidden');
         banner.classList.remove('flex');
       }, 4000);
+    }
+
+    function getDaysRemaining(ddmmyyyy) {
+      if (!ddmmyyyy || !ddmmyyyy.includes('-')) return 0;
+      const [d, m, y] = ddmmyyyy.split('-').map(Number);
+      const exp = new Date(y, m - 1, d, 23, 59, 59);
+      const now = new Date();
+      return Math.max(0, Math.ceil((exp - now) / (1000 * 60 * 60 * 24)));
     }
 
     function isDateExpired(ddmmyyyy) {
@@ -787,15 +1061,13 @@
     function updateCardPreview() {
       const name = document.getElementById('newMemberName')?.value.trim() || 'NEW MEMBER';
       const uid = document.getElementById('newMemberCardId')?.value.trim() || 'WAITING FOR TAP...';
-      const typeRadio = document.querySelector('input[name="nfcType"]:checked');
-      const nfcType = typeRadio ? typeRadio.value : 'Card';
 
       const holderEl = document.getElementById('previewCardHolder');
       const uidEl = document.getElementById('previewCardUid');
       const badgeEl = document.getElementById('previewCardTypeBadge');
       if (holderEl) holderEl.textContent = name.toUpperCase();
       if (uidEl) uidEl.textContent = uid;
-      if (badgeEl) badgeEl.textContent = nfcType === 'Mobile' ? 'Mobile NFC' : 'NFC Card';
+      if (badgeEl) badgeEl.textContent = 'NFC Card';
     }
 
     function saveMemberRecord(name, phone, plan, amount, startIso, endIso, cardId, nfcType) {
@@ -829,6 +1101,7 @@
 
       state.members.unshift(newMember);
       persistState();
+      syncNewMemberToGoogleSheets(newMember);
       playBuzzerPattern('success');
       speakVoiceAlert(`Member ${newMember.name} registered successfully`);
       showToast(`Saved: ${newMember.name} (${cleanUid})!`, 'success');
@@ -842,177 +1115,37 @@
       return true;
     }
 
-    function handleAddMember(e) {
-      e.preventDefault();
-      const name = document.getElementById('newMemberName').value.trim();
-      const phone = document.getElementById('newMemberPhone').value.trim();
-      const plan = document.getElementById('newMemberPlan').value;
-      const amount = document.getElementById('newMemberAmount').value;
-      const startIso = document.getElementById('newMemberStart').value || getTodayIso();
-      const endIso = document.getElementById('newMemberEnd').value || getTodayIso();
-      let cardId = document.getElementById('newMemberCardId').value.trim();
-      const typeRadio = document.querySelector('input[name="nfcType"]:checked');
-      const nfcType = typeRadio ? typeRadio.value : 'Card';
-
-      if (!name || !phone) {
-        showToast('Enter Name and Phone Number first!', 'warning');
-        return;
-      }
-      if (!cardId) {
-        cardId = 'NFC-' + Math.floor(1000 + Math.random() * 9000);
-      }
-      saveMemberRecord(name, phone, plan, amount, startIso, endIso, cardId, nfcType);
+    function saveGoogleSheetsUrl() {
+      const url = (document.getElementById('googleSheetsUrlInput')?.value || '').trim();
+      localStorage.setItem('gym_google_sheets_url', url);
+      showToast(url ? 'Google Sheets URL saved!' : 'Google Sheets URL cleared', 'success');
     }
 
-    function simulateTestTap() {
-      const randomUid = 'A4F9' + Math.floor(1000 + Math.random() * 9000);
-      const debugEl = document.getElementById('serialRawDebug');
-      if (debugEl) debugEl.textContent = `Simulated Tap UID: "${randomUid}"`;
-      handleIncomingCardScan(randomUid);
-    }
+    async function syncNewMemberToGoogleSheets(member) {
+      const webhookUrl = (localStorage.getItem('gym_google_sheets_url') || '').trim();
+      if (!webhookUrl) return;
 
-    let hidKeyBuffer = '';
-    let hidKeyTimer = null;
-    document.addEventListener('keydown', (e) => {
-      const activeTag = document.activeElement ? document.activeElement.tagName : '';
-      const isTextInput = activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT';
-      if (isTextInput) return;
-
-      if (e.key === 'Enter') {
-        if (hidKeyBuffer.trim().length >= 4) {
-          const uid = hidKeyBuffer.trim().toUpperCase();
-          hidKeyBuffer = '';
-          handleIncomingCardScan(uid);
-        }
-        return;
-      }
-
-      if (e.key && e.key.length === 1 && /[a-zA-Z0-9:-]/.test(e.key)) {
-        hidKeyBuffer += e.key;
-        if (hidKeyTimer) clearTimeout(hidKeyTimer);
-        hidKeyTimer = setTimeout(() => {
-          if (hidKeyBuffer.trim().length >= 4) {
-            const uid = hidKeyBuffer.trim().toUpperCase();
-            hidKeyBuffer = '';
-            handleIncomingCardScan(uid);
-          }
-        }, 120);
-      }
-    });
-
-    function handleIncomingCardScan(rawUid) {
-      const uid = String(rawUid || '').replace(/[^a-zA-Z0-9:-]/g, '').toUpperCase();
-      if (!uid || uid.length < 3) return;
-
-      const liveTapText = document.getElementById('liveTapText');
-      if (liveTapText) liveTapText.textContent = `Last Tap: ${uid}`;
-
-      const addSection = document.getElementById('section-add-member');
-      const isAddMemberOpen = addSection && !addSection.classList.contains('hidden');
-
-      if (isAddMemberOpen) {
-        document.getElementById('newMemberCardId').value = uid;
-        updateCardPreview();
-
-        const name = document.getElementById('newMemberName').value.trim();
-        const phone = document.getElementById('newMemberPhone').value.trim();
-        const plan = document.getElementById('newMemberPlan').value;
-        const amount = document.getElementById('newMemberAmount').value || '0';
-        const startIso = document.getElementById('newMemberStart').value || getTodayIso();
-        const endIso = document.getElementById('newMemberEnd').value || getTodayIso();
-        const typeRadio = document.querySelector('input[name="nfcType"]:checked');
-        const nfcType = typeRadio ? typeRadio.value : 'Card';
-
-        if (!name || !phone) {
-          playBuzzerPattern('error');
-          showToast(`Card ${uid} scanned! Enter Name & Phone first, then tap again to auto-save.`, 'warning');
-          if (!name) document.getElementById('newMemberName').focus();
-          else document.getElementById('newMemberPhone').focus();
-          return;
-        }
-
-        saveMemberRecord(name, phone, plan, amount, startIso, endIso, uid, nfcType);
-        return;
-      }
-
-      const ownerUid = (localStorage.getItem('gym_owner_card_uid') || '').trim().toUpperCase();
-      const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const todayStr = getTodayFormatted();
-
-      if (ownerUid && uid === ownerUid) {
-        state.transactions.unshift({
-          id: Date.now(), name: 'Gym Owner', cardId: uid, endDate: 'UNLIMITED',
-          action: 'Allowed (Owner)', time: nowTime, date: todayStr, method: 'Owner Card', status: 'Success'
+      try {
+        await fetch(webhookUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event: 'NEW_MEMBER',
+            cardId: member.cardId,
+            name: member.name,
+            phone: member.phone,
+            plan: member.plan,
+            amount: member.amount,
+            startDate: member.startDate,
+            endDate: member.endDate,
+            status: member.status,
+            createdAt: new Date().toLocaleString()
+          })
         });
-        persistState();
-        playBuzzerPattern('success');
-        speakVoiceAlert('Welcome Owner');
-        showAccessLightBanner(true, 'Gym Owner', 'UNLIMITED', 'Owner VIP Check-In');
-        refreshAllViews();
-        return;
-      }
-
-      const member = state.members.find(m => m.cardId.toUpperCase() === uid);
-      if (!member) {
-        state.transactions.unshift({
-          id: Date.now(), name: 'Unknown Card', cardId: uid, endDate: '-',
-          action: 'Declined (Unregistered)', time: nowTime, date: todayStr, method: 'NFC Reader', status: 'Failed'
-        });
-        persistState();
-        playBuzzerPattern('error');
-        speakVoiceAlert('Card not registered');
-        showAccessLightBanner(false, `Card: ${uid}`, '', 'Unregistered NFC Card');
-        refreshAllViews();
-        return;
-      }
-
-      const expired = isDateExpired(member.endDate) || member.status === 'Expired';
-      if (expired) {
-        member.status = 'Expired';
-        state.transactions.unshift({
-          id: Date.now(), name: member.name, cardId: member.cardId, endDate: member.endDate,
-          action: 'Declined (Expired)', time: nowTime, date: todayStr, method: member.nfcType || 'NFC Card', status: 'Failed'
-        });
-        persistState();
-        playBuzzerPattern('error');
-        speakVoiceAlert(`Access denied. ${member.name}, your membership expired on ${member.endDate}`);
-        showAccessLightBanner(false, member.name, member.endDate, 'Membership Expired • Please Renew');
-        refreshAllViews();
-        return;
-      }
-
-      const dailyLimit = Number(document.getElementById('checkInDailyLimit')?.value || 1);
-      const todayCount = state.transactions.filter(t => t.cardId === member.cardId && t.date === todayStr && t.status === 'Success').length;
-      if (todayCount >= dailyLimit) {
-        playBuzzerPattern('error');
-        speakVoiceAlert(`${member.name}, already checked in today`);
-        showAccessLightBanner(false, member.name, member.endDate, `Daily Check-In Limit (${dailyLimit}/day) Reached`);
-        return;
-      }
-
-      state.transactions.unshift({
-        id: Date.now(), name: member.name, cardId: member.cardId, endDate: member.endDate,
-        action: 'Allowed', time: nowTime, date: todayStr, method: member.nfcType || 'NFC Card', status: 'Success'
-      });
-      persistState();
-      playBuzzerPattern('success');
-      speakVoiceAlert(`Welcome ${member.name}. Valid until ${member.endDate}`);
-      showAccessLightBanner(true, member.name, member.endDate, 'Valid Membership • Check-In Recorded');
-      refreshAllViews();
-    }
-
-    function processSerialLine(line) {
-      const cleaned = line.trim();
-      if (!cleaned) return;
-      const debugEl = document.getElementById('serialRawDebug');
-      if (debugEl) debugEl.textContent = `ESP32 Raw Data: "${cleaned}"`;
-
-      const uidMatch = cleaned.match(/(?:UID[:=\s-]*)?([0-9A-Fa-f]{2}(?:[:\s-]?[0-9A-Fa-f]{2}){1,7})/);
-      const token = uidMatch
-        ? uidMatch[1].replace(/[:\s-]/g, '').toUpperCase()
-        : cleaned.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-      if (token.length >= 4) {
-        handleIncomingCardScan(token);
+        showToast(`Synced ${member.name} to Google Sheets!`, 'info');
+      } catch (err) {
+        showToast('Saved locally, but Google Sheets sync failed.', 'warning');
       }
     }
 
@@ -1024,7 +1157,7 @@
       if (connected) {
         if (headerBtn) headerBtn.className = 'flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-emerald-600 text-white text-xs font-bold shadow-sm';
         if (headerText) headerText.textContent = 'Serial Connected';
-        if (debugEl) debugEl.textContent = 'Serial Connected! Waiting for NFC card tap...';
+        if (debugEl) debugEl.textContent = 'Serial port is connected successfully! Ready for card tap...';
       } else {
         if (headerBtn) headerBtn.className = 'flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm';
         if (headerText) headerText.textContent = 'Connect Serial';
@@ -1047,6 +1180,7 @@
           await serialPort.close();
         } catch (e) {}
         serialPort = null;
+        serialReceiveBuffer = '';
         updateSerialButtonState(false);
         showToast('Serial port disconnected', 'info');
         return;
@@ -1055,8 +1189,11 @@
       try {
         serialPort = await navigator.serial.requestPort();
         await serialPort.open({ baudRate: 115200 });
+        serialReceiveBuffer = '';
         updateSerialButtonState(true);
-        showToast('ESP32 Serial Reader Connected!', 'success');
+        playBuzzerPattern('success');
+        showAccessLightBanner(true, 'Serial Port Connected', '', 'Serial port is connected successfully');
+        showToast('Serial port is connected successfully', 'success');
 
         const decoder = new TextDecoderStream();
         serialPort.readable.pipeTo(decoder.writable);
@@ -1072,12 +1209,12 @@
             serialReceiveBuffer = lines.pop() || '';
             lines.forEach(l => processSerialLine(l));
 
-            if (serialReceiveBuffer.trim().length >= 4) {
+            if (serialReceiveBuffer.trim().length >= 6) {
               serialFlushTimer = setTimeout(() => {
                 const rem = serialReceiveBuffer.trim();
                 serialReceiveBuffer = '';
                 if (rem) processSerialLine(rem);
-              }, 120);
+              }, 150);
             }
           }
         }
@@ -1115,7 +1252,18 @@
         return matchQ && matchPlan && matchStatus;
       });
 
-      tbody.innerHTML = filtered.map((m, idx) => `
+      tbody.innerHTML = filtered.map((m, idx) => {
+        const daysLeft = getDaysRemaining(m.endDate);
+        const isExpired = isDateExpired(m.endDate) || m.status === 'Expired';
+        const needsReminder = isExpired || daysLeft <= 2;
+        const cleanPhone = String(m.phone || '').replace(/\D/g, '');
+        const waPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+        const waMsg = isExpired
+          ? `Hello ${m.name}, your Gym (${m.plan}) membership expired on ${m.endDate}. Please renew your plan to continue your workouts!`
+          : `Hello ${m.name}, your Gym (${m.plan}) membership will expire in ${daysLeft} day(s) on ${m.endDate}. Please renew soon!`;
+        const waUrl = `https://wa.me/${waPhone}?text=${encodeURIComponent(waMsg)}`;
+
+        return `
         <tr class="hover:bg-slate-50/80">
           <td class="py-3 px-3 font-semibold text-slate-500">${idx + 1}</td>
           <td class="py-3 px-3">
@@ -1126,16 +1274,27 @@
           <td class="py-3 px-3 font-semibold">${m.plan}</td>
           <td class="py-3 px-3 font-bold text-slate-800">₹${m.amount}</td>
           <td class="py-3 px-3 text-slate-600">${m.startDate}</td>
-          <td class="py-3 px-3 font-semibold text-slate-700">${m.endDate}</td>
+          <td class="py-3 px-3 font-semibold text-slate-700">
+            <span>${m.endDate}</span>
+            ${!isExpired && daysLeft <= 2 ? `<span class="block text-[10px] font-bold text-amber-600">${daysLeft} day(s) left</span>` : ''}
+          </td>
           <td class="py-3 px-3">
             <span class="px-2.5 py-1 rounded-full text-xs font-bold ${m.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">${m.status}</span>
           </td>
-          <td class="py-3 px-3 text-right space-x-1">
-            <button type="button" onclick="openEditModal(${m.id})" class="px-2.5 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-bold hover:bg-indigo-100">Edit</button>
-            <button type="button" onclick="deleteMember(${m.id})" class="px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-700 text-xs font-bold hover:bg-rose-100">Delete</button>
+          <td class="py-3 px-3 text-right">
+            <div class="inline-flex items-center justify-end gap-1.5">
+              ${needsReminder ? `
+                <a href="${waUrl}" target="_blank" rel="noopener noreferrer" title="Send WhatsApp Renewal Reminder" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm shadow-sm transition">
+                  <i class="fa-brands fa-whatsapp"></i>
+                </a>
+              ` : ''}
+              <button type="button" onclick="openEditModal(${m.id})" class="px-2.5 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-bold hover:bg-indigo-100">Edit</button>
+              <button type="button" onclick="deleteMember(${m.id})" class="px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-700 text-xs font-bold hover:bg-rose-100">Delete</button>
+            </div>
           </td>
         </tr>
-      `).join('');
+      `;
+      }).join('');
     }
 
     function resetMemberFilters() {
@@ -1252,12 +1411,32 @@
       const total = state.members.length;
       const active = state.members.filter(m => !isDateExpired(m.endDate) && m.status === 'Active').length;
       const expired = total - active;
-      const todayAtt = state.transactions.filter(t => t.date === todayStr && t.status === 'Success').length;
+      const todayTxns = state.transactions.filter(t => t.date === todayStr);
+      const todayAtt = todayTxns.filter(t => t.status === 'Success').length;
+      const todayExpiredCount = todayTxns.filter(t => String(t.action || '').toLowerCase().includes('expired')).length;
+      const todayDeclinedCount = todayTxns.filter(t => t.status !== 'Success').length;
 
       document.getElementById('kpiTotalMembers').textContent = total;
       document.getElementById('kpiActiveMembers').textContent = active;
       document.getElementById('kpiExpiredMembers').textContent = expired;
       document.getElementById('kpiTodayAttendance').textContent = todayAtt;
+
+      const repDateSub = document.getElementById('reportsDateSubtitle');
+      const repTodayBadge = document.getElementById('reportTodayBadge');
+      if (repDateSub) repDateSub.textContent = `Today's Entrance & Membership Summary (${todayStr})`;
+      if (repTodayBadge) repTodayBadge.textContent = todayStr;
+
+      const repTodayVisited = document.getElementById('reportTodayVisited');
+      const repTodayAccepted = document.getElementById('reportTodayAccepted');
+      const repTodayExpired = document.getElementById('reportTodayExpired');
+      const repTodayDeclined = document.getElementById('reportTodayDeclined');
+      const repTotalExpiredMembers = document.getElementById('reportTotalExpiredMembers');
+
+      if (repTodayVisited) repTodayVisited.textContent = todayTxns.length;
+      if (repTodayAccepted) repTodayAccepted.textContent = todayAtt;
+      if (repTodayExpired) repTodayExpired.textContent = todayExpiredCount;
+      if (repTodayDeclined) repTodayDeclined.textContent = todayDeclinedCount;
+      if (repTotalExpiredMembers) repTotalExpiredMembers.textContent = expired;
 
       const repCheck = document.getElementById('reportTotalCheckIns');
       const repDen = document.getElementById('reportTotalDenied');
@@ -1265,6 +1444,26 @@
       if (repCheck) repCheck.textContent = state.transactions.filter(t => t.status === 'Success').length;
       if (repDen) repDen.textContent = state.transactions.filter(t => t.status !== 'Success').length;
       if (repAct) repAct.textContent = active;
+
+      const reportTodayTbody = document.getElementById('reportTodayTableBody');
+      if (reportTodayTbody) {
+        if (todayTxns.length === 0) {
+          reportTodayTbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-xs font-semibold text-slate-400">No scans recorded today (${todayStr}) yet.</td></tr>`;
+        } else {
+          reportTodayTbody.innerHTML = todayTxns.map((t, idx) => `
+            <tr class="hover:bg-slate-50/80">
+              <td class="py-3 px-4 font-semibold text-slate-500">${idx + 1}</td>
+              <td class="py-3 px-4 font-bold text-slate-900">${t.name}</td>
+              <td class="py-3 px-4 font-mono text-xs font-bold text-indigo-600">${t.cardId}</td>
+              <td class="py-3 px-4 text-slate-600">${t.time}</td>
+              <td class="py-3 px-4 text-slate-600 font-semibold">${t.endDate}</td>
+              <td class="py-3 px-4">
+                <span class="px-2.5 py-1 rounded-full text-xs font-bold ${t.status === 'Success' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">${t.action}</span>
+              </td>
+            </tr>
+          `).join('');
+        }
+      }
 
       const recentEl = document.getElementById('recentActivityList');
       if (recentEl) {
@@ -1323,10 +1522,16 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
+      initPwaInstaller();
+      appReadyTimestamp = Date.now();
+      hidKeyBuffer = '';
+      serialReceiveBuffer = '';
       document.getElementById('dashboardDateBadge').textContent = `Today • ${getTodayFormatted()}`;
       document.getElementById('newMemberStart').value = getTodayIso();
       autoCalculateEndDate();
       document.getElementById('ownerCardUidInput').value = localStorage.getItem('gym_owner_card_uid') || '';
+      const sheetsInp = document.getElementById('googleSheetsUrlInput');
+      if (sheetsInp) sheetsInp.value = localStorage.getItem('gym_google_sheets_url') || '';
       refreshAllViews();
       initCharts();
     });
