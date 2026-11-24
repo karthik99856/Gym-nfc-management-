@@ -833,26 +833,22 @@ void loop() {
     // Process incoming Bluetooth UID data from ESP32 BLE
     function processBluetoothUid(rawLine) {
       if (!rawLine) return;
-      const cleaned = rawLine.replace(/[^A-Za-z0-9:-]/g, '').trim().toUpperCase();
+      const cleaned = String(rawLine).replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase();
       if (!cleaned || cleaned.length < 4) return;
 
-      const uidMatch = cleaned.match(/([0-9A-F]{2}[:-]?){3,7}[0-9A-F]{2}/);
-      const uid = uidMatch ? uidMatch[0].replace(/[:-]/g, '') : cleaned;
-      if (!uid || uid.length < 4) return;
-
-      // Prevent duplicate reads within 1.5 seconds
+      // Prevent accidental double-tap within 1.2 seconds
       const now = Date.now();
-      if (uid === lastCardTapUid && (now - lastCardTapTime) < 1500) return;
-      lastCardTapUid = uid;
+      if (cleaned === lastCardTapUid && (now - lastCardTapTime) < 1200) return;
+      lastCardTapUid = cleaned;
       lastCardTapTime = now;
 
       const liveTapText = document.getElementById('liveTapText');
-      if (liveTapText) liveTapText.textContent = `Last Tap: ${uid}`;
+      if (liveTapText) liveTapText.textContent = `Last Tap: ${cleaned}`;
 
       const debugEl = document.getElementById('bleRawDebug');
-      if (debugEl) debugEl.textContent = `Last Scanned UID: ${uid}`;
+      if (debugEl) debugEl.textContent = `Last Scanned UID: ${cleaned}`;
 
-      handleIncomingNfcUid(uid);
+      handleIncomingNfcUid(cleaned);
     }
 
     function openEsp32CodeModal() {
@@ -879,10 +875,10 @@ void loop() {
       tempArea.select();
       document.execCommand('copy');
       document.body.removeChild(tempArea);
-      showToast('ESP32 Bluetooth Code copied!', 'success');
-    }
+    function handleIncomingNfcUid(rawUid) {
+      const uid = String(rawUid || '').replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase();
+      if (!uid) return;
 
-    function handleIncomingNfcUid(uid) {
       // 1. If Add Member page is open, fill Card UID & auto-save if details are entered
       const addSec = document.getElementById('section-add-member');
       if (addSec && !addSec.classList.contains('hidden')) {
@@ -907,7 +903,7 @@ void loop() {
       }
 
       // 2. Check Owner Master Card
-      const ownerUid = (localStorage.getItem('gym_owner_card_uid') || '').trim().toUpperCase();
+      const ownerUid = String(localStorage.getItem('gym_owner_card_uid') || '').replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase();
       if (ownerUid && uid === ownerUid) {
         playBuzzerPattern('success');
         speakVoiceAlert('Owner Accepted');
@@ -916,7 +912,7 @@ void loop() {
       }
 
       // 3. Check Registered Member
-      const member = state.members.find(m => m.cardId.toUpperCase() === uid);
+      const member = state.members.find(m => String(m.cardId || '').replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase() === uid);
       const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const dateStr = getTodayFormatted();
 
@@ -950,7 +946,7 @@ void loop() {
 
       // Check Daily Limit
       const limit = Number(document.getElementById('checkInDailyLimit')?.value || 1);
-      const todayVisits = state.transactions.filter(t => t.cardId.toUpperCase() === uid && t.date === dateStr && t.status === 'Success').length;
+      const todayVisits = state.transactions.filter(t => String(t.cardId || '').replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase() === uid && t.date === dateStr && t.status === 'Success').length;
       if (todayVisits >= limit) {
         playBuzzerPattern('error');
         speakVoiceAlert('Daily limit reached');
