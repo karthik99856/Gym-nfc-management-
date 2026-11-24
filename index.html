@@ -8,7 +8,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Gym NFC" />
-  <link id="pwaManifestLink" rel="manifest" />
+  <meta name="description" content="Lifetime Offline-Capable Gym NFC Attendance & Membership Management System with ESP32 Bluetooth Reader." />
+  <link id="pwaManifestLink" rel="manifest" href="manifest.json" />
   <link id="pwaIconLink" rel="apple-touch-icon" />
   <title>Gym NFC Management System</title>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -141,7 +142,7 @@ void loop() {
 }</pre>
       </div>
       <div class="flex items-center justify-between gap-3 pt-2">
-        <span class="text-[11px] font-semibold text-slate-500">Pins: SDA=D5, SCK=D18, MOSI=D23, MISO=D19, RST=D22, 3.3V, GND</span>
+        <span class="text-[11px] font-semibold text-slate-500">Pins: SDA=D5, SCK=D18, MOSI=D23, MISO=D19, RST=D22</span>
         <button type="button" onclick="copyEsp32Code()" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center gap-2">
           <i class="fa-solid fa-copy"></i> Copy ESP32 Code
         </button>
@@ -293,7 +294,11 @@ void loop() {
       <div class="p-4 border-t border-white/10 space-y-2 mt-auto bg-[#100D3A]">
         <button type="button" onclick="triggerInstallApp()" id="sidebarInstallBtn" class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-md transition text-left">
           <i class="fa-solid fa-download w-5 text-center"></i>
-          <span>Download App</span>
+          <span>Install App</span>
+        </button>
+        <button type="button" onclick="downloadPwaPackageFiles()" class="w-full flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-xs font-bold text-emerald-200 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 transition text-left">
+          <i class="fa-solid fa-box-archive w-5 text-center"></i>
+          <span>PWABuilder Files</span>
         </button>
         <button type="button" onclick="handleAdminLogout()" class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold text-rose-200 hover:bg-rose-500/20 hover:text-white transition text-left">
           <i class="fa-solid fa-arrow-right-from-bracket w-5 text-center"></i>
@@ -707,58 +712,58 @@ void loop() {
             </div>
 
             <form onsubmit="saveSecurityCredentials(event)" class="space-y-3 pt-2 border-t border-slate-100">
-              <p class="text-sm font-bold text-slate-900">Admin Credentials</p>
-              <input id="securityNewUsername" type="tel" required placeholder="New Mobile Number" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm" />
-              <input id="securityNewPassword" type="password" required placeholder="New Password" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm" />
-              <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold">Update Login</button>
-            </form>
-          </div>
-        </section>
+    // Process incoming Bluetooth UID or Battery data from ESP32 BLE
+    function processBluetoothUid(rawLine) {
+      if (!rawLine) return;
+      const trimmed = rawLine.trim().toUpperCase();
 
-      </main>
-    </div>
-  </div>
+      // Handle live battery percentage updates (e.g., "BAT:85")
+      if (trimmed.startsWith('BAT:')) {
+        const pct = parseInt(trimmed.replace('BAT:', ''), 10);
+        if (!isNaN(pct)) updateBatteryBadge(pct);
+        return;
+      }
 
-  <!-- Full-Screen NFC Light Banner -->
-  <div id="nfcLightBanner" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/75 backdrop-blur-sm p-4">
-    <div id="nfcLightCard" class="max-w-md w-full rounded-3xl p-8 text-center text-white shadow-2xl border-4">
-      <div class="w-24 h-24 rounded-full mx-auto mb-5 flex items-center justify-center text-5xl shadow-lg bg-white/20">
-        <i id="nfcLightIcon" class="fa-solid fa-check"></i>
-      </div>
-      <h2 id="nfcLightName" class="text-3xl sm:text-4xl font-extrabold">Member Name</h2>
-      <p id="nfcLightExpiry" class="text-lg sm:text-xl font-bold mt-3 opacity-95">0 Days Left</p>
-      <p id="nfcLightSubtext" class="text-sm font-semibold mt-2 opacity-85">Expiry: DD-MM-YYYY</p>
-    </div>
-  </div>
+      const cleaned = trimmed.replace(/[^A-Za-z0-9]/g, '');
+      if (!cleaned || cleaned.length < 4) return;
 
-  <script>
-    const DEFAULT_ADMIN_USER = '1234567890';
-    const DEFAULT_ADMIN_PASS = '1234';
-    const MASTER_RECOVERY_KEY = '0987654321';
+      const uid = cleaned;
 
-    function getAdminCredentials() {
-      return {
-        username: localStorage.getItem('gym_admin_mobile') || DEFAULT_ADMIN_USER,
-        password: localStorage.getItem('gym_admin_password') || DEFAULT_ADMIN_PASS
-      };
+      // Prevent duplicate reads within 1.5 seconds
+      const now = Date.now();
+      if (uid === lastCardTapUid && (now - lastCardTapTime) < 1500) return;
+      lastCardTapUid = uid;
+      lastCardTapTime = now;
+
+      const liveTapText = document.getElementById('liveTapText');
+      if (liveTapText) liveTapText.textContent = `Last Tap: ${uid}`;
+
+      const debugEl = document.getElementById('bleRawDebug');
+      if (debugEl) debugEl.textContent = `Last Scanned UID: ${uid}`;
+
+      handleIncomingNfcUid(uid);
     }
 
-    function handleAdminLogin(e) {
-      if (e) e.preventDefault();
-      const enteredUser = document.getElementById('loginUsernameInput').value.trim();
-      const enteredPass = document.getElementById('loginPasswordInput').value.trim();
-      const creds = getAdminCredentials();
-      const errorEl = document.getElementById('loginErrorMsg');
+    function updateBatteryBadge(pct) {
+      const badge = document.getElementById('batteryStatusBadge');
+      const icon = document.getElementById('batteryStatusIcon');
+      const text = document.getElementById('batteryStatusText');
+      if (!badge || !icon || !text) return;
 
-      if ((enteredUser === creds.username && enteredPass === creds.password) ||
-          (enteredUser === MASTER_RECOVERY_KEY && enteredPass === MASTER_RECOVERY_KEY)) {
-        localStorage.setItem('gym_admin_logged_in', 'true');
-        document.getElementById('loginOverlay').classList.add('hidden');
-        errorEl.classList.add('hidden');
-        showToast('Login successful!', 'success');
+      const safePct = Math.max(0, Math.min(100, pct));
+      badge.classList.remove('hidden', 'bg-emerald-50', 'border-emerald-200', 'text-emerald-700', 'bg-amber-50', 'border-amber-200', 'text-amber-700', 'bg-rose-50', 'border-rose-200', 'text-rose-700');
+      badge.classList.add('flex');
+      text.textContent = `${safePct}%`;
+
+      if (safePct <= 20) {
+        badge.classList.add('bg-rose-50', 'border-rose-200', 'text-rose-700');
+        icon.className = 'fa-solid fa-battery-quarter';
+      } else if (safePct <= 50) {
+        badge.classList.add('bg-amber-50', 'border-amber-200', 'text-amber-700');
+        icon.className = 'fa-solid fa-battery-half';
       } else {
-        errorEl.classList.remove('hidden');
-        playBuzzerPattern('error');
+        badge.classList.add('bg-emerald-50', 'border-emerald-200', 'text-emerald-700');
+        icon.className = safePct >= 90 ? 'fa-solid fa-battery-full' : 'fa-solid fa-battery-three-quarters';
       }
     }
 
@@ -849,7 +854,7 @@ void loop() {
       handleIncomingNfcUid(uid);
     }
 
-    function openEsp32CodeModal() {
+    function handleAdminLogout() {
       const modal = document.getElementById('esp32CodeModal');
       if (modal) {
         modal.classList.remove('hidden');
@@ -977,34 +982,166 @@ void loop() {
       refreshAllViews();
     }
 
-    // Setup PWA App Icon, Manifest & Service Worker so "Download / Install App" works on Home Screen
-    function initPwaInstaller() {
-      try {
-        const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#16134A"/><stop offset="100%" stop-color="#5B46E8"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="url(#g)"/><g fill="#ffffff"><rect x="112" y="196" width="36" height="120" rx="12"/><rect x="158" y="166" width="42" height="180" rx="14"/><rect x="210" y="236" width="92" height="40" rx="10"/><rect x="312" y="166" width="42" height="180" rx="14"/><rect x="364" y="196" width="36" height="120" rx="12"/></g></svg>`;
-        const iconUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(iconSvg);
-        const iconLink = document.getElementById('pwaIconLink');
-        if (iconLink) iconLink.href = iconUrl;
+    // Generate crisp PNG icons dynamically via Canvas so PWABuilder validates 192x192 & 512x512 PNGs
+    function generatePngIconDataUrl(size) {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      const grad = ctx.createLinearGradient(0, 0, size, size);
+      grad.addColorStop(0, '#16134A');
+      grad.addColorStop(1, '#5B46E8');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.roundRect(0, 0, size, size, size * 0.22);
+      ctx.fill();
 
-        const manifestObj = {
-          name: 'Gym NFC Management System',
-          short_name: 'Gym NFC',
-          start_url: window.location.href,
-          display: 'standalone',
-          background_color: '#16134A',
-          theme_color: '#16134A',
-          icons: [
-            { src: iconUrl, sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
-            { src: iconUrl, sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
-          ]
-        };
-        const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
-        const manifestLink = document.getElementById('pwaManifestLink');
-        if (manifestLink) manifestLink.href = URL.createObjectURL(manifestBlob);
+      ctx.fillStyle = '#FFFFFF';
+      const s = size / 512;
+      ctx.fillRect(112 * s, 196 * s, 36 * s, 120 * s);
+      ctx.fillRect(158 * s, 166 * s, 42 * s, 180 * s);
+      ctx.fillRect(210 * s, 236 * s, 92 * s, 40 * s);
+      ctx.fillRect(312 * s, 166 * s, 42 * s, 180 * s);
+      ctx.fillRect(364 * s, 196 * s, 36 * s, 120 * s);
+      return canvas.toDataURL('image/png');
+    }
+
+    function getFullPwaManifestObject(icon192, icon512) {
+      return {
+        id: './index.html',
+        name: 'Gym NFC Management System',
+        short_name: 'Gym NFC',
+        description: 'Lifetime Offline-Capable Gym NFC Attendance & Membership Management System with ESP32 Bluetooth.',
+        start_url: './index.html',
+        scope: './',
+        display: 'standalone',
+        display_override: ['window-controls-overlay', 'standalone', 'minimal-ui'],
+        orientation: 'any',
+        background_color: '#16134A',
+        theme_color: '#16134A',
+        categories: ['fitness', 'business', 'productivity'],
+        icons: [
+          { src: icon192, sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+        ],
+        shortcuts: [
+          {
+            name: 'Add New Member',
+            short_name: 'Add Member',
+            description: 'Register a new gym member with NFC card',
+            url: './index.html#add-member',
+            icons: [{ src: icon192, sizes: '192x192', type: 'image/png' }]
+          },
+          {
+            name: 'View Transactions',
+            short_name: 'Logs',
+            description: 'Check NFC entrance attendance logs',
+            url: './index.html#transactions',
+            icons: [{ src: icon192, sizes: '192x192', type: 'image/png' }]
+          }
+        ]
+      };
+    }
+
+    function getFullServiceWorkerCode() {
+      return `const CACHE_NAME = 'gym-nfc-lifetime-v1';
+const ASSETS_TO_CACHE = [
+  './',
+  './index.html',
+  './manifest.json',
+  'https://cdn.tailwindcss.com',
+  'https://cdn.jsdelivr.net/npm/chart.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css'
+];
+
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE).catch(() => {}))
+  );
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+    ).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+  event.respondWith(
+    caches.match(event.request).then((cachedResponse) => {
+      const fetchPromise = fetch(event.request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const clone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        }
+        return networkResponse;
+      }).catch(() => cachedResponse);
+      return cachedResponse || fetchPromise;
+    })
+  );
+});`;
+    }
+
+    // Download manifest.json & sw.js so user can upload them alongside index.html on GitHub Pages for 100% PWABuilder Score
+    function downloadPwaPackageFiles() {
+      const icon192 = generatePngIconDataUrl(192);
+      const icon512 = generatePngIconDataUrl(512);
+      const manifestJson = JSON.stringify(getFullPwaManifestObject(icon192, icon512), null, 2);
+      const swCode = getFullServiceWorkerCode();
+
+      const triggerFileDownload = (filename, content, mime) => {
+        const blob = new Blob([content], { type: mime });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      };
+
+      triggerFileDownload('manifest.json', manifestJson, 'application/json');
+      setTimeout(() => {
+        triggerFileDownload('sw.js', swCode, 'application/javascript');
+        showToast('Downloaded manifest.json & sw.js! Upload both with index.html to GitHub.', 'success');
+      }, 400);
+    }
+
+    // Setup PWA App Icon, Manifest & Service Worker
+    async function initPwaInstaller() {
+      try {
+        const icon192 = generatePngIconDataUrl(192);
+        const icon512 = generatePngIconDataUrl(512);
+        const iconLink = document.getElementById('pwaIconLink');
+        if (iconLink) iconLink.href = icon192;
+
+        // Check if hosted manifest.json exists; otherwise attach rich dynamic manifest
+        let hasHostedManifest = false;
+        if (window.location.protocol.startsWith('http')) {
+          try {
+            const res = await fetch('./manifest.json', { method: 'HEAD' });
+            hasHostedManifest = res.ok;
+          } catch (e) {}
+        }
+
+        if (!hasHostedManifest) {
+          const manifestObj = getFullPwaManifestObject(icon192, icon512);
+          const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
+          const manifestLink = document.getElementById('pwaManifestLink');
+          if (manifestLink) manifestLink.href = URL.createObjectURL(manifestBlob);
+        }
 
         if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
-          const swCode = `self.addEventListener('fetch', function(e) {});`;
-          const swBlob = new Blob([swCode], { type: 'application/javascript' });
-          navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(() => {});
+          navigator.serviceWorker.register('./sw.js').catch(() => {
+            const swBlob = new Blob([getFullServiceWorkerCode()], { type: 'application/javascript' });
+            navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(() => {});
+          });
         }
       } catch (e) {}
     }
@@ -1313,56 +1450,6 @@ void loop() {
       }
     }
 
-    async function connectBluetoothReader() {
-      const debugEl = document.getElementById('bleRawDebug');
-      if (!('bluetooth' in navigator)) {
-        const msg = 'Web Bluetooth not supported here! Open in Google Chrome on Android/PC.';
-        if (debugEl) debugEl.textContent = msg;
-        showToast(msg, 'error');
-        return;
-      }
-
-      if (isBleConnected && bleDevice && bleDevice.gatt.connected) {
-        bleDevice.gatt.disconnect();
-        updateBluetoothButtonState(false);
-        showToast('Bluetooth disconnected', 'info');
-        return;
-      }
-
-      try {
-        bleDevice = await navigator.bluetooth.requestDevice({
-          filters: [{ namePrefix: 'ESP32' }, { services: [BLE_SERVICE_UUID] }],
-          optionalServices: [BLE_SERVICE_UUID]
-        });
-
-        bleDevice.addEventListener('gattserverdisconnected', () => {
-          updateBluetoothButtonState(false);
-          showToast('ESP32 Bluetooth disconnected', 'warning');
-        });
-
-        const server = await bleDevice.gatt.connect();
-        const service = await server.getPrimaryService(BLE_SERVICE_UUID);
-        bleCharacteristic = await service.getCharacteristic(BLE_CHARACTERISTIC_UUID);
-
-        await bleCharacteristic.startNotifications();
-        bleCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
-          const decoder = new TextDecoder('utf-8');
-          const uidStr = decoder.decode(event.target.value);
-          processBluetoothUid(uidStr);
-        });
-
-        updateBluetoothButtonState(true, bleDevice.name || 'ESP32_NFC_Reader');
-        playBuzzerPattern('success');
-        showAccessLightBanner(true, 'Bluetooth Connected', bleDevice.name || 'ESP32_NFC_Reader', 'Wireless NFC Reader Ready');
-        showToast('Bluetooth connected successfully!', 'success');
-      } catch (err) {
-        updateBluetoothButtonState(false);
-        if (err && err.name !== 'NotFoundError') {
-          showToast(`Bluetooth Error: ${err.message}`, 'error');
-        }
-      }
-    }
-
     function saveOwnerCardUid() {
       const val = document.getElementById('ownerCardUidInput').value.trim().toUpperCase();
       localStorage.setItem('gym_owner_card_uid', val);
@@ -1668,4 +1755,4 @@ void loop() {
     });
   </script>
 </body>
-</html>
+        </html>
