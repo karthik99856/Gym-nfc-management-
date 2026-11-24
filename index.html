@@ -22,6 +22,10 @@
       font-family: 'Plus Jakarta Sans', sans-serif;
       background-color: #F4F6FA;
       color: #1E293B;
+      overscroll-behavior-y: contain;
+    }
+    html {
+      overscroll-behavior-y: contain;
     }
     .sidebar-bg {
       background: linear-gradient(180deg, #16134A 0%, #100D3A 100%);
@@ -317,22 +321,7 @@ void loop() {
         </div>
 
         <div class="flex items-center gap-2.5 sm:gap-4">
-          <button type="button" onclick="requestNotificationPermission(true)" id="headerNotifyBtn" title="Enable Background Tap Notifications" class="flex items-center gap-1.5 px-3 py-2 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-200 transition">
-            <i class="fa-solid fa-bell"></i>
-            <span id="headerNotifyText" class="hidden md:inline">Alerts On</span>
-          </button>
-
-          <button type="button" onclick="openEsp32CodeModal()" class="flex items-center gap-1.5 px-3 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold border border-slate-200 transition">
-            <i class="fa-solid fa-code"></i>
-            <span class="hidden sm:inline">ESP32 Code</span>
-          </button>
-
-          <button type="button" onclick="connectBluetoothReader()" id="headerBleBtn" class="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition">
-            <i class="fa-brands fa-bluetooth-b"></i>
-            <span id="headerBleText">Connect Bluetooth</span>
-          </button>
-
-          <div id="liveTapBadge" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-[11px] font-mono font-bold text-amber-800">
+          <div id="liveTapBadge" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-[11px] font-mono font-bold text-amber-800">
             <i class="fa-solid fa-wifi rotate-90 text-amber-600"></i>
             <span id="liveTapText">Last Tap: None</span>
           </div>
@@ -796,18 +785,18 @@ void loop() {
     let pwaAppIconDataUrl = '';
 
     function updateNotificationButtonState() {
-      const btnText = document.getElementById('headerNotifyText');
-      const btn = document.getElementById('headerNotifyBtn');
       const settingsBtn = document.getElementById('settingsNotifyBtn');
       if (!('Notification' in window)) return;
       if (Notification.permission === 'granted') {
-        if (btnText) btnText.textContent = 'Alerts On';
-        if (btn) btn.className = 'flex items-center gap-1.5 px-3 py-2 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-200 transition';
-        if (settingsBtn) settingsBtn.textContent = 'Alerts Enabled ✓';
+        if (settingsBtn) {
+          settingsBtn.textContent = 'Alerts Enabled ✓';
+          settingsBtn.className = 'px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex-shrink-0';
+        }
       } else {
-        if (btnText) btnText.textContent = 'Enable Alerts';
-        if (btn) btn.className = 'flex items-center gap-1.5 px-3 py-2 rounded-full bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-bold border border-amber-200 transition';
-        if (settingsBtn) settingsBtn.textContent = 'Enable Alerts';
+        if (settingsBtn) {
+          settingsBtn.textContent = 'Enable Alerts';
+          settingsBtn.className = 'px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex-shrink-0';
+        }
       }
     }
 
@@ -844,243 +833,17 @@ void loop() {
         badge: pwaAppIconDataUrl || undefined,
         tag: 'gym-nfc-live-tap-' + Date.now(),
         renotify: true,
-        requireInteraction: false,
-        vibrate: statusType === 'success' ? [200, 100, 200] : [400, 150, 400, 150, 400]
+        requireInteraction: true
       };
       try {
-        if (swRegistrationRef && swRegistrationRef.showNotification) {
-          swRegistrationRef.showNotification(title, options);
-        } else {
-          const notif = new Notification(title, options);
-          notif.onclick = () => { window.focus(); notif.close(); };
-        }
+        const notif = new Notification(title, options);
+        notif.onclick = () => {
+          window.focus();
+          notif.close();
+        };
       } catch (e) {
-        try {
-          const notif = new Notification(title, options);
-          notif.onclick = () => { window.focus(); notif.close(); };
-        } catch (err) {}
-      }
-    }
-
-    function getTodayFormatted() {
-      const d = new Date();
-      return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
-    }
-
-    function getTodayIso() {
-      const d = new Date();
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    }
-
-    function parseFormattedDate(str) {
-      if (!str || typeof str !== 'string') return null;
-      const parts = str.trim().split('-');
-      if (parts.length !== 3) return null;
-      if (parts[0].length === 4) {
-        return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-      }
-      return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
-    }
-
-    function isoToFormatted(isoStr) {
-      if (!isoStr || !isoStr.includes('-')) return isoStr;
-      const [y, m, d] = isoStr.split('-');
-      return `${d}-${m}-${y}`;
-    }
-
-    function getDaysRemaining(endDateStr) {
-      const end = parseFormattedDate(endDateStr);
-      if (!end || isNaN(end.getTime())) return 0;
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      end.setHours(0, 0, 0, 0);
-      return Math.ceil((end - today) / (1000 * 60 * 60 * 24));
-    }
-
-    function computeMemberStatus(member) {
-      if (member.frozen) return 'Frozen';
-      const days = getDaysRemaining(member.endDate);
-      return days >= 0 ? 'Active' : 'Expired';
-    }
-
-    const DEFAULT_MEMBERS = [
-      { id: 1, cardId: 'NFC-1001', name: 'Rahul Kumar', phone: '9876543210', plan: 'Premium', amount: 12000, startDate: '01-11-2026', endDate: '01-11-2027', nfcType: 'Card', status: 'Active', frozen: false },
-      { id: 2, cardId: 'NFC-1002', name: 'Priya Sharma', phone: '9123456789', plan: 'Standard', amount: 6500, startDate: '05-11-2026', endDate: '05-05-2027', nfcType: 'Card', status: 'Active', frozen: false },
-      { id: 3, cardId: 'NFC-1004', name: 'Sneha Reddy', phone: '9001122334', plan: 'Basic', amount: 1500, startDate: '12-10-2026', endDate: '12-11-2026', nfcType: 'Card', status: 'Expired', frozen: false }
-    ];
-
-    const DEFAULT_TRANSACTIONS = [
-      { id: 1, name: 'Rahul Kumar', cardId: 'NFC-1001', endDate: '01-11-2027', action: 'Allowed', time: '08:30 AM', date: getTodayFormatted(), method: 'NFC Card', status: 'Success' }
-    ];
-
-    let state = {
-      members: (() => {
-        try {
-          const saved = localStorage.getItem('gym_nfc_members');
-          return saved !== null ? JSON.parse(saved) : DEFAULT_MEMBERS;
-        } catch (e) { return DEFAULT_MEMBERS; }
-      })(),
-      transactions: (() => {
-        try {
-          const saved = localStorage.getItem('gym_nfc_txns');
-          return saved !== null ? JSON.parse(saved) : DEFAULT_TRANSACTIONS;
-        } catch (e) { return DEFAULT_TRANSACTIONS; }
-      })()
-    };
-
-    function persistData() {
-      try {
-        localStorage.setItem('gym_nfc_members', JSON.stringify(state.members));
-        localStorage.setItem('gym_nfc_txns', JSON.stringify(state.transactions));
-      } catch (e) {}
-    }
-
-    function showToast(message, type = 'info') {
-      const container = document.getElementById('toastContainer');
-      if (!container) return;
-      const colors = {
-        success: 'bg-emerald-600 text-white',
-        error: 'bg-rose-600 text-white',
-        info: 'bg-slate-900 text-white'
-      };
-      const el = document.createElement('div');
-      el.className = `${colors[type] || colors.info} px-4 py-3 rounded-2xl shadow-xl text-xs font-bold flex items-center gap-2.5 transition-all duration-300`;
-      el.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-info'}"></i><span>${message}</span>`;
-      container.appendChild(el);
-      setTimeout(() => {
-        el.style.opacity = '0';
-        setTimeout(() => el.remove(), 300);
-      }, 3200);
-    }
-
-    function speakText(text) {
-      if (!('speechSynthesis' in window)) return;
-      try {
-        window.speechSynthesis.cancel();
-        const utter = new SpeechSynthesisUtterance(text);
-        utter.rate = 1.02;
-        utter.pitch = 1.0;
-        window.speechSynthesis.speak(utter);
-      } catch (e) {}
-    }
-
-    function playBuzzerPattern(type = 'success') {
-      try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (!AudioCtx) return;
-        const ctx = new AudioCtx();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        if (type === 'success') {
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(880, ctx.currentTime);
-          osc.frequency.setValueAtTime(1174, ctx.currentTime + 0.12);
-          gain.gain.setValueAtTime(0.18, ctx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
-          osc.start();
-          osc.stop(ctx.currentTime + 0.36);
-        } else {
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(220, ctx.currentTime);
-          gain.gain.setValueAtTime(0.22, ctx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
-          osc.start();
-          osc.stop(ctx.currentTime + 0.46);
-        }
-      } catch (e) {}
-    }
-
-    function showNfcLightBanner(type, title, line1, line2 = '') {
-      const banner = document.getElementById('nfcLightBanner');
-      const card = document.getElementById('nfcLightCard');
-      const icon = document.getElementById('nfcLightIcon');
-      const nameEl = document.getElementById('nfcLightName');
-      const expEl = document.getElementById('nfcLightExpiry');
-      const subEl = document.getElementById('nfcLightSubtext');
-      if (!banner || !card) return;
-
-      if (nfcLightTimeout) clearTimeout(nfcLightTimeout);
-
-      if (type === 'success') {
-        card.className = 'max-w-md w-full rounded-3xl p-8 text-center text-white shadow-2xl border-4 border-emerald-300 bg-gradient-to-br from-emerald-600 to-teal-700 green-light-active';
-        icon.className = 'fa-solid fa-check';
-      } else {
-        card.className = 'max-w-md w-full rounded-3xl p-8 text-center text-white shadow-2xl border-4 border-rose-300 bg-gradient-to-br from-rose-600 to-red-800 red-light-active';
-        icon.className = 'fa-solid fa-xmark';
-      }
-
-      nameEl.textContent = title;
-      expEl.textContent = line1;
-      subEl.textContent = line2;
-
-      banner.classList.remove('hidden');
-      banner.classList.add('flex');
-
-      nfcLightTimeout = setTimeout(() => {
-        banner.classList.add('hidden');
-        banner.classList.remove('flex');
-      }, 3400);
-    }
-
-    const BLE_SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
-    const BLE_CHARACTERISTIC_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
-    let bleDevice = null;
-    let bleCharacteristic = null;
-    let isBleConnected = false;
-    let nfcLightTimeout = null;
-    let lineChartInstance = null;
-    let barChartInstance = null;
-    let deferredInstallPrompt = null;
-    let lastCardTapTime = 0;
-    let lastCardTapUid = '';
-
-    function updateBleUiStatus(connected, label = '') {
-      isBleConnected = connected;
-      const headerBtn = document.getElementById('headerBleBtn');
-      const headerText = document.getElementById('headerBleText');
-      const debugEl = document.getElementById('bleRawDebug');
-      if (connected) {
-        if (headerBtn) headerBtn.className = 'flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition';
-        if (headerText) headerText.textContent = label || 'Bluetooth Connected';
-        if (debugEl) debugEl.textContent = 'Bluetooth Status: Connected (Tap NFC Card Now)';
-      } else {
-        if (headerBtn) headerBtn.className = 'flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition';
-        if (headerText) headerText.textContent = 'Connect Bluetooth';
-        if (debugEl) debugEl.textContent = 'Bluetooth Status: Disconnected';
-      }
-    }
-
-    async function connectBluetoothReader() {
-      if (!navigator.bluetooth) {
-        showToast('Web Bluetooth is not supported in this browser. Use Chrome on Android/Desktop.', 'error');
-        return;
-      }
-      try {
-        requestNotificationPermission(false);
-        bleDevice = await navigator.bluetooth.requestDevice({
-          filters: [{ services: [BLE_SERVICE_UUID] }],
-          optionalServices: [BLE_SERVICE_UUID]
-        });
-        bleDevice.addEventListener('gattserverdisconnected', () => {
-          updateBleUiStatus(false);
-          showToast('ESP32 Bluetooth disconnected', 'error');
-        });
-        const server = await bleDevice.gatt.connect();
-        const service = await server.getPrimaryService(BLE_SERVICE_UUID);
-        bleCharacteristic = await service.getCharacteristic(BLE_CHARACTERISTIC_UUID);
-        await bleCharacteristic.startNotifications();
-        bleCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
-          const decoder = new TextDecoder('utf-8');
-          const rawVal = decoder.decode(event.target.value);
-          processBluetoothUid(rawVal);
-        });
-        updateBleUiStatus(true, bleDevice.name || 'ESP32 Connected');
-        showToast('ESP32 NFC Reader Connected!', 'success');
-      } catch (err) {
-        if (err && err.name !== 'NotFoundError') {
-          showToast('Bluetooth connection failed: ' + err.message, 'error');
+        if (swRegistrationRef && swRegistrationRef.showNotification) {
+          swRegistrationRef.showNotification(title, options).catch(() => {});
         }
       }
     }
@@ -1098,10 +861,151 @@ void loop() {
       const liveTapText = document.getElementById('liveTapText');
       if (liveTapText) liveTapText.textContent = `Last Tap: ${cleaned}`;
 
-      const debugEl = document.getElementById('bleRawDebug');
-      if (debugEl) debugEl.textContent = `Last Scanned UID: ${cleaned}`;
-
       handleIncomingNfcUid(cleaned);
+    }
+
+    // Core Application State & Helper Functions
+    const state = {
+      members: JSON.parse(localStorage.getItem('gym_nfc_members') || '[]'),
+      transactions: JSON.parse(localStorage.getItem('gym_nfc_transactions') || '[]')
+    };
+
+    let lastCardTapUid = '';
+    let lastCardTapTime = 0;
+    let isBleConnected = false;
+    let bleDevice = null;
+    let bleCharacteristic = null;
+    let lineChartInstance = null;
+    let barChartInstance = null;
+    let deferredInstallPrompt = null;
+    let lightBannerTimer = null;
+
+    function persistData() {
+      localStorage.setItem('gym_nfc_members', JSON.stringify(state.members));
+      localStorage.setItem('gym_nfc_transactions', JSON.stringify(state.transactions));
+    }
+
+    function getTodayIso() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function getTodayFormatted() {
+      const d = new Date();
+      return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+    }
+
+    function isoToFormatted(isoStr) {
+      if (!isoStr || !isoStr.includes('-')) return isoStr || '';
+      const [y, m, d] = isoStr.split('-');
+      return `${d}-${m}-${y}`;
+    }
+
+    function parseFormattedDate(ddmmyyyy) {
+      if (!ddmmyyyy || !ddmmyyyy.includes('-')) return null;
+      const [d, m, y] = ddmmyyyy.split('-').map(Number);
+      if (!d || !m || !y) return null;
+      return new Date(y, m - 1, d, 23, 59, 59);
+    }
+
+    function getDaysRemaining(endDateStr) {
+      const endObj = parseFormattedDate(endDateStr);
+      if (!endObj) return 0;
+      const now = new Date();
+      const diffMs = endObj.getTime() - now.getTime();
+      return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    }
+
+    function computeMemberStatus(member) {
+      if (member.frozen) return 'Frozen';
+      const days = getDaysRemaining(member.endDate);
+      return days < 0 ? 'Expired' : 'Active';
+    }
+
+    function showToast(msg, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      if (!container) return;
+      const colors = {
+        success: 'bg-emerald-600 text-white',
+        error: 'bg-rose-600 text-white',
+        info: 'bg-slate-900 text-white'
+      };
+      const el = document.createElement('div');
+      el.className = `${colors[type] || colors.info} px-4 py-3 rounded-2xl shadow-xl text-xs font-bold flex items-center gap-2.5 transition-all duration-300`;
+      el.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-info'}"></i><span>${msg}</span>`;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        setTimeout(() => el.remove(), 300);
+      }, 3200);
+    }
+
+    function playBuzzerPattern(type = 'success') {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        if (type === 'success') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(880, ctx.currentTime);
+          osc.frequency.setValueAtTime(1174, ctx.currentTime + 0.12);
+          gain.gain.setValueAtTime(0.18, ctx.currentTime);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.28);
+        } else {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(240, ctx.currentTime);
+          gain.gain.setValueAtTime(0.22, ctx.currentTime);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.45);
+        }
+      } catch (e) {}
+    }
+
+    function speakText(text) {
+      try {
+        if (!('speechSynthesis' in window)) return;
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.rate = 1.0;
+        utter.pitch = 1.0;
+        window.speechSynthesis.speak(utter);
+      } catch (e) {}
+    }
+
+    function showNfcLightBanner(type, title, subtitle, subtext) {
+      const banner = document.getElementById('nfcLightBanner');
+      const card = document.getElementById('nfcLightCard');
+      const icon = document.getElementById('nfcLightIcon');
+      const nameEl = document.getElementById('nfcLightName');
+      const expiryEl = document.getElementById('nfcLightExpiry');
+      const subEl = document.getElementById('nfcLightSubtext');
+      if (!banner || !card) return;
+
+      nameEl.textContent = title;
+      expiryEl.textContent = subtitle;
+      subEl.textContent = subtext;
+
+      if (type === 'success') {
+        card.className = 'max-w-md w-full rounded-3xl p-8 text-center text-white shadow-2xl border-4 border-emerald-300 bg-gradient-to-br from-emerald-500 to-emerald-700 green-light-active';
+        icon.className = 'fa-solid fa-check';
+      } else {
+        card.className = 'max-w-md w-full rounded-3xl p-8 text-center text-white shadow-2xl border-4 border-rose-300 bg-gradient-to-br from-rose-500 to-rose-700 red-light-active';
+        icon.className = 'fa-solid fa-xmark';
+      }
+
+      banner.classList.remove('hidden');
+      banner.classList.add('flex');
+
+      if (lightBannerTimer) clearTimeout(lightBannerTimer);
+      lightBannerTimer = setTimeout(() => {
+        banner.classList.add('hidden');
+        banner.classList.remove('flex');
+      }, 3200);
     }
 
     function openEsp32CodeModal() {
@@ -1109,6 +1013,58 @@ void loop() {
       if (modal) {
         modal.classList.remove('hidden');
         modal.classList.add('flex');
+      }
+    }
+
+    async function connectBluetoothReader() {
+      if (!navigator.bluetooth) {
+        showToast('Web Bluetooth not supported on this browser. Use Chrome!', 'error');
+        return;
+      }
+      try {
+        const SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
+        const CHARACTERISTIC_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
+        bleDevice = await navigator.bluetooth.requestDevice({
+          filters: [{ namePrefix: 'ESP32' }],
+          optionalServices: [SERVICE_UUID]
+        });
+        bleDevice.addEventListener('gattserverdisconnected', () => {
+          updateBleUiStatus(false);
+          showToast('ESP32 Bluetooth disconnected', 'error');
+        });
+        const server = await bleDevice.gatt.connect();
+        const service = await server.getPrimaryService(SERVICE_UUID);
+        bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+        await bleCharacteristic.startNotifications();
+        bleCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
+          const val = new TextDecoder().decode(event.target.value);
+          processBluetoothUid(val);
+        });
+        updateBleUiStatus(true, bleDevice.name || 'ESP32 Connected');
+        showToast('ESP32 NFC Reader Connected!', 'success');
+      } catch (err) {
+        if (err && err.name !== 'NotFoundError') {
+          showToast('Bluetooth connection failed: ' + err.message, 'error');
+        }
+      }
+    }
+
+    function updateBleUiStatus(connected, label = '') {
+      isBleConnected = connected;
+      const bleBtn = document.getElementById('bleConnectBtn');
+      const debugEl = document.getElementById('bleRawDebug');
+      if (connected) {
+        if (bleBtn) {
+          bleBtn.className = 'flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold shadow-sm transition';
+          bleBtn.innerHTML = `<i class="fa-brands fa-bluetooth-b"></i><span>${label || 'Bluetooth Connected'}</span>`;
+        }
+        if (debugEl) debugEl.textContent = 'Bluetooth Status: Connected (Tap NFC Card Now)';
+      } else {
+        if (bleBtn) {
+          bleBtn.className = 'flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold shadow-sm transition';
+          bleBtn.innerHTML = `<i class="fa-brands fa-bluetooth-b"></i><span>Connect Bluetooth</span>`;
+        }
+        if (debugEl) debugEl.textContent = 'Bluetooth Status: Disconnected (Connect in Settings)';
       }
     }
 
@@ -1726,12 +1682,22 @@ void loop() {
     async function triggerInstallApp() {
       if (deferredInstallPrompt) {
         deferredInstallPrompt.prompt();
-        await deferredInstallPrompt.userChoice;
-        deferredInstallPrompt = null;
+        const { outcome } = await deferredInstallPrompt.userChoice;
+        if (outcome === 'accepted') {
+          deferredInstallPrompt = null;
+          showToast('App installed on home screen!', 'success');
+        }
       } else {
         showToast('Open browser menu (⋮) and tap "Install App / Add to Home Screen"', 'info');
       }
     }
+
+    window.addEventListener('beforeunload', (e) => {
+      if (localStorage.getItem('gym_admin_logged_in') === 'true') {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
 
     window.addEventListener('DOMContentLoaded', () => {
       initPwaInstaller();
