@@ -1047,12 +1047,36 @@ void loop() {
       return canvas.toDataURL('image/png');
     }
 
-    function getFullPwaManifestObject(icon192, icon512) {
+    function generateScreenshotDataUrl(width, height) {
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#F4F6FA';
+      ctx.fillRect(0, 0, width, height);
+      ctx.fillStyle = '#16134A';
+      ctx.fillRect(0, 0, width, Math.round(height * 0.14));
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = `bold ${Math.round(height * 0.045)}px sans-serif`;
+      ctx.fillText('Gym NFC Management System', Math.round(width * 0.05), Math.round(height * 0.085));
+      ctx.fillStyle = '#5B46E8';
+      ctx.beginPath();
+      ctx.roundRect(Math.round(width * 0.05), Math.round(height * 0.2), Math.round(width * 0.9), Math.round(height * 0.25), 24);
+      ctx.fill();
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = `bold ${Math.round(height * 0.04)}px sans-serif`;
+      ctx.fillText('Instant ESP32 Bluetooth NFC Reader', Math.round(width * 0.09), Math.round(height * 0.34));
+      return canvas.toDataURL('image/png');
+    }
+
+    function getFullPwaManifestObject(icon192Url, icon512Url, wideShotUrl, narrowShotUrl) {
       return {
         id: './index.html',
         name: 'Gym NFC Management System',
         short_name: 'Gym NFC',
         description: 'Lifetime Offline-Capable Gym NFC Attendance & Membership Management System with ESP32 Bluetooth.',
+        lang: 'en',
+        dir: 'ltr',
         start_url: './index.html',
         scope: './',
         display: 'standalone',
@@ -1060,11 +1084,28 @@ void loop() {
         orientation: 'any',
         background_color: '#16134A',
         theme_color: '#16134A',
+        prefer_related_applications: false,
         categories: ['fitness', 'business', 'productivity'],
         icons: [
-          { src: icon192, sizes: '192x192', type: 'image/png', purpose: 'any' },
-          { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'any' },
-          { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+          { src: icon192Url, sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: icon512Url, sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: icon512Url, sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+        ],
+        screenshots: [
+          {
+            src: wideShotUrl,
+            sizes: '1280x720',
+            type: 'image/png',
+            form_factor: 'wide',
+            label: 'Gym NFC Desktop Dashboard'
+          },
+          {
+            src: narrowShotUrl,
+            sizes: '720x1280',
+            type: 'image/png',
+            form_factor: 'narrow',
+            label: 'Gym NFC Mobile View'
+          }
         ],
         shortcuts: [
           {
@@ -1072,25 +1113,27 @@ void loop() {
             short_name: 'Add Member',
             description: 'Register a new gym member with NFC card',
             url: './index.html#add-member',
-            icons: [{ src: icon192, sizes: '192x192', type: 'image/png' }]
+            icons: [{ src: icon192Url, sizes: '192x192', type: 'image/png' }]
           },
           {
             name: 'View Transactions',
             short_name: 'Logs',
             description: 'Check NFC entrance attendance logs',
             url: './index.html#transactions',
-            icons: [{ src: icon192, sizes: '192x192', type: 'image/png' }]
+            icons: [{ src: icon192Url, sizes: '192x192', type: 'image/png' }]
           }
         ]
       };
     }
 
     function getFullServiceWorkerCode() {
-      return `const CACHE_NAME = 'gym-nfc-lifetime-v1';
+      return `const CACHE_NAME = 'gym-nfc-lifetime-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json',
+  './icon-192.png',
+  './icon-512.png',
   'https://cdn.tailwindcss.com',
   'https://cdn.jsdelivr.net/npm/chart.js',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
@@ -1130,14 +1173,30 @@ self.addEventListener('fetch', (event) => {
 });`;
     }
 
-    // Download manifest.json & sw.js so user can upload them alongside index.html on GitHub Pages for 100% PWABuilder Score
+    // Download real PNGs + manifest.json + sw.js for 100% PWABuilder Score (48/48 Manifest & Service Worker)
     function downloadPwaPackageFiles() {
-      const icon192 = generatePngIconDataUrl(192);
-      const icon512 = generatePngIconDataUrl(512);
-      const manifestJson = JSON.stringify(getFullPwaManifestObject(icon192, icon512), null, 2);
+      const icon192Data = generatePngIconDataUrl(192);
+      const icon512Data = generatePngIconDataUrl(512);
+      const wideShotData = generateScreenshotDataUrl(1280, 720);
+      const narrowShotData = generateScreenshotDataUrl(720, 1280);
+
+      const manifestJson = JSON.stringify(
+        getFullPwaManifestObject('./icon-192.png', './icon-512.png', './screenshot-wide.png', './screenshot-mobile.png'),
+        null,
+        2
+      );
       const swCode = getFullServiceWorkerCode();
 
-      const triggerFileDownload = (filename, content, mime) => {
+      const downloadDataUrl = (filename, dataUrl) => {
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      };
+
+      const downloadTextFile = (filename, content, mime) => {
         const blob = new Blob([content], { type: mime });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
@@ -1147,11 +1206,15 @@ self.addEventListener('fetch', (event) => {
         document.body.removeChild(a);
       };
 
-      triggerFileDownload('manifest.json', manifestJson, 'application/json');
+      downloadTextFile('manifest.json', manifestJson, 'application/json');
+      setTimeout(() => downloadTextFile('sw.js', swCode, 'application/javascript'), 250);
+      setTimeout(() => downloadDataUrl('icon-192.png', icon192Data), 500);
+      setTimeout(() => downloadDataUrl('icon-512.png', icon512Data), 750);
+      setTimeout(() => downloadDataUrl('screenshot-wide.png', wideShotData), 1000);
       setTimeout(() => {
-        triggerFileDownload('sw.js', swCode, 'application/javascript');
-        showToast('Downloaded manifest.json & sw.js! Upload both with index.html to GitHub.', 'success');
-      }, 400);
+        downloadDataUrl('screenshot-mobile.png', narrowShotData);
+        showToast('Downloaded all 6 PWABuilder files! Upload all of them with index.html to GitHub.', 'success');
+      }, 1250);
     }
 
     // Setup PWA App Icon, Manifest & Service Worker
@@ -1159,6 +1222,8 @@ self.addEventListener('fetch', (event) => {
       try {
         const icon192 = generatePngIconDataUrl(192);
         const icon512 = generatePngIconDataUrl(512);
+        const wideShot = generateScreenshotDataUrl(1280, 720);
+        const narrowShot = generateScreenshotDataUrl(720, 1280);
         const iconLink = document.getElementById('pwaIconLink');
         if (iconLink) iconLink.href = icon192;
 
@@ -1172,17 +1237,14 @@ self.addEventListener('fetch', (event) => {
         }
 
         if (!hasHostedManifest) {
-          const manifestObj = getFullPwaManifestObject(icon192, icon512);
+          const manifestObj = getFullPwaManifestObject(icon192, icon512, wideShot, narrowShot);
           const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
           const manifestLink = document.getElementById('pwaManifestLink');
           if (manifestLink) manifestLink.href = URL.createObjectURL(manifestBlob);
         }
 
         if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
-          navigator.serviceWorker.register('./sw.js').catch(() => {
-            const swBlob = new Blob([getFullServiceWorkerCode()], { type: 'application/javascript' });
-            navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(() => {});
-          });
+          navigator.serviceWorker.register('./sw.js').catch(() => {});
         }
       } catch (e) {}
     }
