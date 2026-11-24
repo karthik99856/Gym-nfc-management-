@@ -695,7 +695,7 @@ void loop() {
               <p class="text-sm font-bold text-slate-900">Owner NFC Card UID (Unlimited Access)</p>
               <div class="flex gap-2">
                 <input id="ownerCardUidInput" type="text" placeholder="Tap owner card or type UID" class="flex-1 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-mono font-bold uppercase" />
-                <button type="button" onclick="saveOwnerCardUid()" class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold">Save</button>
+                <button type="button" onclick="saveOwnerCardUid()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold">Save</button>
               </div>
             </div>
 
@@ -712,58 +712,45 @@ void loop() {
             </div>
 
             <form onsubmit="saveSecurityCredentials(event)" class="space-y-3 pt-2 border-t border-slate-100">
-    // Process incoming Bluetooth UID or Battery data from ESP32 BLE
-    function processBluetoothUid(rawLine) {
-      if (!rawLine) return;
-      const trimmed = rawLine.trim().toUpperCase();
+              <p class="text-sm font-bold text-slate-900">Admin Login Credentials</p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input id="securityNewUsername" type="tel" required placeholder="Admin Mobile Number" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
+                <input id="securityNewPassword" type="password" required placeholder="New Password" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <button type="submit" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold">Save Login Settings</button>
+            </form>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
 
-      // Handle live battery percentage updates (e.g., "BAT:85")
-      if (trimmed.startsWith('BAT:')) {
-        const pct = parseInt(trimmed.replace('BAT:', ''), 10);
-        if (!isNaN(pct)) updateBatteryBadge(pct);
-        return;
-      }
+  <!-- Live NFC Access Light Banner -->
+  <div id="nfcLightBanner" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 pointer-events-none">
+    <div id="nfcLightCard" class="rounded-3xl p-8 max-w-sm w-full text-center text-white shadow-2xl border-4 transition-all">
+      <div class="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center text-4xl mx-auto mb-4">
+        <i id="nfcLightIcon" class="fa-solid fa-check"></i>
+      </div>
+      <h3 id="nfcLightName" class="text-2xl font-extrabold tracking-tight">Member Name</h3>
+      <p id="nfcLightExpiry" class="text-lg font-bold mt-1 text-white/95">30 Days Left</p>
+      <p id="nfcLightSubtext" class="text-xs font-medium mt-2 text-white/80">Expiry: 31-12-2026</p>
+    </div>
+  </div>
 
-      const cleaned = trimmed.replace(/[^A-Za-z0-9]/g, '');
-      if (!cleaned || cleaned.length < 4) return;
-
-      const uid = cleaned;
-
-      // Prevent duplicate reads within 1.5 seconds
-      const now = Date.now();
-      if (uid === lastCardTapUid && (now - lastCardTapTime) < 1500) return;
-      lastCardTapUid = uid;
-      lastCardTapTime = now;
-
-      const liveTapText = document.getElementById('liveTapText');
-      if (liveTapText) liveTapText.textContent = `Last Tap: ${uid}`;
-
-      const debugEl = document.getElementById('bleRawDebug');
-      if (debugEl) debugEl.textContent = `Last Scanned UID: ${uid}`;
-
-      handleIncomingNfcUid(uid);
-    }
-
-    function updateBatteryBadge(pct) {
-      const badge = document.getElementById('batteryStatusBadge');
-      const icon = document.getElementById('batteryStatusIcon');
-      const text = document.getElementById('batteryStatusText');
-      if (!badge || !icon || !text) return;
-
-      const safePct = Math.max(0, Math.min(100, pct));
-      badge.classList.remove('hidden', 'bg-emerald-50', 'border-emerald-200', 'text-emerald-700', 'bg-amber-50', 'border-amber-200', 'text-amber-700', 'bg-rose-50', 'border-rose-200', 'text-rose-700');
-      badge.classList.add('flex');
-      text.textContent = `${safePct}%`;
-
-      if (safePct <= 20) {
-        badge.classList.add('bg-rose-50', 'border-rose-200', 'text-rose-700');
-        icon.className = 'fa-solid fa-battery-quarter';
-      } else if (safePct <= 50) {
-        badge.classList.add('bg-amber-50', 'border-amber-200', 'text-amber-700');
-        icon.className = 'fa-solid fa-battery-half';
+  <script>
+    function handleAdminLogin(e) {
+      e.preventDefault();
+      const user = document.getElementById('loginUsernameInput').value.trim();
+      const pass = document.getElementById('loginPasswordInput').value.trim();
+      const savedUser = localStorage.getItem('gym_admin_mobile') || '1234567890';
+      const savedPass = localStorage.getItem('gym_admin_password') || '1234';
+      if (user === savedUser && pass === savedPass) {
+        localStorage.setItem('gym_admin_logged_in', 'true');
+        document.getElementById('loginOverlay').classList.add('hidden');
+        document.getElementById('loginErrorMsg').classList.add('hidden');
+        showToast('Welcome back!', 'success');
       } else {
-        badge.classList.add('bg-emerald-50', 'border-emerald-200', 'text-emerald-700');
-        icon.className = safePct >= 90 ? 'fa-solid fa-battery-full' : 'fa-solid fa-battery-three-quarters';
+        document.getElementById('loginErrorMsg').classList.remove('hidden');
       }
     }
 
@@ -780,7 +767,7 @@ void loop() {
       if (!newUser || !newPass) return;
       localStorage.setItem('gym_admin_mobile', newUser);
       localStorage.setItem('gym_admin_password', newPass);
-      showToast('Credentials updated!', 'success');
+      showToast('Login credentials saved!', 'success');
     }
 
     function getTodayFormatted() {
@@ -831,6 +818,60 @@ void loop() {
     let lastCardTapTime = 0;
     let lastCardTapUid = '';
 
+    async function connectBluetoothReader() {
+      if (!navigator.bluetooth) {
+        showToast('Web Bluetooth is not supported in this browser. Use Chrome!', 'error');
+        return;
+      }
+      try {
+        showToast('Scanning for ESP32_NFC_Reader...', 'info');
+        bleDevice = await navigator.bluetooth.requestDevice({
+          filters: [{ namePrefix: 'ESP32' }],
+          optionalServices: [BLE_SERVICE_UUID]
+        });
+
+        bleDevice.addEventListener('gattserverdisconnected', () => {
+          updateBluetoothButtonState(false);
+          showToast('ESP32 Bluetooth disconnected', 'warning');
+        });
+
+        const server = await bleDevice.gatt.connect();
+        const service = await server.getPrimaryService(BLE_SERVICE_UUID);
+        bleCharacteristic = await service.getCharacteristic(BLE_CHARACTERISTIC_UUID);
+
+        await bleCharacteristic.startNotifications();
+        bleCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
+          const decoder = new TextDecoder('utf-8');
+          const rawValue = decoder.decode(event.target.value);
+          processBluetoothUid(rawValue);
+        });
+
+        updateBluetoothButtonState(true, bleDevice.name || 'ESP32_NFC_Reader');
+        showToast(`Connected to ${bleDevice.name || 'ESP32'}!`, 'success');
+      } catch (err) {
+        updateBluetoothButtonState(false);
+        if (err && err.name !== 'NotFoundError') {
+          showToast('Bluetooth connection failed: ' + err.message, 'error');
+        }
+      }
+    }
+
+    function handleAddMember(e) {
+      e.preventDefault();
+      const name = document.getElementById('newMemberName').value.trim();
+      const phone = document.getElementById('newMemberPhone').value.trim();
+      const plan = document.getElementById('newMemberPlan').value;
+      const amount = document.getElementById('newMemberAmount').value;
+      const startIso = document.getElementById('newMemberStart').value;
+      const endIso = document.getElementById('newMemberEnd').value;
+      const cardId = document.getElementById('newMemberCardId').value.trim();
+
+      const saved = saveMemberRecord(name, phone, plan, amount, startIso, endIso, cardId, 'Card');
+      if (saved) {
+        setTimeout(() => switchSection('dashboard'), 600);
+      }
+    }
+
     // Process incoming Bluetooth UID data from ESP32 BLE
     function processBluetoothUid(rawLine) {
       if (!rawLine) return;
@@ -854,7 +895,7 @@ void loop() {
       handleIncomingNfcUid(uid);
     }
 
-    function handleAdminLogout() {
+    function openEsp32CodeModal() {
       const modal = document.getElementById('esp32CodeModal');
       if (modal) {
         modal.classList.remove('hidden');
@@ -1755,4 +1796,4 @@ self.addEventListener('fetch', (event) => {
     });
   </script>
 </body>
-        </html>
+</html>
