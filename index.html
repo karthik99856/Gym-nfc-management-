@@ -317,6 +317,11 @@ void loop() {
         </div>
 
         <div class="flex items-center gap-2.5 sm:gap-4">
+          <button type="button" onclick="requestNotificationPermission(true)" id="headerNotifyBtn" title="Enable Background Tap Notifications" class="flex items-center gap-1.5 px-3 py-2 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-200 transition">
+            <i class="fa-solid fa-bell"></i>
+            <span id="headerNotifyText" class="hidden md:inline">Alerts On</span>
+          </button>
+
           <button type="button" onclick="openEsp32CodeModal()" class="flex items-center gap-1.5 px-3 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold border border-slate-200 transition">
             <i class="fa-solid fa-code"></i>
             <span class="hidden sm:inline">ESP32 Code</span>
@@ -330,11 +335,6 @@ void loop() {
           <div id="liveTapBadge" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-[11px] font-mono font-bold text-amber-800">
             <i class="fa-solid fa-wifi rotate-90 text-amber-600"></i>
             <span id="liveTapText">Last Tap: None</span>
-          </div>
-
-          <div class="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-[11px] font-bold text-slate-600">
-            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-            <span>LocalStorage</span>
           </div>
         </div>
       </header>
@@ -564,7 +564,6 @@ void loop() {
             </button>
           </div>
 
-          <!-- Today's Detailed Scan Breakdown Cards -->
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
               <div class="flex items-center justify-between mb-2">
@@ -634,7 +633,6 @@ void loop() {
             </div>
           </div>
 
-          <!-- Today's Scan Activity Table -->
           <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-100 space-y-4">
             <div class="flex items-center justify-between">
               <h3 class="text-base font-bold text-slate-900">Today's Entrance Log Breakdown</h3>
@@ -675,6 +673,16 @@ void loop() {
           </div>
 
           <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-5 max-w-xl">
+            <div class="flex items-center justify-between p-4 rounded-xl border border-indigo-200 bg-indigo-50/50">
+              <div>
+                <p class="text-sm font-bold text-slate-900">Background Pop-Up Notifications</p>
+                <p class="text-xs text-slate-500">Show large Accept / Decline / Expired banners on screen even when using other apps.</p>
+              </div>
+              <button type="button" onclick="requestNotificationPermission(true)" id="settingsNotifyBtn" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex-shrink-0">
+                Enable Alerts
+              </button>
+            </div>
+
             <div class="flex items-center justify-between p-4 rounded-xl border border-slate-200">
               <div>
                 <p class="text-sm font-bold text-slate-800">Daily Check-In Limit</p>
@@ -757,6 +765,7 @@ void loop() {
         localStorage.setItem('gym_admin_logged_in', 'true');
         document.getElementById('loginOverlay').classList.add('hidden');
         errorEl.classList.add('hidden');
+        requestNotificationPermission(false);
         showToast(`Welcome, ${creds.username}!`, 'success');
       } else {
         errorEl.classList.remove('hidden');
@@ -782,6 +791,77 @@ void loop() {
       showToast('Passcode name & password updated!', 'success');
     }
 
+    // System Push Notification Support (works in background / other apps)
+    let swRegistrationRef = null;
+    let pwaAppIconDataUrl = '';
+
+    function updateNotificationButtonState() {
+      const btnText = document.getElementById('headerNotifyText');
+      const btn = document.getElementById('headerNotifyBtn');
+      const settingsBtn = document.getElementById('settingsNotifyBtn');
+      if (!('Notification' in window)) return;
+      if (Notification.permission === 'granted') {
+        if (btnText) btnText.textContent = 'Alerts On';
+        if (btn) btn.className = 'flex items-center gap-1.5 px-3 py-2 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-200 transition';
+        if (settingsBtn) settingsBtn.textContent = 'Alerts Enabled ✓';
+      } else {
+        if (btnText) btnText.textContent = 'Enable Alerts';
+        if (btn) btn.className = 'flex items-center gap-1.5 px-3 py-2 rounded-full bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-bold border border-amber-200 transition';
+        if (settingsBtn) settingsBtn.textContent = 'Enable Alerts';
+      }
+    }
+
+    async function requestNotificationPermission(showFeedback = false) {
+      if (!('Notification' in window)) {
+        if (showFeedback) showToast('System notifications not supported in this browser.', 'error');
+        return;
+      }
+      if (Notification.permission === 'granted') {
+        updateNotificationButtonState();
+        if (showFeedback) {
+          sendSystemTapNotification('✅ GYM NFC ALERTS ACTIVE', 'Background tap notifications are ready!', 'success');
+          showToast('Background pop-up alerts are active!', 'success');
+        }
+        return;
+      }
+      if (Notification.permission !== 'denied') {
+        const perm = await Notification.requestPermission();
+        updateNotificationButtonState();
+        if (perm === 'granted' && showFeedback) {
+          sendSystemTapNotification('✅ GYM NFC ALERTS ACTIVE', 'You will now receive tap notifications even when using other apps!', 'success');
+          showToast('Background pop-up alerts enabled!', 'success');
+        }
+      } else if (showFeedback) {
+        showToast('Notifications blocked in browser settings. Please allow notifications for this site.', 'error');
+      }
+    }
+
+    function sendSystemTapNotification(title, bodyText, statusType = 'success') {
+      if (!('Notification' in window) || Notification.permission !== 'granted') return;
+      const options = {
+        body: bodyText,
+        icon: pwaAppIconDataUrl || undefined,
+        badge: pwaAppIconDataUrl || undefined,
+        tag: 'gym-nfc-live-tap-' + Date.now(),
+        renotify: true,
+        requireInteraction: false,
+        vibrate: statusType === 'success' ? [200, 100, 200] : [400, 150, 400, 150, 400]
+      };
+      try {
+        if (swRegistrationRef && swRegistrationRef.showNotification) {
+          swRegistrationRef.showNotification(title, options);
+        } else {
+          const notif = new Notification(title, options);
+          notif.onclick = () => { window.focus(); notif.close(); };
+        }
+      } catch (e) {
+        try {
+          const notif = new Notification(title, options);
+          notif.onclick = () => { window.focus(); notif.close(); };
+        } catch (err) {}
+      }
+    }
+
     function getTodayFormatted() {
       const d = new Date();
       return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
@@ -790,6 +870,37 @@ void loop() {
     function getTodayIso() {
       const d = new Date();
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function parseFormattedDate(str) {
+      if (!str || typeof str !== 'string') return null;
+      const parts = str.trim().split('-');
+      if (parts.length !== 3) return null;
+      if (parts[0].length === 4) {
+        return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+      }
+      return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+    }
+
+    function isoToFormatted(isoStr) {
+      if (!isoStr || !isoStr.includes('-')) return isoStr;
+      const [y, m, d] = isoStr.split('-');
+      return `${d}-${m}-${y}`;
+    }
+
+    function getDaysRemaining(endDateStr) {
+      const end = parseFormattedDate(endDateStr);
+      if (!end || isNaN(end.getTime())) return 0;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      end.setHours(0, 0, 0, 0);
+      return Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+    }
+
+    function computeMemberStatus(member) {
+      if (member.frozen) return 'Frozen';
+      const days = getDaysRemaining(member.endDate);
+      return days >= 0 ? 'Active' : 'Expired';
     }
 
     const DEFAULT_MEMBERS = [
@@ -817,6 +928,102 @@ void loop() {
       })()
     };
 
+    function persistData() {
+      try {
+        localStorage.setItem('gym_nfc_members', JSON.stringify(state.members));
+        localStorage.setItem('gym_nfc_txns', JSON.stringify(state.transactions));
+      } catch (e) {}
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      if (!container) return;
+      const colors = {
+        success: 'bg-emerald-600 text-white',
+        error: 'bg-rose-600 text-white',
+        info: 'bg-slate-900 text-white'
+      };
+      const el = document.createElement('div');
+      el.className = `${colors[type] || colors.info} px-4 py-3 rounded-2xl shadow-xl text-xs font-bold flex items-center gap-2.5 transition-all duration-300`;
+      el.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-info'}"></i><span>${message}</span>`;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        setTimeout(() => el.remove(), 300);
+      }, 3200);
+    }
+
+    function speakText(text) {
+      if (!('speechSynthesis' in window)) return;
+      try {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.rate = 1.02;
+        utter.pitch = 1.0;
+        window.speechSynthesis.speak(utter);
+      } catch (e) {}
+    }
+
+    function playBuzzerPattern(type = 'success') {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        if (type === 'success') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(880, ctx.currentTime);
+          osc.frequency.setValueAtTime(1174, ctx.currentTime + 0.12);
+          gain.gain.setValueAtTime(0.18, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.36);
+        } else {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(220, ctx.currentTime);
+          gain.gain.setValueAtTime(0.22, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.46);
+        }
+      } catch (e) {}
+    }
+
+    function showNfcLightBanner(type, title, line1, line2 = '') {
+      const banner = document.getElementById('nfcLightBanner');
+      const card = document.getElementById('nfcLightCard');
+      const icon = document.getElementById('nfcLightIcon');
+      const nameEl = document.getElementById('nfcLightName');
+      const expEl = document.getElementById('nfcLightExpiry');
+      const subEl = document.getElementById('nfcLightSubtext');
+      if (!banner || !card) return;
+
+      if (nfcLightTimeout) clearTimeout(nfcLightTimeout);
+
+      if (type === 'success') {
+        card.className = 'max-w-md w-full rounded-3xl p-8 text-center text-white shadow-2xl border-4 border-emerald-300 bg-gradient-to-br from-emerald-600 to-teal-700 green-light-active';
+        icon.className = 'fa-solid fa-check';
+      } else {
+        card.className = 'max-w-md w-full rounded-3xl p-8 text-center text-white shadow-2xl border-4 border-rose-300 bg-gradient-to-br from-rose-600 to-red-800 red-light-active';
+        icon.className = 'fa-solid fa-xmark';
+      }
+
+      nameEl.textContent = title;
+      expEl.textContent = line1;
+      subEl.textContent = line2;
+
+      banner.classList.remove('hidden');
+      banner.classList.add('flex');
+
+      nfcLightTimeout = setTimeout(() => {
+        banner.classList.add('hidden');
+        banner.classList.remove('flex');
+      }, 3400);
+    }
+
     const BLE_SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
     const BLE_CHARACTERISTIC_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
     let bleDevice = null;
@@ -825,18 +1032,64 @@ void loop() {
     let nfcLightTimeout = null;
     let lineChartInstance = null;
     let barChartInstance = null;
-    let appReadyTimestamp = Date.now();
     let deferredInstallPrompt = null;
     let lastCardTapTime = 0;
     let lastCardTapUid = '';
 
-    // Process incoming Bluetooth UID data from ESP32 BLE
+    function updateBleUiStatus(connected, label = '') {
+      isBleConnected = connected;
+      const headerBtn = document.getElementById('headerBleBtn');
+      const headerText = document.getElementById('headerBleText');
+      const debugEl = document.getElementById('bleRawDebug');
+      if (connected) {
+        if (headerBtn) headerBtn.className = 'flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition';
+        if (headerText) headerText.textContent = label || 'Bluetooth Connected';
+        if (debugEl) debugEl.textContent = 'Bluetooth Status: Connected (Tap NFC Card Now)';
+      } else {
+        if (headerBtn) headerBtn.className = 'flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition';
+        if (headerText) headerText.textContent = 'Connect Bluetooth';
+        if (debugEl) debugEl.textContent = 'Bluetooth Status: Disconnected';
+      }
+    }
+
+    async function connectBluetoothReader() {
+      if (!navigator.bluetooth) {
+        showToast('Web Bluetooth is not supported in this browser. Use Chrome on Android/Desktop.', 'error');
+        return;
+      }
+      try {
+        requestNotificationPermission(false);
+        bleDevice = await navigator.bluetooth.requestDevice({
+          filters: [{ services: [BLE_SERVICE_UUID] }],
+          optionalServices: [BLE_SERVICE_UUID]
+        });
+        bleDevice.addEventListener('gattserverdisconnected', () => {
+          updateBleUiStatus(false);
+          showToast('ESP32 Bluetooth disconnected', 'error');
+        });
+        const server = await bleDevice.gatt.connect();
+        const service = await server.getPrimaryService(BLE_SERVICE_UUID);
+        bleCharacteristic = await service.getCharacteristic(BLE_CHARACTERISTIC_UUID);
+        await bleCharacteristic.startNotifications();
+        bleCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
+          const decoder = new TextDecoder('utf-8');
+          const rawVal = decoder.decode(event.target.value);
+          processBluetoothUid(rawVal);
+        });
+        updateBleUiStatus(true, bleDevice.name || 'ESP32 Connected');
+        showToast('ESP32 NFC Reader Connected!', 'success');
+      } catch (err) {
+        if (err && err.name !== 'NotFoundError') {
+          showToast('Bluetooth connection failed: ' + err.message, 'error');
+        }
+      }
+    }
+
     function processBluetoothUid(rawLine) {
       if (!rawLine) return;
       const cleaned = String(rawLine).replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase();
       if (!cleaned || cleaned.length < 4) return;
 
-      // Prevent accidental double-tap within 1.2 seconds
       const now = Date.now();
       if (cleaned === lastCardTapUid && (now - lastCardTapTime) < 1200) return;
       lastCardTapUid = cleaned;
@@ -881,16 +1134,609 @@ void loop() {
     function handleIncomingNfcUid(rawUid) {
       const uid = String(rawUid || '').replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase();
       if (!uid) return;
-// ... existing code ... -->
+
+      const activeSec = localStorage.getItem('gym_active_section') || 'dashboard';
+
+      // If user is on Add Member screen, bind tapped card & save member
+      if (activeSec === 'add-member') {
+        const nameInp = document.getElementById('newMemberName');
+        const phoneInp = document.getElementById('newMemberPhone');
+        const amountInp = document.getElementById('newMemberAmount');
+        document.getElementById('newMemberCardId').value = uid;
+        document.getElementById('previewCardUid').textContent = uid;
+
+        if (!nameInp.value.trim() || !phoneInp.value.trim() || !amountInp.value.trim()) {
+          showToast(`Card ${uid} captured! Fill Name, Phone & Amount then tap again.`, 'info');
+          playBuzzerPattern('success');
+          return;
+        }
+        handleAddMember(null, uid);
+        return;
+      }
+
+      // Check Owner Card
+      const ownerUid = (localStorage.getItem('gym_owner_card_uid') || '').replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase();
+      if (ownerUid && uid === ownerUid) {
+        playBuzzerPattern('success');
+        speakText('Owner Accepted');
+        showNfcLightBanner('success', 'OWNER ACCEPTED', 'Unlimited Master Access', `Card UID: ${uid}`);
+        sendSystemTapNotification('✅ OWNER ACCEPTED', `Master Card (${uid}) • Unlimited Access`, 'success');
+        logTransaction('Owner (Master)', uid, 'Unlimited', 'Allowed', 'Success');
+        return;
+      }
+
+      // Find registered member
+      const member = state.members.find(m => String(m.cardId || '').replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase() === uid);
+
+      if (!member) {
+        playBuzzerPattern('error');
+        speakText('Unregistered Card');
+        showNfcLightBanner('error', 'UNREGISTERED CARD', 'Access Declined', `Card UID: ${uid}`);
+        sendSystemTapNotification('⛔ DECLINED • UNREGISTERED CARD', `Unknown Card UID: ${uid} tapped at entrance`, 'error');
+        logTransaction('Unregistered Card', uid, '-', 'Unregistered', 'Declined');
+        return;
+      }
+
+      const status = computeMemberStatus(member);
+      const daysLeft = getDaysRemaining(member.endDate);
+
+      if (status === 'Frozen') {
+        playBuzzerPattern('error');
+        speakText(`${member.name} Frozen`);
+        showNfcLightBanner('error', member.name.toUpperCase(), 'MEMBERSHIP FROZEN', `Expiry: ${member.endDate}`);
+        sendSystemTapNotification(`⛔ REJECTED • ${member.name}`, `Membership Frozen • Expiry: ${member.endDate}`, 'error');
+        logTransaction(member.name, member.cardId, member.endDate, 'Frozen', 'Declined');
+        return;
+      }
+
+      if (daysLeft < 0) {
+        playBuzzerPattern('error');
+        speakText(`${member.name} Expired`);
+        showNfcLightBanner('error', member.name.toUpperCase(), 'MEMBERSHIP EXPIRED', `Expired on: ${member.endDate}`);
+        sendSystemTapNotification(`⚠️ EXPIRED • ${member.name}`, `Membership Expired on ${member.endDate} • Access Declined`, 'error');
+        logTransaction(member.name, member.cardId, member.endDate, 'Expired', 'Declined');
+        return;
+      }
+
+      // Check Daily Limit
+      const limit = Number(document.getElementById('checkInDailyLimit')?.value || 1);
+      const todayStr = getTodayFormatted();
+      const todayAllowedCount = state.transactions.filter(t => t.cardId === member.cardId && t.date === todayStr && t.status === 'Success').length;
+
+      if (todayAllowedCount >= limit) {
+        playBuzzerPattern('error');
+        speakText(`${member.name} Already Checked In`);
+        showNfcLightBanner('error', member.name.toUpperCase(), 'DAILY LIMIT REACHED', `${daysLeft} Days Left • Exp: ${member.endDate}`);
+        sendSystemTapNotification(`⛔ REJECTED • ${member.name}`, `Daily Check-in Limit Reached (${todayAllowedCount}/${limit})`, 'error');
+        logTransaction(member.name, member.cardId, member.endDate, 'Limit Reached', 'Declined');
+        return;
+      }
+
+      // Allowed!
+      playBuzzerPattern('success');
+      speakText(`${member.name} Accepted`);
+      showNfcLightBanner('success', `${member.name.toUpperCase()} ACCEPTED`, `${daysLeft} Days Left`, `Expiry: ${member.endDate}`);
+      sendSystemTapNotification(`✅ ACCEPTED • ${member.name}`, `${daysLeft} Days Left • Expiry: ${member.endDate}`, 'success');
+      logTransaction(member.name, member.cardId, member.endDate, 'Allowed', 'Success');
+    }
+
+    function logTransaction(name, cardId, endDate, action, status) {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      state.transactions.unshift({
+        id: Date.now(),
+        name,
+        cardId,
+        endDate,
+        action,
+        time: timeStr,
+        date: getTodayFormatted(),
+        method: 'NFC Card',
+        status
+      });
+      persistData();
+      refreshAllViews();
+    }
+
+    function saveOwnerCardUid() {
+      const val = document.getElementById('ownerCardUidInput').value.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase();
+      document.getElementById('ownerCardUidInput').value = val;
+      localStorage.setItem('gym_owner_card_uid', val);
+      showToast('Owner NFC Card UID saved!', 'success');
+    }
+
+    function saveGoogleSheetsUrl() {
+      const url = document.getElementById('googleSheetsUrlInput').value.trim();
+      localStorage.setItem('gym_google_sheets_url', url);
+      showToast('Google Sheets Sync URL saved!', 'success');
+    }
+
+    function syncNewMemberToGoogleSheets(member) {
+      const url = localStorage.getItem('gym_google_sheets_url');
+      if (!url) return;
+      try {
+        fetch(url, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(member)
+        });
+      } catch (e) {}
+    }
+
+    function updateCardPreview() {
+      const name = document.getElementById('newMemberName').value.trim();
+      document.getElementById('previewCardHolder').textContent = name ? name.toUpperCase() : 'NEW MEMBER';
+    }
+
+    function autoCalculateEndDate() {
+      const plan = document.getElementById('newMemberPlan').value;
+      const startIso = document.getElementById('newMemberStart').value;
+      if (!startIso) return;
+      const d = new Date(startIso);
+      if (isNaN(d.getTime())) return;
+      if (plan === 'Premium') d.setFullYear(d.getFullYear() + 1);
+      else if (plan === 'Standard') d.setMonth(d.getMonth() + 6);
+      else d.setMonth(d.getMonth() + 1);
+      const endIso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      document.getElementById('newMemberEnd').value = endIso;
+    }
+
+    function handleAddMember(e, tappedUid = '') {
+      if (e) e.preventDefault();
+      const name = document.getElementById('newMemberName').value.trim();
+      const phone = document.getElementById('newMemberPhone').value.trim();
+      const plan = document.getElementById('newMemberPlan').value;
+      const amount = Number(document.getElementById('newMemberAmount').value || 0);
+      const startDate = isoToFormatted(document.getElementById('newMemberStart').value);
+      const endDate = isoToFormatted(document.getElementById('newMemberEnd').value);
+      const cardId = (tappedUid || document.getElementById('newMemberCardId').value || '').replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase();
+
+      if (!name || !phone || !cardId) {
+        showToast('Please enter details and tap NFC card!', 'error');
+        return;
+      }
+
+      const duplicate = state.members.find(m => m.cardId.toUpperCase() === cardId);
+      if (duplicate) {
+        playBuzzerPattern('error');
+        showToast(`Card ${cardId} is already assigned to ${duplicate.name}!`, 'error');
+        return;
+      }
+
+      const newMember = {
+        id: Date.now(),
+        cardId,
+        name,
+        phone,
+        plan,
+        amount,
+        startDate,
+        endDate,
+        nfcType: 'Card',
+        status: 'Active',
+        frozen: false
+      };
+
+      state.members.unshift(newMember);
+      persistData();
+      syncNewMemberToGoogleSheets(newMember);
+
+      playBuzzerPattern('success');
+      speakText(`${name} Registered`);
+      showToast(`Member ${name} registered with card ${cardId}!`, 'success');
+
+      document.getElementById('addMemberForm').reset();
+      document.getElementById('newMemberCardId').value = '';
+      document.getElementById('previewCardUid').textContent = 'WAITING FOR TAP...';
+      document.getElementById('previewCardHolder').textContent = 'NEW MEMBER';
+      document.getElementById('newMemberStart').value = getTodayIso();
+      autoCalculateEndDate();
+
+      refreshAllViews();
+      switchSection('dashboard');
+    }
+
+    function renderMembersTable() {
+      const tbody = document.getElementById('membersTableBody');
+      if (!tbody) return;
+      const q = (document.getElementById('memberSearchInput')?.value || '').trim().toLowerCase();
+      const planFilter = document.getElementById('memberPlanFilter')?.value || 'All';
+      const statusFilter = document.getElementById('memberStatusFilter')?.value || 'All';
+
+      const filtered = state.members.filter(m => {
+        const computedStatus = computeMemberStatus(m);
+        const matchesQ = !q || m.name.toLowerCase().includes(q) || m.phone.includes(q) || m.cardId.toLowerCase().includes(q);
+        const matchesPlan = planFilter === 'All' || m.plan === planFilter;
+        const matchesStatus = statusFilter === 'All' || computedStatus === statusFilter;
+        return matchesQ && matchesPlan && matchesStatus;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-slate-400 font-semibold">No members found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map((m, idx) => {
+        const st = computeMemberStatus(m);
+        const badgeClass = st === 'Active' ? 'bg-emerald-100 text-emerald-700' : st === 'Frozen' ? 'bg-sky-100 text-sky-700' : 'bg-rose-100 text-rose-700';
+        return `
+          <tr class="hover:bg-slate-50/80 transition">
+            <td class="py-3.5 px-3 font-semibold text-slate-500">${idx + 1}</td>
+            <td class="py-3.5 px-3">
+              <div class="font-bold text-slate-900">${m.name}</div>
+              <div class="text-[11px] font-mono font-bold text-indigo-600">${m.cardId}</div>
+            </td>
+            <td class="py-3.5 px-3 font-medium text-slate-700">${m.phone}</td>
+            <td class="py-3.5 px-3 font-semibold text-slate-700">${m.plan}</td>
+            <td class="py-3.5 px-3 font-bold text-slate-900">₹${m.amount}</td>
+            <td class="py-3.5 px-3 text-slate-600">${m.startDate}</td>
+            <td class="py-3.5 px-3 font-semibold text-slate-800">${m.endDate}</td>
+            <td class="py-3.5 px-3"><span class="px-2.5 py-1 rounded-full text-xs font-bold ${badgeClass}">${st}</span></td>
+            <td class="py-3.5 px-3 text-right space-x-1">
+              <button type="button" onclick="toggleFreezeMember(${m.id})" title="${m.frozen ? 'Unfreeze' : 'Freeze'}" class="px-2.5 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-bold">
+                <i class="fa-solid ${m.frozen ? 'fa-sun' : 'fa-snowflake'}"></i>
+              </button>
+              <button type="button" onclick="openEditModal(${m.id})" title="Edit" class="px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold">
+                <i class="fa-solid fa-pen"></i>
+              </button>
+              <button type="button" onclick="deleteMember(${m.id})" title="Delete" class="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function resetMemberFilters() {
+      document.getElementById('memberSearchInput').value = '';
+      document.getElementById('memberPlanFilter').value = 'All';
+      document.getElementById('memberStatusFilter').value = 'All';
+      renderMembersTable();
+    }
+
+    function toggleFreezeMember(id) {
+      const m = state.members.find(x => x.id === id);
+      if (!m) return;
+      m.frozen = !m.frozen;
+      persistData();
+      refreshAllViews();
+      showToast(`${m.name} membership ${m.frozen ? 'frozen' : 'unfrozen'}!`, 'info');
+    }
+
+    function deleteMember(id) {
+      state.members = state.members.filter(x => x.id !== id);
+      persistData();
+      refreshAllViews();
+      showToast('Member deleted.', 'info');
+    }
+
+    function openEditModal(id) {
+      const m = state.members.find(x => x.id === id);
+      if (!m) return;
+      document.getElementById('editMemberId').value = m.id;
+      document.getElementById('editName').value = m.name;
+      document.getElementById('editPhone').value = m.phone;
+      document.getElementById('editAmount').value = m.amount;
+      document.getElementById('editCardId').value = m.cardId;
+      document.getElementById('editPlan').value = m.plan;
+      document.getElementById('editStatus').value = computeMemberStatus(m) === 'Expired' ? 'Expired' : 'Active';
+      document.getElementById('editStartDate').value = m.startDate;
+      document.getElementById('editEndDate').value = m.endDate;
+
+      const modal = document.getElementById('editMemberModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeEditModal() {
+      const modal = document.getElementById('editMemberModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function saveEditedMember(e) {
+      e.preventDefault();
+      const id = Number(document.getElementById('editMemberId').value);
+      const m = state.members.find(x => x.id === id);
+      if (!m) return;
+      m.name = document.getElementById('editName').value.trim();
+      m.phone = document.getElementById('editPhone').value.trim();
+      m.amount = Number(document.getElementById('editAmount').value || 0);
+      m.cardId = document.getElementById('editCardId').value.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase();
+      m.plan = document.getElementById('editPlan').value;
+      m.startDate = document.getElementById('editStartDate').value.trim();
+      m.endDate = document.getElementById('editEndDate').value.trim();
+      m.status = document.getElementById('editStatus').value;
+      persistData();
+      closeEditModal();
+      refreshAllViews();
+      showToast('Member updated!', 'success');
+    }
+
+    function renderTransactionsTable() {
+      const tbody = document.getElementById('transactionsTableBody');
+      if (!tbody) return;
+      if (state.transactions.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400 font-semibold">No NFC entrance scans yet.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = state.transactions.map((t, idx) => {
+        const isOk = t.status === 'Success';
+        return `
+          <tr class="hover:bg-slate-50/80 transition">
+            <td class="py-3.5 px-4 font-semibold text-slate-500">${idx + 1}</td>
+            <td class="py-3.5 px-4">
+              <div class="font-bold text-slate-900">${t.name}</div>
+              <div class="text-[11px] font-mono font-bold text-indigo-600">${t.cardId}</div>
+            </td>
+            <td class="py-3.5 px-4 text-slate-700 font-medium">${t.endDate}</td>
+            <td class="py-3.5 px-4 text-slate-700">${t.time} • <span class="text-slate-500 text-xs">${t.date}</span></td>
+            <td class="py-3.5 px-4 text-slate-600 text-xs font-semibold">${t.method}</td>
+            <td class="py-3.5 px-4">
+              <span class="px-2.5 py-1 rounded-full text-xs font-bold ${isOk ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">
+                ${t.action} (${t.status})
+              </span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderDashboardAndReports() {
+      const todayStr = getTodayFormatted();
+      const total = state.members.length;
+      const active = state.members.filter(m => computeMemberStatus(m) === 'Active').length;
+      const expired = state.members.filter(m => computeMemberStatus(m) === 'Expired').length;
+      const todayTxns = state.transactions.filter(t => t.date === todayStr);
+      const todayAccepted = todayTxns.filter(t => t.status === 'Success').length;
+      const todayExpired = todayTxns.filter(t => t.action === 'Expired').length;
+      const todayDeclined = todayTxns.filter(t => t.status !== 'Success').length;
+
+      document.getElementById('kpiTotalMembers').textContent = total;
+      document.getElementById('kpiActiveMembers').textContent = active;
+      document.getElementById('kpiExpiredMembers').textContent = expired;
+      document.getElementById('kpiTodayAttendance').textContent = todayAccepted;
+
+      document.getElementById('reportTodayVisited').textContent = todayTxns.length;
+      document.getElementById('reportTodayAccepted').textContent = todayAccepted;
+      document.getElementById('reportTodayExpired').textContent = todayExpired;
+      document.getElementById('reportTodayDeclined').textContent = todayDeclined;
+      document.getElementById('reportTotalExpiredMembers').textContent = expired;
+
+      document.getElementById('reportTotalCheckIns').textContent = state.transactions.filter(t => t.status === 'Success').length;
+      document.getElementById('reportTotalDenied').textContent = state.transactions.filter(t => t.status !== 'Success').length;
+      document.getElementById('reportActiveMembers').textContent = active;
+
+      const recentList = document.getElementById('recentActivityList');
+      if (recentList) {
+        const top5 = state.transactions.slice(0, 5);
+        recentList.innerHTML = top5.length === 0
+          ? `<p class="text-xs text-slate-400">No recent scans.</p>`
+          : top5.map(t => `
+            <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+              <div>
+                <p class="text-xs font-bold text-slate-900">${t.name}</p>
+                <p class="text-[11px] font-mono text-slate-500">${t.cardId} • ${t.time}</p>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${t.status === 'Success' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">
+                ${t.action}
+              </span>
+            </div>
+          `).join('');
+      }
+
+      const todayTable = document.getElementById('reportTodayTableBody');
+      if (todayTable) {
+        todayTable.innerHTML = todayTxns.length === 0
+          ? `<tr><td colspan="6" class="py-6 text-center text-slate-400 font-semibold">No taps recorded today.</td></tr>`
+          : todayTxns.map((t, idx) => `
+            <tr>
+              <td class="py-3 px-4 text-slate-500 font-semibold">${idx + 1}</td>
+              <td class="py-3 px-4 font-bold text-slate-900">${t.name}</td>
+              <td class="py-3 px-4 font-mono text-xs text-indigo-600 font-bold">${t.cardId}</td>
+              <td class="py-3 px-4 text-slate-600">${t.time}</td>
+              <td class="py-3 px-4 text-slate-600">${t.endDate}</td>
+              <td class="py-3 px-4">
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${t.status === 'Success' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">
+                  ${t.action}
+                </span>
+              </td>
+            </tr>
+          `).join('');
+      }
+    }
+
+    function refreshAllViews() {
+      renderDashboardAndReports();
+      renderMembersTable();
+      renderTransactionsTable();
+    }
+
+    function handleGlobalSearch(e) {
+      const q = e.target.value.trim();
+      if (!q) return;
+      switchSection('view-members');
+      document.getElementById('memberSearchInput').value = q;
+      renderMembersTable();
+    }
+
     function switchSection(sec) {
       localStorage.setItem('gym_active_section', sec);
       document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
       const target = document.getElementById(`section-${sec}`);
       if (target) target.classList.remove('hidden');
-// ... existing code ... -->
+
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        if (btn.dataset.nav === sec) {
+          btn.classList.add('nav-active', 'text-white', 'font-semibold');
+          btn.classList.remove('text-indigo-100/80', 'font-medium');
+        } else {
+          btn.classList.remove('nav-active', 'text-white', 'font-semibold');
+          btn.classList.add('text-indigo-100/80', 'font-medium');
+        }
+      });
+
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.getElementById('sidebarBackdrop');
+      if (sidebar && !sidebar.classList.contains('-translate-x-full') && window.innerWidth < 1024) {
+        sidebar.classList.add('-translate-x-full');
+        backdrop.classList.add('hidden');
+      }
+      refreshAllViews();
+    }
+
+    function toggleMobileSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.getElementById('sidebarBackdrop');
+      sidebar.classList.toggle('-translate-x-full');
+      backdrop.classList.toggle('hidden');
+    }
+
+    function downloadMembersPdf() {
+      if (!window.jspdf) return;
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.text('Gym NFC Members List', 14, 16);
+      doc.autoTable({
+        startY: 22,
+        head: [['#', 'Name', 'Card UID', 'Phone', 'Plan', 'Amount', 'End Date', 'Status']],
+        body: state.members.map((m, i) => [i + 1, m.name, m.cardId, m.phone, m.plan, `Rs.${m.amount}`, m.endDate, computeMemberStatus(m)])
+      });
+      doc.save(`Gym_Members_${getTodayFormatted()}.pdf`);
+    }
+
+    function downloadTransactionsPdf() {
+      if (!window.jspdf) return;
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.text('Gym NFC Entrance Transactions', 14, 16);
+      doc.autoTable({
+        startY: 22,
+        head: [['#', 'Name', 'Card UID', 'Time', 'Date', 'Action', 'Status']],
+        body: state.transactions.map((t, i) => [i + 1, t.name, t.cardId, t.time, t.date, t.action, t.status])
+      });
+      doc.save(`Gym_Transactions_${getTodayFormatted()}.pdf`);
+    }
+
+    function initCharts() {
+      if (!window.Chart) return;
+      const lineCtx = document.getElementById('attendanceLineChart');
+      if (lineCtx) {
+        lineChartInstance = new Chart(lineCtx, {
+          type: 'line',
+          data: {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            datasets: [{
+              label: 'Check-Ins',
+              data: [12, 19, 15, 22, 18, 25, state.transactions.filter(t => t.date === getTodayFormatted() && t.status === 'Success').length || 14],
+              borderColor: '#5B46E8',
+              backgroundColor: 'rgba(91, 70, 232, 0.12)',
+              fill: true,
+              tension: 0.4
+            }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+      }
+
+      const barCtx = document.getElementById('reportsBarChart');
+      if (barCtx) {
+        barChartInstance = new Chart(barCtx, {
+          type: 'bar',
+          data: {
+            labels: ['Accepted', 'Expired', 'Declined'],
+            datasets: [{
+              label: 'Today Scans',
+              data: [
+                state.transactions.filter(t => t.date === getTodayFormatted() && t.status === 'Success').length,
+                state.transactions.filter(t => t.date === getTodayFormatted() && t.action === 'Expired').length,
+                state.transactions.filter(t => t.date === getTodayFormatted() && t.status !== 'Success').length
+              ],
+              backgroundColor: ['#18B87A', '#F87924', '#F43F5E'],
+              borderRadius: 8
+            }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+      }
+    }
+
+    function initPwaInstaller() {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#16134A';
+        ctx.fillRect(0, 0, 512, 512);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 120px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('GYM', 256, 220);
+        ctx.font = 'bold 70px sans-serif';
+        ctx.fillStyle = '#818CF8';
+        ctx.fillText('NFC', 256, 320);
+        pwaAppIconDataUrl = canvas.toDataURL('image/png');
+        const iconLink = document.getElementById('pwaIconLink');
+        if (iconLink) iconLink.href = pwaAppIconDataUrl;
+
+        const manifestObj = {
+          name: 'Gym NFC Management System',
+          short_name: 'Gym NFC',
+          start_url: '.',
+          display: 'standalone',
+          background_color: '#16134A',
+          theme_color: '#16134A',
+          icons: [{ src: pwaAppIconDataUrl, sizes: '512x512', type: 'image/png' }]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/json' });
+        const manifestLink = document.getElementById('pwaManifestLink');
+        if (manifestLink) manifestLink.href = URL.createObjectURL(manifestBlob);
+
+        if ('serviceWorker' in navigator) {
+          const swCode = `
+            self.addEventListener('install', e => self.skipWaiting());
+            self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
+            self.addEventListener('notificationclick', e => {
+              e.notification.close();
+              e.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+                for (const client of list) {
+                  if ('focus' in client) return client.focus();
+                }
+                if (clients.openWindow) return clients.openWindow('./');
+              }));
+            });
+          `;
+          const swBlob = new Blob([swCode], { type: 'application/javascript' });
+          navigator.serviceWorker.register(URL.createObjectURL(swBlob)).then(reg => {
+            swRegistrationRef = reg;
+          }).catch(() => {});
+        }
+      } catch (e) {}
+
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredInstallPrompt = e;
+      });
+    }
+
+    async function triggerInstallApp() {
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        await deferredInstallPrompt.userChoice;
+        deferredInstallPrompt = null;
+      } else {
+        showToast('Open browser menu (⋮) and tap "Install App / Add to Home Screen"', 'info');
+      }
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       initPwaInstaller();
-      appReadyTimestamp = Date.now();
+      updateNotificationButtonState();
+
       const creds = getAdminCredentials();
       const loginOverlay = document.getElementById('loginOverlay');
       if (loginOverlay) {
@@ -900,6 +1746,7 @@ void loop() {
           loginOverlay.classList.remove('hidden');
         }
       }
+
       const secUser = document.getElementById('securityNewUsername');
       const secPass = document.getElementById('securityNewPassword');
       if (secUser) secUser.value = creds.username;
@@ -911,6 +1758,7 @@ void loop() {
       document.getElementById('ownerCardUidInput').value = localStorage.getItem('gym_owner_card_uid') || '';
       const sheetsInp = document.getElementById('googleSheetsUrlInput');
       if (sheetsInp) sheetsInp.value = localStorage.getItem('gym_google_sheets_url') || '';
+
       const savedSection = localStorage.getItem('gym_active_section') || 'dashboard';
       switchSection(savedSection);
       initCharts();
